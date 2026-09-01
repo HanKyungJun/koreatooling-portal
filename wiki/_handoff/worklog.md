@@ -101,6 +101,15 @@
 - 🔴 **Cowork 검증 실수** — 유입 검사 패턴에 `.git-archive-backup` 을 빠뜨려 ⓐ검사가 통과처럼 보였다. **파일 수(8,598)가 아니었으면 넘어갔다** → **개수 확인이 패턴 검사보다 먼저다**
 - 조치: 백업을 **작업 트리 밖**으로 이동. 런북 ⑤단계 개정
 
+**🔴 함정 3 — fine-grained PAT 가 새 저장소에 권한을 안 준다 (⑧에서 발현)**
+
+- `commit code=0` → **`push code=128` / 403 `Permission ... denied`**. PAT는 **저장소 ID 단위** 권한이라 이름이 같아도 새 저장소는 **다른 저장소**
+- ⚠️ **⑥의 수동 push 성공에 속으면 안 된다** — 그건 자격 증명 관리자 경로다. 토큰 URL 경로만 막히므로 **⑧에서야 드러난다.** `generate.py` 가 origin을 토큰 URL로 바꿔놔 **뒤이은 수동 push까지 403**(위키 커밋 `4bd954d` 가 로컬에 묶였다)
+- 조치: `git remote set-url` 로 응급 복구 후 push 성공 → 토큰 Repository access에 새 저장소 추가(**`.env` 수정 불필요**)
+- 💡 **tasks.md P3「PAT 평문 상주」에 근거 추가** — 토큰 재기입을 걷어내면 평문 상주와 범위 문제가 동시에 사라진다
+
+**✅ 잔재 object 정리** — ⑤ 스테이징 취소로 남은 unreachable loose **8,590개**를 `git prune --expire=now` 로 제거. **loose 0 · garbage 0 · in-pack 527 · 53.17 MiB**(작업 전 1.35 GB)
+
 **추적 파일 534 → 481, 빠진 53건 전수 확인**
 
 - `git init` 으로 `.gitignore` 가 **기존 추적 파일에도 처음 적용**된 결과. `outputs/barcode_checker/` 빌드·exe 19 · `outputs/과제자료/` 31 · `__pycache__` 1 · `_to_delete/` 1 · `.claude/settings.local.json` 1

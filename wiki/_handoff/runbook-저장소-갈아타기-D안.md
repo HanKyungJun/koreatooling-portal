@@ -254,6 +254,36 @@ git push -u origin main
 
 > 인증은 기존 PAT를 그대로 사용합니다. `generate.py` 가 실행 시마다 `remote set-url` 로 토큰 URL을 다시 넣으므로, 여기서는 수동 인증으로 충분합니다.
 
+### ⑥-1. 🔴 fine-grained PAT 의 저장소 범위 갱신 (2026-09-01 신설 — 필수)
+
+> **이름이 같아도 새 저장소는 「다른 저장소」다.** fine-grained PAT는 **저장소 ID 단위**로 권한을 주므로, 새로 만든 `koreatooling-portal` 에는 **권한이 따라오지 않는다.** 토큰은 여전히 옛 저장소(현 archive)만 가리킨다.
+
+**증상** (2026-09-01 실측):
+
+```
+[git] commit: 5.9s (code=0)
+[git] push: 0.8s (code=128)
+❌ 푸시 실패: remote: Permission to HanKyungJun/koreatooling-portal.git denied to HanKyungJun.
+fatal: ... The requested URL returned error: 403
+```
+
+**⚠️ 수동 push가 되는 것에 속지 말 것.** ⑥의 수동 `git push` 는 **Windows 자격 증명 관리자**를 타서 성공한다. 실패하는 것은 **`generate.py` 가 `remote set-url` 로 박아 넣는 토큰 URL 경로뿐**이다. 그래서 ⑥이 성공해도 ⑧에서 처음 드러난다. 게다가 `generate.py` 가 origin을 토큰 URL로 바꿔놓으므로 **그 뒤의 수동 push까지 403이 된다.**
+
+**조치**: GitHub → Settings → Developer settings → **Personal access tokens → Fine-grained tokens** → 해당 토큰 →
+**Repository access** 에 **`koreatooling-portal` 추가** → **Contents: Read and write** 확인 → Update.
+✅ **토큰 값은 그대로이므로 `.env` 수정 불필요.** archive는 push할 일이 없으니 목록에서 빼도 된다.
+
+**복구(응급)**: 토큰 범위를 고치기 전이라면 아래로 자격 증명 관리자 경로를 되살려 수동 push할 수 있다.
+
+```powershell
+git remote set-url origin https://github.com/HanKyungJun/koreatooling-portal.git
+git push
+```
+
+⚠️ 단 `generate.py` 는 실행마다 토큰 URL로 되돌리므로 **응급 조치일 뿐**이다. 16:00 배치 전에 토큰 범위를 반드시 고칠 것.
+
+💡 **파생 논점** — 자격 증명 관리자 경로는 저장소가 바뀌어도 통했고 토큰 URL 경로만 막혔다. `generate.py` 의 토큰 재기입을 걷어내고 credential helper에 맡기면 **평문 상주(tasks.md P3)와 이 범위 문제가 동시에 사라진다.**
+
 ### ⑦ 새 저장소 Pages 켜기
 
 **Settings → Pages → Source: Deploy from a branch → `main` / `/ (root)`** → Save
@@ -275,6 +305,17 @@ python generate.py
 - `commit code=0` 또는 정상적인 「변경 없음」
 - `push code=0`
 - ⚠️ `✅ 업로드 완료` 만 보고 판단하지 말 것 — **커밋 code와 함께** 확인합니다(decisions.md 2026-08-28).
+
+### ⑨ 잔재 object 정리 (2026-09-01 신설)
+
+⑤에서 스테이징을 한 번이라도 취소했다면 그때 해시된 object가 **도달 불가 상태로 남는다**(2026-09-01: unreachable loose **8,590개**).
+
+```powershell
+git prune --expire=now
+git count-objects -vH
+```
+
+📌 2026-09-01 실측 결과: loose **0** · garbage **0** · in-pack 527 · **53.17 MiB**. 작업 전 로컬 `.git` 이 1.35 GB였으므로 사실상 전량 정리됐다.
 
 ---
 
