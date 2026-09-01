@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>공구 불량 신고 — 코리아툴링</title>
+<style>
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5; color: #1a1a2e; min-height: 100vh; }
+header { background: #1A3A6B; color: white; padding: 16px 28px; display: flex; align-items: center; justify-content: space-between; }
+header h1 { font-size: 1.1rem; font-weight: 700; }
+.back-link { color: rgba(255,255,255,0.7); font-size: 0.82rem; text-decoration: none; }
+.back-link:hover { color: white; }
+main { max-width: 680px; margin: 32px auto; padding: 0 20px 40px; }
+.card { background: white; border-radius: 14px; padding: 32px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+.card-title { font-size: 1.1rem; font-weight: 700; color: #1A3A6B; margin-bottom: 4px; }
+.card-sub { font-size: 0.8rem; color: #999; margin-bottom: 28px; }
+.field { margin-bottom: 18px; }
+.field label { display: block; font-size: 0.8rem; font-weight: 600; color: #555; margin-bottom: 6px; }
+.req { color: #ea4335; }
+.field input[type=text], .field input[type=tel], .field input[type=email],
+.field input[type=number], .field input[type=date], .field select, .field textarea {
+  width: 100%; padding: 10px 13px; border: 1.5px solid #e0e0e0; border-radius: 8px;
+  font-size: 0.9rem; font-family: inherit; outline: none; transition: border-color 0.15s;
+}
+.field input:focus, .field select:focus, .field textarea:focus { border-color: #1A3A6B; }
+.field textarea { resize: vertical; min-height: 90px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.check-group { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 4px; }
+.check-item { display: flex; align-items: center; gap: 6px; font-size: 0.88rem; cursor: pointer; }
+.check-item input[type=checkbox] { width: auto; accent-color: #1A3A6B; }
+.submit-btn { width: 100%; padding: 13px; background: #1A3A6B; color: white; border: none;
+  border-radius: 10px; font-size: 0.95rem; font-weight: 600; cursor: pointer; margin-top: 10px;
+  transition: background 0.15s; }
+.submit-btn:hover { background: #152d55; }
+.submit-btn:disabled { background: #aaa; cursor: default; }
+.success-box { text-align: center; padding: 48px 20px; }
+.success-box .icon { font-size: 3rem; margin-bottom: 16px; }
+.success-box h2 { color: #1A3A6B; font-size: 1.2rem; margin-bottom: 8px; }
+.success-box p { color: #666; font-size: 0.88rem; line-height: 1.6; margin-bottom: 24px; }
+.home-btn { display: inline-block; padding: 11px 28px; background: #f0f2f5; color: #1A3A6B;
+  border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.88rem; }
+footer { text-align: center; padding: 20px; color: #bbb; font-size: 0.75rem; }
+.file-drop { display: block; border: 2px dashed #d0d8f0; border-radius: 10px; padding: 22px;
+  text-align: center; cursor: pointer; color: #888; font-size: 0.85rem; line-height: 1.7;
+  transition: border-color 0.15s, background 0.15s; }
+.file-drop:hover { border-color: #1A3A6B; background: #f5f8ff; }
+.file-drop.has-file { border-color: #34a853; background: #f0faf3; color: #2d7a3a; }
+@media (max-width: 560px) { .row2 { grid-template-columns: 1fr; } }
+
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚠️ 공구 불량 신고</h1>
+  <a href="index.html" class="back-link">← 메인으로</a>
+</header>
+<main>
+  <div id="form-wrap" class="card">
+    <div class="card-title">⚠️ 공구 불량 신고</div>
+    <div class="card-sub">＊ 표시는 필수 입력 항목입니다.</div>
+    <form name="defect-form" method="POST">
+      <input type="hidden" name="form-name" value="defect-form">
+
+      <div class="row2">
+        <div class="field">
+          <label>회사명 <span class="req">＊</span></label>
+          <input type="text" name="company" placeholder="예) 코리아툴링" required>
+        </div>
+        <div class="field">
+          <label>담당자 <span class="req">＊</span></label>
+          <input type="text" name="contact" placeholder="이름" required>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>연락처 <span class="req">＊</span></label>
+          <input type="tel" name="phone" placeholder="010-0000-0000" required>
+        </div>
+        <div class="field">
+          <label>발생 일자 <span class="req">＊</span></label>
+          <input type="date" name="defect_date" required>
+        </div>
+      </div>
+      <div class="field">
+        <label>공구명 / 규격 <span class="req">＊</span>
+          <span style="font-weight:400;color:#aaa;font-size:0.75rem;margin-left:6px;">품종이 여러 개면 행 추가</span>
+        </label>
+        <div id="defect-rows">
+          <div class="defect-row" style="display:grid;grid-template-columns:1fr 90px 32px;gap:8px;margin-bottom:8px;">
+            <input type="text" name="tool_spec[]" placeholder="공구명/규격 (예: 초경 엔드밀 Ø10, 4날)" required
+              style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;">
+            <input type="number" name="defect_qty[]" placeholder="수량" min="1" required
+              style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;text-align:center;">
+            <button type="button" onclick="removeDefectRow(this)"
+              style="background:#fff0f0;color:#e53935;border:1.5px solid #ffd0d0;border-radius:8px;font-size:1.1rem;cursor:pointer;display:none;">✕</button>
+          </div>
+        </div>
+        <button type="button" onclick="addDefectRow()"
+          style="margin-top:4px;padding:8px 16px;background:#f0f4ff;color:#1A3A6B;border:1.5px dashed #b0c4f0;border-radius:8px;font-size:0.82rem;font-weight:600;cursor:pointer;">
+          + 규격 추가
+        </button>
+      </div>
+      <div class="field">
+        <label>불량 증상 <span class="req">＊</span></label>
+        <div class="check-group">
+          <label class="check-item"><input type="checkbox" name="symptom" value="치핑"> 치핑</label>
+          <label class="check-item"><input type="checkbox" name="symptom" value="파손"> 파손</label>
+          <label class="check-item"><input type="checkbox" name="symptom" value="치수불량"> 치수 불량</label>
+          <label class="check-item"><input type="checkbox" name="symptom" value="코팅불량"> 코팅 불량</label>
+          <label class="check-item"><input type="checkbox" name="symptom" value="수명단축"> 수명 단축</label>
+          <label class="check-item"><input type="checkbox" name="symptom" value="기타"> 기타</label>
+        </div>
+      </div>
+      <div class="field">
+        <label>피삭재 / 사용 환경</label>
+        <input type="text" name="workpiece" placeholder="예) SUS304, 건식">
+      </div>
+      <div class="field">
+        <label>불량 상세 내용 <span class="req">＊</span></label>
+        <textarea name="detail" placeholder="불량 발생 경위, 사용 조건(회전수/이송) 등 상세히 기재해주세요." required></textarea>
+      </div>
+      <button type="submit" class="submit-btn">제출하기 →</button>
+    </form>
+  </div>
+  <div id="success" style="display:none" class="card">
+    <div class="success-box">
+      <div class="icon">✅</div>
+      <h2>제출이 완료되었습니다</h2>
+      <p>불량 내용을 접수하였습니다.<br>빠른 시일 내에 확인 후 연락드리겠습니다.</p>
+      <a href="index.html" class="home-btn">메인으로 돌아가기</a>
+    </div>
+  </div>
+</main>
+<footer>© 2026 코리아툴링 | Korea Tooling Co., Ltd.</footer>
+<iframe name="hidden-target" style="display:none;"></iframe>
+<script>
+(function() {
+  var form = document.querySelector('form');
+  form.setAttribute('action', 'https://script.google.com/macros/s/AKfycbzjgm7IhynT5CCQzX1f9M78HUN8cDwwmLj9xVNSV3lrF_TPkvPCmLFt9E7GwRYmRipA/exec');
+  form.setAttribute('target', 'hidden-target');
+  form.addEventListener('submit', function() {
+    var btn = form.querySelector('.submit-btn');
+    btn.disabled = true; btn.textContent = '제출 중...';
+    setTimeout(function() {
+      document.getElementById('form-wrap').style.display = 'none';
+      document.getElementById('success').style.display = 'block';
+    }, 800);
+  });
+})();
+</script>
+</body>
+</html><script>
+function addDefectRow() {
+  var container = document.getElementById('defect-rows');
+  var row = document.createElement('div');
+  row.className = 'defect-row';
+  row.style.cssText = 'display:grid;grid-template-columns:1fr 90px 32px;gap:8px;margin-bottom:8px;';
+  row.innerHTML = '<input type="text" name="tool_spec[]" placeholder="공구명/규격 (예: 초경 엔드밀 Ø10, 4날)"'
+    + ' style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;">'
+    + '<input type="number" name="defect_qty[]" placeholder="수량" min="1"'
+    + ' style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;text-align:center;">'
+    + '<button type="button" onclick="removeDefectRow(this)"'
+    + ' style="background:#fff0f0;color:#e53935;border:1.5px solid #ffd0d0;border-radius:8px;font-size:1.1rem;cursor:pointer;">✕</button>';
+  container.appendChild(row);
+  updateDefectButtons();
+  row.querySelector('input').focus();
+}
+function removeDefectRow(btn) {
+  btn.closest('.defect-row').remove();
+  updateDefectButtons();
+}
+function updateDefectButtons() {
+  var rows = document.querySelectorAll('.defect-row');
+  rows.forEach(function(r) {
+    r.querySelector('button').style.display = rows.length > 1 ? '' : 'none';
+  });
+}
+</script>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          

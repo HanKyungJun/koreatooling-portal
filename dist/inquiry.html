@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>작업 진행 문의 — 코리아툴링</title>
+<link rel="stylesheet" href="portal.css">
+</head>
+<body>
+
+<header>
+  <h1>📋 작업 진행 문의</h1>
+  <a href="index.html" class="back-link">← 메인으로</a>
+</header>
+<main>
+  <div id="form-wrap" class="card">
+    <div class="card-title">📋 작업 진행 문의</div>
+    <div class="card-sub">＊ 표시는 필수 입력 항목입니다.</div>
+    <form name="inquiry-form" method="POST">
+      <input type="hidden" name="form-name" value="inquiry-form">
+
+      <div class="row2">
+        <div class="field">
+          <label>회사명 <span class="req">＊</span></label>
+          <input type="text" name="company" placeholder="예) 코리아툴링" required>
+        </div>
+        <div class="field">
+          <label>담당자 <span class="req">＊</span></label>
+          <input type="text" name="contact" placeholder="이름" required>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>연락처 <span class="req">＊</span></label>
+          <input type="tel" name="phone" placeholder="010-0000-0000" required>
+        </div>
+        <div class="field">
+          <label>의뢰 납기 / 참고 일자</label>
+          <input type="text" name="ref_date" placeholder="예) 2026-04-30">
+        </div>
+      </div>
+      <div class="field">
+        <label>문의 내용 <span class="req">＊</span></label>
+        <textarea name="inquiry" placeholder="공구명·수량·납기 등 진행 현황을 문의할 내용을 입력해주세요." style="min-height:120px;" required></textarea>
+      </div>
+      <button type="submit" class="submit-btn">제출하기 →</button>
+    </form>
+  </div>
+  <div id="success" style="display:none" class="card">
+    <div class="success-box">
+      <div class="icon">✅</div>
+      <h2>제출이 완료되었습니다</h2>
+      <p>문의를 접수하였습니다.<br>담당자가 확인 후 신속히 연락드리겠습니다.</p>
+      <a href="index.html" class="home-btn">메인으로 돌아가기</a>
+    </div>
+  </div>
+</main>
+<footer>© 2026 코리아툴링 | Korea Tooling Co., Ltd.</footer>
+<iframe name="hidden-target" style="display:none;"></iframe>
+<script src="portal.js"></script>
+</body>
+</html>

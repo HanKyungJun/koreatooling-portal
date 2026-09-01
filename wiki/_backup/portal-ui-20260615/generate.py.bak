@@ -1,0 +1,1148 @@
+import sys, io, os, json, hashlib, subprocess
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
+import openpyxl, xlrd, requests
+from datetime import datetime
+
+# .env 파일 로드 (python-dotenv 설치된 경우. 없으면 시스템 환경변수 사용)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
+# ── 설정 ──────────────────────────────────────────────────────────────────────
+# 2026-05-11 보안 정리: 하드코딩되어 있던 토큰·비밀번호를 환경변수로 분리.
+# 값은 .env 파일 또는 시스템 환경변수에서 로드. (.env.example 참조)
+# 관련: SECURITY_NOTES.md, wiki/_handoff/decisions.md 2026-05-11 항목
+GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
+GITHUB_USER  = os.getenv('GITHUB_USER', 'HanKyungJun')
+GITHUB_REPO  = os.getenv('GITHUB_REPO', 'koreatooling-portal')
+STAFF_PASS   = os.getenv('STAFF_PASS', '1234')  # 화면 보호용 임시 비밀번호 — 실제 인증·권한 아님
+SHOW_STAFF   = os.getenv('SHOW_STAFF', 'True').lower() == 'true'
+
+# 필수 환경변수 체크 (--local 모드가 아닐 때만 GitHub 토큰 필요)
+if '--local' not in sys.argv and not GITHUB_TOKEN:
+    raise SystemExit(
+        "⚠️ GITHUB_TOKEN 환경변수가 필요합니다.\n"
+        "   .env 파일을 만들어 GITHUB_TOKEN=... 형식으로 설정하세요.\n"
+        "   템플릿: .env.example 참조.\n"
+        "   GitHub 업로드 없이 로컬 파일만 생성하려면 --local 플래그를 사용하세요."
+    )
+
+BASE_DIR    = os.path.dirname(os.path.abspath(__file__))
+COMP_DIR    = os.path.join(BASE_DIR, 'wiki', 'comparisons')
+WORKLOG_DIR = os.path.join(BASE_DIR, 'raw', '출하현황')
+DIST_DIR    = os.path.join(BASE_DIR, 'dist')
+
+YEARS = [2026, 2025, 2024, 2023, 2022]
+
+
+# ── 파싱 ──────────────────────────────────────────────────────────────────────
+def parse_shipping(filepath):
+    wb = openpyxl.load_workbook(filepath, data_only=True)
+    ws = wb['요약']
+    months = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월']
+    customers = []
+    for row in ws.iter_rows(min_row=3, values_only=True):
+        if not row[1]:
+            break
+        monthly = [row[i + 2] or 0 for i in range(12)]
+        customers.append({'name': row[1], 'monthly': monthly, 'total': sum(monthly)})
+    customers.sort(key=lambda x: x['total'], reverse=True)
+    return {'months': months, 'customers': customers}
+
+
+def parse_worklog():
+    today = datetime.now()
+    year, month, day = today.year, today.month, today.day
+    path = os.path.join(WORKLOG_DIR,
+                        f'재연마 작업일지({year})',
+                        f'재연마_월간생산일지 ({month}월).xls')
+    if not os.path.exists(path):
+        return None, None
+
+    wb = xlrd.open_workbook(path)
+    ws = wb.sheet_by_index(0)
+
+    today_row = None
+    fast_cum = gx7_cum = fast_t_cum = gx7_t_cum = work_days = 0
+
+    for i in range(2, ws.nrows):
+        row = ws.row_values(i)
+        try:
+            d = int(row[0])
+        except (ValueError, TypeError):
+            break
+        fast_qty  = int(row[1] or 0)
+        fast_time = int(row[3] or 0)
+        gx7_qty   = int(row[7] or 0)
+        gx7_time  = int(row[9] or 0)
+        if d <= day:
+            fast_cum   += fast_qty;  gx7_cum    += gx7_qty
+            fast_t_cum += fast_time; gx7_t_cum  += gx7_time
+            if fast_qty > 0 or gx7_qty > 0:
+                work_days += 1
+        if d == day:
+            today_row = {'fast_qty': fast_qty, 'fast_time': fast_time,
+                         'gx7_qty': gx7_qty,   'gx7_time': gx7_time}
+
+    if today_row is None:
+        today_row = {'fast_qty': 0, 'fast_time': 0, 'gx7_qty': 0, 'gx7_time': 0}
+
+    return {
+        'date':       today.strftime('%Y-%m-%d'),
+        'fast':       {'qty': today_row['fast_qty'],  'time_sec': today_row['fast_time']},
+        'gx7':        {'qty': today_row['gx7_qty'],   'time_sec': today_row['gx7_time']},
+        'total':      {'qty': today_row['fast_qty'] + today_row['gx7_qty'],
+                       'time_sec': today_row['fast_time'] + today_row['gx7_time']},
+        'cumulative': {'fast': fast_cum, 'gx7': gx7_cum,
+                       'total': fast_cum + gx7_cum, 'work_days': work_days},
+    }, f'{year}-{month:02d}-{day:02d} 재연마_월간생산일지 ({month}월)'
+
+
+# ── 공통 컴포넌트 ──────────────────────────────────────────────────────────────
+_FORM_CSS = """
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5; color: #1a1a2e; min-height: 100vh; }
+header { background: #1A3A6B; color: white; padding: 16px 28px; display: flex; align-items: center; justify-content: space-between; }
+header h1 { font-size: 1.1rem; font-weight: 700; }
+.back-link { color: rgba(255,255,255,0.7); font-size: 0.82rem; text-decoration: none; }
+.back-link:hover { color: white; }
+main { max-width: 680px; margin: 32px auto; padding: 0 20px 40px; }
+.card { background: white; border-radius: 14px; padding: 32px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+.card-title { font-size: 1.1rem; font-weight: 700; color: #1A3A6B; margin-bottom: 4px; }
+.card-sub { font-size: 0.8rem; color: #999; margin-bottom: 28px; }
+.field { margin-bottom: 18px; }
+.field label { display: block; font-size: 0.8rem; font-weight: 600; color: #555; margin-bottom: 6px; }
+.req { color: #ea4335; }
+.field input[type=text], .field input[type=tel], .field input[type=email],
+.field input[type=number], .field input[type=date], .field select, .field textarea {
+  width: 100%; padding: 10px 13px; border: 1.5px solid #e0e0e0; border-radius: 8px;
+  font-size: 0.9rem; font-family: inherit; outline: none; transition: border-color 0.15s;
+}
+.field input:focus, .field select:focus, .field textarea:focus { border-color: #1A3A6B; }
+.field textarea { resize: vertical; min-height: 90px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.check-group { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 4px; }
+.check-item { display: flex; align-items: center; gap: 6px; font-size: 0.88rem; cursor: pointer; }
+.check-item input[type=checkbox] { width: auto; accent-color: #1A3A6B; }
+.submit-btn { width: 100%; padding: 13px; background: #1A3A6B; color: white; border: none;
+  border-radius: 10px; font-size: 0.95rem; font-weight: 600; cursor: pointer; margin-top: 10px;
+  transition: background 0.15s; }
+.submit-btn:hover { background: #152d55; }
+.submit-btn:disabled { background: #aaa; cursor: default; }
+.success-box { text-align: center; padding: 48px 20px; }
+.success-box .icon { font-size: 3rem; margin-bottom: 16px; }
+.success-box h2 { color: #1A3A6B; font-size: 1.2rem; margin-bottom: 8px; }
+.success-box p { color: #666; font-size: 0.88rem; line-height: 1.6; margin-bottom: 24px; }
+.home-btn { display: inline-block; padding: 11px 28px; background: #f0f2f5; color: #1A3A6B;
+  border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.88rem; }
+footer { text-align: center; padding: 20px; color: #bbb; font-size: 0.75rem; }
+.file-drop { display: block; border: 2px dashed #d0d8f0; border-radius: 10px; padding: 22px;
+  text-align: center; cursor: pointer; color: #888; font-size: 0.85rem; line-height: 1.7;
+  transition: border-color 0.15s, background 0.15s; }
+.file-drop:hover { border-color: #1A3A6B; background: #f5f8ff; }
+.file-drop.has-file { border-color: #34a853; background: #f0faf3; color: #2d7a3a; }
+@media (max-width: 560px) { .row2 { grid-template-columns: 1fr; } }
+"""
+
+_AUTH_HTML = """<div id="auth-overlay" style="position:fixed;inset:0;background:rgba(26,58,107,0.96);
+  display:flex;align-items:center;justify-content:center;z-index:9999;
+  font-family:'Segoe UI',sans-serif;">
+  <div style="background:white;border-radius:18px;padding:44px 36px;width:320px;
+    max-width:90vw;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.35);">
+    <div style="font-size:2.2rem;margin-bottom:12px;">🔒</div>
+    <h2 style="color:#1A3A6B;font-size:1.1rem;margin-bottom:6px;">직원 전용</h2>
+    <p style="color:#999;font-size:0.8rem;margin-bottom:22px;">비밀번호를 입력하세요.</p>
+    <input id="pass-input" type="password" placeholder="비밀번호"
+      style="width:100%;padding:12px;border:2px solid #e0e0e0;border-radius:9px;
+        font-size:1rem;text-align:center;margin-bottom:12px;outline:none;"
+      onfocus="this.style.borderColor='#1A3A6B'"
+      onblur="this.style.borderColor='#e0e0e0'">
+    <button onclick="checkPass()"
+      style="width:100%;padding:12px;background:#1A3A6B;color:white;border:none;
+        border-radius:9px;font-size:0.95rem;font-weight:600;cursor:pointer;">확인</button>
+    <div id="pass-err" style="color:#ea4335;font-size:0.8rem;margin-top:10px;min-height:16px;"></div>
+    <a href="index.html" style="display:block;margin-top:14px;color:#bbb;font-size:0.78rem;text-decoration:none;">
+      ← 메인으로 돌아가기</a>
+  </div>
+</div>"""
+
+def _auth_script(password):
+    return f"""<script>
+(function() {{
+  if (sessionStorage.getItem('kt_auth') === '1') {{
+    document.getElementById('auth-overlay').style.display = 'none'; return;
+  }}
+  var inp = document.getElementById('pass-input');
+  inp.focus();
+  inp.addEventListener('keydown', function(e) {{ if (e.key === 'Enter') checkPass(); }});
+}})();
+function checkPass() {{
+  if (document.getElementById('pass-input').value === '{password}') {{
+    sessionStorage.setItem('kt_auth', '1');
+    document.getElementById('auth-overlay').style.display = 'none';
+  }} else {{
+    document.getElementById('pass-err').textContent = '비밀번호가 틀렸습니다.';
+    document.getElementById('pass-input').value = '';
+    document.getElementById('pass-input').focus();
+  }}
+}}
+</script>"""
+
+APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzjgm7IhynT5CCQzX1f9M78HUN8cDwwmLj9xVNSV3lrF_TPkvPCmLFt9E7GwRYmRipA/exec'
+
+_AJAX_JS = f"""<iframe name="hidden-target" style="display:none;"></iframe>
+<script>
+(function() {{
+  var form = document.querySelector('form');
+  form.setAttribute('action', '{APPS_SCRIPT_URL}');
+  form.setAttribute('target', 'hidden-target');
+  form.addEventListener('submit', function() {{
+    var btn = form.querySelector('.submit-btn');
+    btn.disabled = true; btn.textContent = '제출 중...';
+    setTimeout(function() {{
+      document.getElementById('form-wrap').style.display = 'none';
+      document.getElementById('success').style.display = 'block';
+    }}, 800);
+  }});
+}})();
+</script>"""
+
+
+def _form_page(page_title, form_name, icon, header_title, fields_html, success_msg, protected=False):
+    auth_block = (_AUTH_HTML + '\n' + _auth_script(STAFF_PASS)) if protected else ''
+    return ('<!DOCTYPE html>\n<html lang="ko">\n<head>\n'
+            '<meta charset="UTF-8">\n'
+            '<meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
+            '<title>' + page_title + ' — 코리아툴링</title>\n'
+            '<style>\n' + _FORM_CSS + '\n</style>\n'
+            '</head>\n<body>\n'
+            + auth_block + '\n'
+            '<header>\n'
+            '  <h1>' + icon + ' ' + header_title + '</h1>\n'
+            '  <a href="index.html" class="back-link">← 메인으로</a>\n'
+            '</header>\n'
+            '<main>\n'
+            '  <div id="form-wrap" class="card">\n'
+            '    <div class="card-title">' + icon + ' ' + header_title + '</div>\n'
+            '    <div class="card-sub">＊ 표시는 필수 입력 항목입니다.</div>\n'
+            '    <form name="' + form_name + '" method="POST">\n'
+            '      <input type="hidden" name="form-name" value="' + form_name + '">\n'
+            + fields_html + '\n'
+            '      <button type="submit" class="submit-btn">제출하기 →</button>\n'
+            '    </form>\n'
+            '  </div>\n'
+            '  <div id="success" style="display:none" class="card">\n'
+            '    <div class="success-box">\n'
+            '      <div class="icon">✅</div>\n'
+            '      <h2>제출이 완료되었습니다</h2>\n'
+            '      <p>' + success_msg + '</p>\n'
+            '      <a href="index.html" class="home-btn">메인으로 돌아가기</a>\n'
+            '    </div>\n'
+            '  </div>\n'
+            '</main>\n'
+            '<footer>© 2026 코리아툴링 | Korea Tooling Co., Ltd.</footer>\n'
+            + _AJAX_JS + '\n'
+            '</body>\n</html>')
+
+
+# ── 포털 메인 ──────────────────────────────────────────────────────────────────
+def build_portal_html():
+    staff_section = ("""
+  <button class="staff-toggle" onclick="showStaffAuth()">🔒 직원 전용</button>
+
+  <!-- 비밀번호 모달 -->
+  <div id="staff-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:100;display:none;align-items:center;justify-content:center;">
+    <div style="background:white;border-radius:16px;padding:32px 28px;width:320px;max-width:90vw;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+      <div style="font-size:2rem;margin-bottom:10px;">🔒</div>
+      <h2 style="color:#1A3A6B;font-size:1rem;margin-bottom:6px;">직원 전용</h2>
+      <p style="color:#999;font-size:0.78rem;margin-bottom:18px;">비밀번호를 입력하세요.</p>
+      <input id="staff-pass-input" type="password" placeholder="비밀번호"
+        style="width:100%;padding:10px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:0.95rem;margin-bottom:10px;outline:none;text-align:center;"
+        onkeydown="if(event.key==='Enter') checkStaffPass()">
+      <p id="staff-pass-error" style="color:#e53935;font-size:0.78rem;min-height:18px;margin-bottom:8px;"></p>
+      <button onclick="checkStaffPass()"
+        style="width:100%;padding:11px;background:#1A3A6B;color:white;border:none;border-radius:8px;font-size:0.9rem;font-weight:700;cursor:pointer;margin-bottom:8px;">
+        확인
+      </button>
+      <button onclick="closeStaffModal()"
+        style="width:100%;padding:9px;background:none;border:1px solid #ddd;border-radius:8px;font-size:0.85rem;color:#aaa;cursor:pointer;">
+        취소
+      </button>
+    </div>
+  </div>
+
+  <div id="staff-section" style="display:none">
+    <div class="sec-label" style="margin-top:16px">🔒 직원 전용 <span class="staff-badge">PASSWORD</span></div>
+    <div class="grid">
+      <a class="card staff" href="dashboard.html">
+        <div class="card-icon">📊</div>
+        <div class="card-title">재연마 현황판</div>
+        <div class="card-desc">출하현황 및 일일 생산 실적을 확인합니다.</div>
+      </a>
+      <a class="card staff" href="supplies.html">
+        <div class="card-icon">🛒</div>
+        <div class="card-title">소모품 구매 요청</div>
+        <div class="card-desc">소모품 및 물품 구매를 요청합니다.</div>
+      </a>
+    </div>
+  </div>
+  <script>
+  function showStaffAuth() {
+    var modal = document.getElementById('staff-modal');
+    modal.style.display = 'flex';
+    setTimeout(function(){ document.getElementById('staff-pass-input').focus(); }, 50);
+  }
+  function closeStaffModal() {
+    document.getElementById('staff-modal').style.display = 'none';
+    document.getElementById('staff-pass-input').value = '';
+    document.getElementById('staff-pass-error').textContent = '';
+  }
+  function checkStaffPass() {
+    var val = document.getElementById('staff-pass-input').value;
+    if (val === '""" + STAFF_PASS + """') {
+      closeStaffModal();
+      document.getElementById('staff-section').style.display = 'block';
+      document.querySelector('.staff-toggle').style.display = 'none';
+    } else {
+      document.getElementById('staff-pass-error').textContent = '비밀번호가 올바르지 않습니다.';
+      document.getElementById('staff-pass-input').value = '';
+      document.getElementById('staff-pass-input').focus();
+    }
+  }
+  </script>""") if SHOW_STAFF else ''
+
+    return """<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>코리아툴링 생산팀 포털</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5; min-height: 100vh; }
+    header { background: #1A3A6B; color: white; padding: 32px; text-align: center; }
+    .co-name { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.18em; opacity: 0.6; text-transform: uppercase; margin-bottom: 10px; }
+    header h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 6px; }
+    header p { font-size: 0.83rem; opacity: 0.6; }
+    main { max-width: 880px; margin: 40px auto; padding: 0 20px 60px; }
+    .sec-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; color: #aaa;
+      text-transform: uppercase; margin-bottom: 16px; padding-bottom: 10px;
+      border-bottom: 2px solid #e8e8e8; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px; margin-bottom: 40px; }
+    .card { background: white; border-radius: 14px; padding: 26px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.07); text-decoration: none; color: inherit;
+      display: block; transition: transform 0.18s, box-shadow 0.18s;
+      border-top: 4px solid #1A3A6B; }
+    .card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+    .card.staff { border-top-color: #c0392b; }
+    .card-icon { font-size: 1.8rem; margin-bottom: 14px; }
+    .card-title { font-size: 0.97rem; font-weight: 700; color: #1a1a2e; margin-bottom: 6px; }
+    .card-desc { font-size: 0.79rem; color: #999; line-height: 1.55; }
+    .staff-badge { display: inline-block; font-size: 0.62rem; background: #fff0f0;
+      color: #c0392b; border-radius: 4px; padding: 2px 7px; font-weight: 700;
+      vertical-align: middle; margin-left: 6px; }
+    footer { text-align: center; padding: 24px; color: #ccc; font-size: 0.75rem; }
+    .staff-toggle { background: none; border: none; color: #ccc; font-size: 0.72rem;
+      cursor: pointer; padding: 4px 0; margin-bottom: 4px; letter-spacing: 0.05em; }
+    .staff-toggle:hover { color: #999; }
+    @media (max-width: 560px) { header { padding: 24px 20px; } }
+  </style>
+</head>
+<body>
+<header>
+  <div class="co-name">Korea Tooling Co., Ltd.</div>
+  <h1>생산팀 포털</h1>
+  <p>서비스를 선택해 주세요</p>
+</header>
+<main>
+  <div class="sec-label">🌐 고객 서비스</div>
+  <div class="grid">
+    <a class="card" href="request.html">
+      <div class="card-icon">🔧</div>
+      <div class="card-title">재연마 의뢰 접수</div>
+      <div class="card-desc">공구 재연마를 의뢰하고 수량·납기를 등록합니다.</div>
+    </a>
+    <a class="card" href="defect.html">
+      <div class="card-icon">⚠️</div>
+      <div class="card-title">공구 불량 신고</div>
+      <div class="card-desc">불량 공구의 증상 및 발생 현황을 신고합니다.</div>
+    </a>
+    <a class="card" href="inquiry.html">
+      <div class="card-icon">📋</div>
+      <div class="card-title">작업 진행 문의</div>
+      <div class="card-desc">의뢰한 공구의 진행 현황을 문의합니다.</div>
+    </a>
+  </div>
+""" + staff_section + """
+</main>
+<footer>© 2026 코리아툴링 생산팀 포털 | Korea Tooling Co., Ltd.</footer>
+</body>
+</html>"""
+
+
+# ── 폼 페이지들 ────────────────────────────────────────────────────────────────
+def build_request_html():
+    fields = """
+      <div class="row2">
+        <div class="field">
+          <label>회사명 <span class="req">＊</span></label>
+          <input type="text" name="company" placeholder="예) 코리아툴링" required>
+        </div>
+        <div class="field">
+          <label>담당자 <span class="req">＊</span></label>
+          <input type="text" name="contact" placeholder="이름" required>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>연락처 <span class="req">＊</span></label>
+          <input type="tel" name="phone" placeholder="010-0000-0000" required>
+        </div>
+        <div class="field">
+          <label>이메일</label>
+          <input type="email" name="email" placeholder="example@email.com">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>공구 종류 <span class="req">＊</span></label>
+          <select name="tool_type" required>
+            <option value="">선택하세요</option>
+            <option>엔드밀</option>
+            <option>드릴</option>
+            <option>리머</option>
+            <option>탭</option>
+            <option>기타</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>재질</label>
+          <select name="material">
+            <option value="">선택하세요</option>
+            <option>초경</option>
+            <option>HSS</option>
+            <option>SKD</option>
+            <option>기타</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>규격 / 수량 <span class="req">＊</span>
+          <span style="font-weight:400;color:#aaa;font-size:0.75rem;margin-left:6px;">품종이 여러 개면 행 추가</span>
+        </label>
+        <div id="spec-rows">
+          <div class="spec-row" style="display:grid;grid-template-columns:1fr 90px 32px;gap:8px;margin-bottom:8px;">
+            <input type="text" name="spec[]" placeholder="규격 (예: Ø10 4날, R0.5)" required
+              style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;">
+            <input type="number" name="quantity[]" placeholder="수량" min="1" required
+              style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;text-align:center;">
+            <button type="button" onclick="removeRow(this)"
+              style="background:#fff0f0;color:#e53935;border:1.5px solid #ffd0d0;border-radius:8px;font-size:1.1rem;cursor:pointer;display:none;">✕</button>
+          </div>
+        </div>
+        <button type="button" onclick="addSpecRow()"
+          style="margin-top:4px;padding:8px 16px;background:#f0f4ff;color:#1A3A6B;border:1.5px dashed #b0c4f0;border-radius:8px;font-size:0.82rem;font-weight:600;cursor:pointer;">
+          + 규격 추가
+        </button>
+      </div>
+      <div class="field">
+        <label>특이사항 / 요청사항</label>
+        <textarea name="notes" placeholder="재연마 특이사항, 요청사항을 입력해주세요."></textarea>
+      </div>
+      <div class="field">
+        <label>도면 / 사진 첨부 <span style="font-weight:400;color:#aaa;font-size:0.75rem">(선택 · 최대 5MB)</span></label>
+        <label class="file-drop" for="attach-input" id="file-drop-zone">
+          <span id="file-drop-text">📎 클릭하거나 파일을 드래그하세요<br>
+          <span style="font-size:0.75rem;color:#bbb">JPG · PNG · PDF · DWG · DXF</span></span>
+        </label>
+        <input type="file" id="attach-input" accept="image/*,.pdf,.dwg,.dxf" style="display:none">
+        <input type="hidden" name="file-data" id="file-data">
+        <input type="hidden" name="file-name" id="file-name">
+        <input type="hidden" name="file-type" id="file-type">
+      </div>"""
+    return (_form_page(
+        '재연마 의뢰 접수', 'request-form', '🔧', '재연마 의뢰 접수',
+        fields,
+        '담당자가 확인 후 연락드리겠습니다.<br>감사합니다.')
+    + """<script>
+function addSpecRow() {
+  var container = document.getElementById('spec-rows');
+  var row = document.createElement('div');
+  row.className = 'spec-row';
+  row.style.cssText = 'display:grid;grid-template-columns:1fr 90px 32px;gap:8px;margin-bottom:8px;';
+  row.innerHTML = '<input type="text" name="spec[]" placeholder="규격 (예: Ø10 4날, R0.5)"'
+    + ' style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;">'
+    + '<input type="number" name="quantity[]" placeholder="수량" min="1"'
+    + ' style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;text-align:center;">'
+    + '<button type="button" onclick="removeRow(this)"'
+    + ' style="background:#fff0f0;color:#e53935;border:1.5px solid #ffd0d0;border-radius:8px;font-size:1.1rem;cursor:pointer;">✕</button>';
+  container.appendChild(row);
+  updateRemoveButtons();
+  row.querySelector('input').focus();
+}
+function removeRow(btn) {
+  btn.closest('.spec-row').remove();
+  updateRemoveButtons();
+}
+function updateRemoveButtons() {
+  var rows = document.querySelectorAll('.spec-row');
+  rows.forEach(function(r, i) {
+    r.querySelector('button').style.display = rows.length > 1 ? '' : 'none';
+  });
+}
+
+// ── 파일 첨부 ─────────────────────────────────────────────────────────────────
+var dropZone = document.getElementById('file-drop-zone');
+document.getElementById('attach-input').addEventListener('change', function(e) {
+  handleAttach(e.target.files[0]);
+});
+dropZone.addEventListener('dragover', function(e) {
+  e.preventDefault(); dropZone.style.borderColor = '#1A3A6B';
+});
+dropZone.addEventListener('dragleave', function() {
+  dropZone.style.borderColor = '';
+});
+dropZone.addEventListener('drop', function(e) {
+  e.preventDefault(); dropZone.style.borderColor = '';
+  handleAttach(e.dataTransfer.files[0]);
+});
+function handleAttach(file) {
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    alert('파일 크기는 5MB 이하로 첨부해 주세요.');
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    document.getElementById('file-data').value = ev.target.result;
+    document.getElementById('file-name').value = file.name;
+    document.getElementById('file-type').value = file.type;
+    document.getElementById('file-drop-text').innerHTML =
+      '✅ ' + file.name + '<br><span style="font-size:0.75rem;color:#888">'
+      + (file.size/1024).toFixed(0) + 'KB · 클릭해서 변경</span>';
+    dropZone.classList.add('has-file');
+  };
+  reader.readAsDataURL(file);
+}
+</script>"""
+    )
+
+
+def build_defect_html():
+    fields = """
+      <div class="row2">
+        <div class="field">
+          <label>회사명 <span class="req">＊</span></label>
+          <input type="text" name="company" placeholder="예) 코리아툴링" required>
+        </div>
+        <div class="field">
+          <label>담당자 <span class="req">＊</span></label>
+          <input type="text" name="contact" placeholder="이름" required>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>연락처 <span class="req">＊</span></label>
+          <input type="tel" name="phone" placeholder="010-0000-0000" required>
+        </div>
+        <div class="field">
+          <label>발생 일자 <span class="req">＊</span></label>
+          <input type="date" name="defect_date" required>
+        </div>
+      </div>
+      <div class="field">
+        <label>공구명 / 규격 <span class="req">＊</span>
+          <span style="font-weight:400;color:#aaa;font-size:0.75rem;margin-left:6px;">품종이 여러 개면 행 추가</span>
+        </label>
+        <div id="defect-rows">
+          <div class="defect-row" style="display:grid;grid-template-columns:1fr 90px 32px;gap:8px;margin-bottom:8px;">
+            <input type="text" name="tool_spec[]" placeholder="공구명/규격 (예: 초경 엔드밀 Ø10, 4날)" required
+              style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;">
+            <input type="number" name="defect_qty[]" placeholder="수량" min="1" required
+              style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;text-align:center;">
+            <button type="button" onclick="removeDefectRow(this)"
+              style="background:#fff0f0;color:#e53935;border:1.5px solid #ffd0d0;border-radius:8px;font-size:1.1rem;cursor:pointer;display:none;">✕</button>
+          </div>
+        </div>
+        <button type="button" onclick="addDefectRow()"
+          style="margin-top:4px;padding:8px 16px;background:#f0f4ff;color:#1A3A6B;border:1.5px dashed #b0c4f0;border-radius:8px;font-size:0.82rem;font-weight:600;cursor:pointer;">
+          + 규격 추가
+        </button>
+      </div>
+      <div class="field">
+        <label>불량 증상 <span class="req">＊</span></label>
+        <div class="check-group">
+          <label class="check-item"><input type="checkbox" name="symptom" value="치핑"> 치핑</label>
+          <label class="check-item"><input type="checkbox" name="symptom" value="파손"> 파손</label>
+          <label class="check-item"><input type="checkbox" name="symptom" value="치수불량"> 치수 불량</label>
+          <label class="check-item"><input type="checkbox" name="symptom" value="코팅불량"> 코팅 불량</label>
+          <label class="check-item"><input type="checkbox" name="symptom" value="수명단축"> 수명 단축</label>
+          <label class="check-item"><input type="checkbox" name="symptom" value="기타"> 기타</label>
+        </div>
+      </div>
+      <div class="field">
+        <label>피삭재 / 사용 환경</label>
+        <input type="text" name="workpiece" placeholder="예) SUS304, 건식">
+      </div>
+      <div class="field">
+        <label>불량 상세 내용 <span class="req">＊</span></label>
+        <textarea name="detail" placeholder="불량 발생 경위, 사용 조건(회전수/이송) 등 상세히 기재해주세요." required></textarea>
+      </div>"""
+    return (_form_page(
+        '공구 불량 신고', 'defect-form', '⚠️', '공구 불량 신고',
+        fields,
+        '불량 내용을 접수하였습니다.<br>빠른 시일 내에 확인 후 연락드리겠습니다.')
+    + """<script>
+function addDefectRow() {
+  var container = document.getElementById('defect-rows');
+  var row = document.createElement('div');
+  row.className = 'defect-row';
+  row.style.cssText = 'display:grid;grid-template-columns:1fr 90px 32px;gap:8px;margin-bottom:8px;';
+  row.innerHTML = '<input type="text" name="tool_spec[]" placeholder="공구명/규격 (예: 초경 엔드밀 Ø10, 4날)"'
+    + ' style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;">'
+    + '<input type="number" name="defect_qty[]" placeholder="수량" min="1"'
+    + ' style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;text-align:center;">'
+    + '<button type="button" onclick="removeDefectRow(this)"'
+    + ' style="background:#fff0f0;color:#e53935;border:1.5px solid #ffd0d0;border-radius:8px;font-size:1.1rem;cursor:pointer;">✕</button>';
+  container.appendChild(row);
+  updateDefectButtons();
+  row.querySelector('input').focus();
+}
+function removeDefectRow(btn) {
+  btn.closest('.defect-row').remove();
+  updateDefectButtons();
+}
+function updateDefectButtons() {
+  var rows = document.querySelectorAll('.defect-row');
+  rows.forEach(function(r) {
+    r.querySelector('button').style.display = rows.length > 1 ? '' : 'none';
+  });
+}
+</script>"""
+    )
+
+
+def build_inquiry_html():
+    fields = """
+      <div class="row2">
+        <div class="field">
+          <label>회사명 <span class="req">＊</span></label>
+          <input type="text" name="company" placeholder="예) 코리아툴링" required>
+        </div>
+        <div class="field">
+          <label>담당자 <span class="req">＊</span></label>
+          <input type="text" name="contact" placeholder="이름" required>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>연락처 <span class="req">＊</span></label>
+          <input type="tel" name="phone" placeholder="010-0000-0000" required>
+        </div>
+        <div class="field">
+          <label>의뢰 납기 / 참고 일자</label>
+          <input type="text" name="ref_date" placeholder="예) 2026-04-30">
+        </div>
+      </div>
+      <div class="field">
+        <label>문의 내용 <span class="req">＊</span></label>
+        <textarea name="inquiry" placeholder="공구명·수량·납기 등 진행 현황을 문의할 내용을 입력해주세요." style="min-height:120px;" required></textarea>
+      </div>"""
+    return _form_page(
+        '작업 진행 문의', 'inquiry-form', '📋', '작업 진행 문의',
+        fields,
+        '문의를 접수하였습니다.<br>담당자가 확인 후 신속히 연락드리겠습니다.')
+
+
+def build_supplies_html():
+    fields = """
+      <div class="row2">
+        <div class="field">
+          <label>요청자 <span class="req">＊</span></label>
+          <input type="text" name="requester" placeholder="이름" required>
+        </div>
+        <div class="field">
+          <label>부서 <span class="req">＊</span></label>
+          <select name="department" required>
+            <option value="">선택하세요</option>
+            <option>생산팀</option>
+            <option>품질팀</option>
+            <option>관리팀</option>
+            <option>기타</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>품목명 <span class="req">＊</span></label>
+        <input type="text" name="item_name" placeholder="예) 절삭유, 연마석, 측정기" required>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>규격 / 사양</label>
+          <input type="text" name="item_spec" placeholder="예) 100L, #120">
+        </div>
+        <div class="field">
+          <label>수량 <span class="req">＊</span></label>
+          <input type="number" name="quantity" placeholder="개/L/m" min="1" required>
+        </div>
+      </div>
+      <div class="field">
+        <label>희망 납기</label>
+        <input type="date" name="due_date">
+      </div>
+      <div class="field">
+        <label>용도 / 사유 <span class="req">＊</span></label>
+        <textarea name="reason" placeholder="구매가 필요한 이유와 용도를 기재해주세요." required></textarea>
+      </div>
+      <div class="field">
+        <label class="check-item" style="font-size:0.88rem;cursor:pointer;">
+          <input type="checkbox" name="urgent" value="Y" style="width:auto;accent-color:#c0392b;">
+          &nbsp;긴급 요청 (즉시 처리 필요)
+        </label>
+      </div>"""
+    return _form_page(
+        '소모품 구매 요청', 'supplies-form', '🛒', '소모품 구매 요청',
+        fields,
+        '구매 요청이 접수되었습니다.<br>확인 후 처리하겠습니다.',
+        protected=True)
+
+
+# ── 현황판 ─────────────────────────────────────────────────────────────────────
+def build_dashboard_html(shippings, daily, worklog_date, generated_at):
+    shipping_js = ',\n'.join(
+        f'  [{y}, {json.dumps(d, ensure_ascii=False)}]' for y, d in shippings
+    )
+    daily_json = json.dumps(daily, ensure_ascii=False)
+
+    return f"""<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>재연마 현황판 — 코리아툴링</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+    body {{ font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #1a1a2e; }}
+    header {{
+      background: #1A3A6B; color: white; padding: 14px 28px;
+      display: flex; align-items: center; gap: 16px;
+    }}
+    header h1 {{ font-size: 1.15rem; font-weight: 700; }}
+    .header-meta {{ margin-left: auto; font-size: 0.78rem; opacity: 0.75; text-align: right; }}
+    .header-meta span {{ display: block; }}
+    .back-link {{ color: rgba(255,255,255,0.65); font-size: 0.8rem; text-decoration: none; white-space: nowrap; }}
+    .back-link:hover {{ color: white; }}
+    main {{ max-width: 1100px; margin: 24px auto; padding: 0 16px; }}
+    .section-title-row {{ display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }}
+    .section-title {{ font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #888; }}
+    .section-date {{ font-size: 0.85rem; font-weight: 600; color: #1a73e8; }}
+    .kpi-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px; }}
+    .kpi-card {{ background: white; border-radius: 12px; padding: 18px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); border-left: 4px solid #1A3A6B; }}
+    .kpi-card.gx7   {{ border-color: #34a853; }}
+    .kpi-card.total {{ border-color: #fbbc04; }}
+    .kpi-card.cum   {{ border-color: #9c27b0; }}
+    .kpi-label {{ font-size: 0.76rem; color: #888; font-weight: 600; margin-bottom: 6px; }}
+    .kpi-value {{ font-size: 1.9rem; font-weight: 700; color: #1a1a2e; line-height: 1; }}
+    .kpi-unit  {{ font-size: 0.82rem; color: #aaa; margin-left: 2px; }}
+    .kpi-sub   {{ font-size: 0.76rem; color: #aaa; margin-top: 6px; }}
+    .chart-card {{ background: white; border-radius: 12px; padding: 22px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); margin-bottom: 24px; }}
+    .chart-title {{ font-size: 0.95rem; font-weight: 700; margin-bottom: 14px; }}
+    .chart-sub {{ font-size: 0.78rem; color: #888; margin-bottom: 14px; }}
+    .chart-wrap {{ position: relative; height: 300px; }}
+    .table-wrap {{ overflow-x: auto; margin-top: 20px; }}
+    table {{ width: 100%; border-collapse: collapse; font-size: 0.8rem; }}
+    thead th {{ background: #f8f9fa; padding: 8px 10px; text-align: center; font-weight: 700; color: #555; border-bottom: 2px solid #e0e0e0; white-space: nowrap; }}
+    thead th:nth-child(2) {{ text-align: left; }}
+    tbody td {{ padding: 7px 10px; text-align: center; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }}
+    tbody td:nth-child(2) {{ text-align: left; max-width: 170px; overflow: hidden; text-overflow: ellipsis; }}
+    tbody tr:hover {{ background: #f8f9fa; }}
+    tbody tr:last-child td {{ font-weight: 700; background: #f0f4ff; border-top: 2px solid #c5d8ff; }}
+    .rank-badge {{ display: inline-block; width: 20px; height: 20px; line-height: 20px; border-radius: 50%; font-size: 0.7rem; font-weight: 700; text-align: center; background: #e8f0fe; color: #1a73e8; }}
+    .rank-badge.gold {{ background: #fff3cd; color: #b8860b; }}
+    .rank-badge.silver {{ background: #f0f0f0; color: #666; }}
+    .rank-badge.bronze {{ background: #fde8d8; color: #a0522d; }}
+    td.zero {{ color: #ddd; }}
+    td.hi {{ font-weight: 700; color: #1a73e8; }}
+    .tab-bar {{ display: flex; gap: 4px; border-bottom: 2px solid #e0e0e0; margin-bottom: 20px; }}
+    .tab-btn {{ padding: 9px 22px; border: none; background: none; font-size: 0.9rem; font-weight: 600; color: #888; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: color 0.15s; }}
+    .tab-btn:hover {{ color: #1A3A6B; }}
+    .tab-btn.active {{ color: #1A3A6B; border-bottom-color: #1A3A6B; }}
+    .tab-panel {{ display: none; }}
+    .tab-panel.active {{ display: block; }}
+    .section-card {{ background: white; border-radius: 12px; padding: 22px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); margin-bottom: 24px; }}
+    .sub-tab-bar {{ display: flex; gap: 4px; border-bottom: 1px solid #e0e0e0; margin-bottom: 16px; flex-wrap: wrap; }}
+    .sub-tab-btn {{ padding: 7px 16px; border: none; background: none; font-size: 0.82rem; font-weight: 600; color: #888; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }}
+    .sub-tab-btn.active {{ color: #1A3A6B; border-bottom-color: #1A3A6B; }}
+    .sub-tab-panel {{ display: none; }}
+    .sub-tab-panel.active {{ display: block; }}
+    .form-table {{ width: 100%; border-collapse: collapse; font-size: 0.78rem; }}
+    .form-table th {{ background: #f0f4ff; padding: 7px 10px; text-align: left; font-weight: 700; color: #555; border-bottom: 2px solid #dce6ff; white-space: nowrap; }}
+    .form-table td {{ padding: 7px 10px; border-bottom: 1px solid #f0f0f0; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }}
+    .form-table tr:hover td {{ background: #f8f9fa; }}
+    .refresh-row {{ display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }}
+    .refresh-btn {{ padding: 5px 14px; border: 1px solid #1A3A6B; border-radius: 6px; background: white; color: #1A3A6B; font-size: 0.78rem; font-weight: 600; cursor: pointer; }}
+    .refresh-btn:hover {{ background: #1A3A6B; color: white; }}
+    .refresh-info {{ font-size: 0.75rem; color: #aaa; }}
+    .badge {{ display: inline-block; background: #e8f0fe; color: #1a73e8; border-radius: 10px; padding: 1px 8px; font-size: 0.7rem; font-weight: 700; margin-left: 4px; }}
+    .no-data {{ color: #bbb; padding: 20px; text-align: center; font-size: 0.85rem; }}
+  </style>
+</head>
+<body>
+
+{_AUTH_HTML}
+{_auth_script(STAFF_PASS)}
+
+<header>
+  <a href="index.html" class="back-link">← 포털</a>
+  <div>
+    <h1>📊 재연마 현황판</h1>
+  </div>
+  <div class="header-meta">
+    <span>생성: {generated_at}</span>
+  </div>
+</header>
+
+<main>
+  <div class="section-title-row">
+    <span class="section-title">오늘 실적</span>
+    <span class="section-date">📅 {worklog_date}</span>
+  </div>
+  <div class="kpi-grid" id="kpi-grid"></div>
+
+  <div class="chart-card">
+    <div class="chart-title">업체별 월간 출하현황</div>
+    <div class="tab-bar" id="tab-bar"></div>
+    <div id="tab-panels"></div>
+  </div>
+
+  <div class="section-card">
+    <div class="chart-title">📋 접수현황 <span style="font-size:0.78rem;color:#aaa;font-weight:400">(최신순)</span></div>
+    <div class="refresh-row">
+      <button class="refresh-btn" onclick="loadSubmissions()">🔄 새로고침</button>
+      <span class="refresh-info" id="refresh-info">—</span>
+    </div>
+    <div class="sub-tab-bar" id="form-tab-bar"></div>
+    <div id="form-tab-panels"></div>
+  </div>
+</main>
+
+<script>
+const COLORS = [
+  '#1A3A6B','#34a853','#fbbc04','#ea4335',
+  '#9c27b0','#00acc1','#ff7043','#43a047',
+  '#8d6e63','#546e7a','#bdbdbd'
+];
+const TOP_N = 10;
+const SHIPPINGS = [
+{shipping_js}
+];
+const daily = {daily_json};
+
+(function renderKPI() {{
+  var grid = document.getElementById('kpi-grid');
+  if (!daily) {{ grid.innerHTML = '<div style="color:#aaa;padding:20px">생산일지 데이터 없음</div>'; return; }}
+  function secToHM(sec) {{
+    if (!sec) return '-';
+    var h = Math.floor(sec/3600), m = Math.round((sec%3600)/60);
+    return h > 0 ? h+'h '+m+'m' : m+'m';
+  }}
+  var cards = [
+    {{ cls:'',      label:'FAST GRIND — 오늘 수량', value: daily.fast.qty,  unit:'개', sub:'가동: '+secToHM(daily.fast.time_sec) }},
+    {{ cls:'gx7',   label:'GX7 — 오늘 수량',        value: daily.gx7.qty,   unit:'개', sub:'가동: '+secToHM(daily.gx7.time_sec) }},
+    {{ cls:'total', label:'합계 — 오늘 수량',        value: daily.total.qty, unit:'개', sub:'가동: '+secToHM(daily.total.time_sec) }},
+    {{ cls:'cum',   label:'월 누계 ('+daily.cumulative.work_days+'일 실적)',
+       value: daily.cumulative.total, unit:'개',
+       sub:'FAST '+daily.cumulative.fast.toLocaleString()+' / GX7 '+daily.cumulative.gx7.toLocaleString() }},
+  ];
+  grid.innerHTML = cards.map(function(c) {{
+    return '<div class="kpi-card '+c.cls+'">'
+      +'<div class="kpi-label">'+c.label+'</div>'
+      +'<div class="kpi-value">'+c.value+'<span class="kpi-unit">'+c.unit+'</span></div>'
+      +(c.sub?'<div class="kpi-sub">'+c.sub+'</div>':'')
+      +'</div>';
+  }}).join('');
+}})();
+
+function renderSection(data, canvasId, subId, tableId) {{
+  var months = data.months, customers = data.customers;
+  var top    = customers.slice(0, TOP_N);
+  var others = customers.slice(TOP_N);
+
+  var datasets = top.map(function(c, i) {{
+    return {{ label: c.name, data: c.monthly, backgroundColor: COLORS[i % COLORS.length],
+             stack:'stack', borderWidth:0, borderRadius:2 }};
+  }});
+  if (others.length > 0) {{
+    var om = months.map(function(_, mi) {{ return others.reduce(function(s,c){{return s+(c.monthly[mi]||0);}},0); }});
+    datasets.push({{ label:'기타 ('+others.length+'개사)', data:om,
+      backgroundColor: COLORS[COLORS.length-1], stack:'stack', borderWidth:0, borderRadius:2 }});
+  }}
+
+  var monthTotals = months.map(function(_, mi) {{ return customers.reduce(function(s,c){{return s+(c.monthly[mi]||0);}},0); }});
+  var grandTotal  = monthTotals.reduce(function(a,b){{return a+b;}}, 0);
+  document.getElementById(subId).textContent =
+    '연간 합계 '+grandTotal.toLocaleString()+'개 | 납품처 '+customers.length+'개사';
+
+  new Chart(document.getElementById(canvasId).getContext('2d'), {{
+    type:'bar', data:{{ labels:months, datasets:datasets }},
+    options:{{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{{ mode:'index', intersect:false }},
+      plugins:{{
+        legend:{{ position:'bottom', labels:{{ font:{{size:11}}, padding:10, boxWidth:12 }} }},
+        tooltip:{{ callbacks:{{ footer:function(items) {{
+          return '월합계: '+monthTotals[items[0].dataIndex].toLocaleString()+'개';
+        }} }} }}
+      }},
+      scales:{{
+        x:{{ stacked:true, grid:{{display:false}} }},
+        y:{{ stacked:true, beginAtZero:true,
+             ticks:{{ callback:function(v){{return v.toLocaleString();}} }},
+             grid:{{ color:'#f0f0f0' }} }},
+      }},
+    }},
+  }});
+
+  var rankCls = function(i){{ return i===0?'gold':i===1?'silver':i===2?'bronze':''; }};
+  var colMax  = months.map(function(_, mi){{ return Math.max.apply(null, top.map(function(c){{return c.monthly[mi]||0;}})); }});
+  document.querySelector('#'+tableId+' thead tr').innerHTML =
+    '<th>순위</th><th>납품처</th>' + months.map(function(m){{return '<th>'+m+'</th>';}}).join('') + '<th>연간합계</th>';
+
+  var rows = top.map(function(c, i) {{
+    var cells = c.monthly.map(function(val, mi) {{
+      var cls = val===0?'zero': val===colMax[mi]?'hi':'';
+      return '<td class="'+cls+'">'+(val===0?'-':val.toLocaleString())+'</td>';
+    }}).join('');
+    return '<tr><td><span class="rank-badge '+rankCls(i)+'">'+(i+1)+'</span></td>'
+      +'<td title="'+c.name+'">'+c.name+'</td>'+cells
+      +'<td><strong>'+c.total.toLocaleString()+'</strong></td></tr>';
+  }});
+  if (others.length > 0) {{
+    var om2 = months.map(function(_,mi){{return others.reduce(function(s,c){{return s+(c.monthly[mi]||0);}},0);}});
+    var ot  = om2.reduce(function(a,b){{return a+b;}},0);
+    rows.push('<tr><td><span class="rank-badge" style="background:#eee;color:#999">기타</span></td>'
+      +'<td>'+others.length+'개사 합산</td>'
+      +om2.map(function(v){{return '<td class="'+(v===0?'zero':'')+'">'+(v===0?'-':v.toLocaleString())+'</td>';}}).join('')
+      +'<td><strong>'+ot.toLocaleString()+'</strong></td></tr>');
+  }}
+  var tcells = monthTotals.map(function(v){{return '<td>'+v.toLocaleString()+'</td>';}}).join('');
+  rows.push('<tr><td colspan="2">합계</td>'+tcells+'<td>'+grandTotal.toLocaleString()+'</td></tr>');
+  document.querySelector('#'+tableId+' tbody').innerHTML = rows.join('');
+}}
+
+var tabBar    = document.getElementById('tab-bar');
+var tabPanels = document.getElementById('tab-panels');
+
+SHIPPINGS.forEach(function(item, idx) {{
+  var year = item[0], data = item[1];
+  var panelId = 'tab'+year;
+
+  var btn = document.createElement('button');
+  btn.className = 'tab-btn' + (idx===0?' active':'');
+  btn.textContent = year+'년';
+  btn.onclick = function(){{ switchTab(panelId, btn); }};
+  tabBar.appendChild(btn);
+
+  var panel = document.createElement('div');
+  panel.className = 'tab-panel' + (idx===0?' active':'');
+  panel.id = panelId;
+  panel.innerHTML =
+    '<div class="chart-sub" id="chart-sub-'+year+'"></div>'
+    +'<div class="chart-wrap"><canvas id="chart'+year+'"></canvas></div>'
+    +'<div class="table-wrap"><table id="table'+year+'"><thead><tr></tr></thead><tbody></tbody></table></div>';
+  tabPanels.appendChild(panel);
+
+  renderSection(data, 'chart'+year, 'chart-sub-'+year, 'table'+year);
+}});
+
+function switchTab(panelId, btn) {{
+  document.querySelectorAll('.tab-panel').forEach(function(p){{p.classList.remove('active');}});
+  document.querySelectorAll('.tab-btn').forEach(function(b){{b.classList.remove('active');}});
+  document.getElementById(panelId).classList.add('active');
+  btn.classList.add('active');
+}}
+
+// ── 접수현황 ──────────────────────────────────────────────────────────────────
+var formTabNames = ['재연마의뢰','불량신고','진행문의','소모품요청'];
+var formTabIcons = ['🔧','⚠️','💬','📦'];
+var activeFormTab = 0;
+
+(function initFormTabs() {{
+  var bar    = document.getElementById('form-tab-bar');
+  var panels = document.getElementById('form-tab-panels');
+  formTabNames.forEach(function(name, i) {{
+    var btn = document.createElement('button');
+    btn.className = 'sub-tab-btn' + (i===0?' active':'');
+    btn.id = 'ftab-btn-'+i;
+    btn.innerHTML = formTabIcons[i]+' '+name+' <span class="badge" id="ftab-cnt-'+i+'">—</span>';
+    btn.onclick = (function(idx){{ return function(){{ switchFormTab(idx); }}; }})(i);
+    bar.appendChild(btn);
+
+    var panel = document.createElement('div');
+    panel.className = 'sub-tab-panel' + (i===0?' active':'');
+    panel.id = 'ftab-panel-'+i;
+    panel.innerHTML = '<div class="no-data">불러오는 중...</div>';
+    panels.appendChild(panel);
+  }});
+  loadSubmissions();
+  setInterval(loadSubmissions, 30000);
+}})();
+
+function switchFormTab(idx) {{
+  activeFormTab = idx;
+  document.querySelectorAll('.sub-tab-btn').forEach(function(b,i){{
+    b.classList.toggle('active', i===idx);
+  }});
+  document.querySelectorAll('.sub-tab-panel').forEach(function(p,i){{
+    p.classList.toggle('active', i===idx);
+  }});
+}}
+
+function loadSubmissions() {{
+  fetch('/api/form-submissions')
+    .then(function(r){{ return r.json(); }})
+    .then(function(res) {{
+      if (!res.ok) {{
+        document.getElementById('refresh-info').textContent = '오류: ' + res.error;
+        return;
+      }}
+      document.getElementById('refresh-info').textContent =
+        '최종 갱신: ' + res.fetched_at + ' (30초 자동갱신)';
+      formTabNames.forEach(function(name, i) {{
+        var tab = res.data[name];
+        if (!tab) return;
+        var cnt = tab.rows ? tab.rows.length : 0;
+        document.getElementById('ftab-cnt-'+i).textContent = cnt;
+        renderFormTable(i, tab.headers, tab.rows);
+      }});
+    }})
+    .catch(function(err) {{
+      document.getElementById('refresh-info').textContent = '서버 연결 필요 (Flask 실행 중이어야 합니다)';
+    }});
+}}
+
+function renderFormTable(idx, headers, rows) {{
+  var panel = document.getElementById('ftab-panel-'+idx);
+  if (!rows || rows.length === 0) {{
+    panel.innerHTML = '<div class="no-data">접수 내역이 없습니다</div>';
+    return;
+  }}
+  var html = '<div style="overflow-x:auto"><table class="form-table"><thead><tr>';
+  headers.forEach(function(h) {{ html += '<th>'+h+'</th>'; }});
+  html += '</tr></thead><tbody>';
+  rows.forEach(function(row) {{
+    html += '<tr>';
+    headers.forEach(function(_, ci) {{
+      var v = row[ci] || '';
+      html += '<td title="'+v+'">'+v+'</td>';
+    }});
+    html += '</tr>';
+  }});
+  html += '</tbody></table></div>';
+  panel.innerHTML = html;
+}}
+</script>
+</body>
+</html>"""
+
+
+# ── GitHub Pages 업로드 ────────────────────────────────────────────────────────
+def upload_to_github():
+    git = 'git'
+    env = os.environ.copy()
+
+    def run(cmd, cwd=DIST_DIR):
+        result = subprocess.run(cmd, cwd=cwd, capture_output=True,
+                                text=True, encoding='utf-8', errors='replace', env=env)
+        return result.returncode, result.stdout.strip(), result.stderr.strip()
+
+    # 원격 URL (토큰 포함)
+    remote = f'https://{GITHUB_TOKEN}@github.com/{GITHUB_USER}/{GITHUB_REPO}.git'
+
+    # git 설정
+    run([git, 'config', 'user.email', 'hankyungjun@koreatooling.com'])
+    run([git, 'config', 'user.name',  GITHUB_USER])
+
+    # 원격 URL 갱신
+    run([git, 'remote', 'set-url', 'origin', remote])
+
+    # 변경사항 스테이징
+    run([git, 'add', '.'])
+
+    # 커밋 (변경 없으면 스킵)
+    msg = f'update: {datetime.now().strftime("%Y-%m-%d %H:%M")}'
+    code, out, err = run([git, 'commit', '-m', msg])
+    if code != 0 and 'nothing to commit' in (out + err):
+        print('  변경 없음 — 업로드 생략')
+        return f'https://{GITHUB_USER}.github.io/{GITHUB_REPO}/'
+
+    # 푸시
+    code, out, err = run([git, 'push', 'origin', 'main'])
+    if code != 0:
+        print(f'  ❌ 푸시 실패: {err}')
+        return None
+
+    url = f'https://{GITHUB_USER}.github.io/{GITHUB_REPO}/'
+    print(f'  ✅ 업로드 완료: {url}')
+    return url
+
+
+# ── 메인 ──────────────────────────────────────────────────────────────────────
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--local', action='store_true', help='Netlify 업로드 건너뜀')
+    args = parser.parse_args()
+
+    print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] generate.py 시작 '
+          f'{"(로컬 전용)" if args.local else "(Netlify 업로드 포함)"}')
+
+    os.makedirs(DIST_DIR, exist_ok=True)
+
+    # 1) 출하현황 파싱
+    print('  출하현황 파싱 중...')
+    shippings = []
+    for y in YEARS:
+        path = os.path.join(COMP_DIR, f'출하현황_납품처별_월별분석_{y}.xlsx')
+        if os.path.exists(path):
+            data = parse_shipping(path)
+            shippings.append((y, data))
+            print(f'  → {y}: 납품처 {len(data["customers"])}개사')
+        else:
+            print(f'  → {y}: 파일 없음 (건너뜀)')
+
+    # 2) 월간생산일지 파싱
+    print('  월간생산일지 파싱 중...')
+    daily, worklog_file = parse_worklog()
+    print(f'  → {worklog_file or "파일 없음"}')
+
+    worklog_date = daily['date'] if daily else '-'
+    generated_at = datetime.now().strftime('%Y-%m-%d %H:%M')
+
+    # 3) 페이지 생성
+    pages = {
+        'index.html':     build_portal_html(),
+        'request.html':   build_request_html(),
+        'defect.html':    build_defect_html(),
+        'inquiry.html':   build_inquiry_html(),
+        'supplies.html':  build_supplies_html(),
+        'dashboard.html': build_dashboard_html(shippings, daily, worklog_date, generated_at),
+    }
+
+    for fname, html in pages.items():
+        for out_dir in (DIST_DIR, BASE_DIR):
+            fpath = os.path.join(out_dir, fname)
+            with open(fpath, 'w', encoding='utf-8') as f:
+                f.write(html)
+        print(f'  → 저장: {fname} (dist/ + 루트)')
+
+    # 3-B) dist/ 정적 HTML → 루트 동기화 (generate가 생성하지 않는 파일)
+    import shutil, glob
+    generated = set(pages.keys())
+    for src in glob.glob(os.path.join(DIST_DIR, '*.html')):
+        fname = os.path.basename

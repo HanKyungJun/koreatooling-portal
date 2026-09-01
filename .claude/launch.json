@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "CNC Wiki Flask Server",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["run.py"],
+      "port": 5000
+    }
+  ]
+}

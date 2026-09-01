@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>현장 기록 — 코리아툴링</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; background: #f0f2f5; color: #1a1a2e; font-size: 15px; }
+
+header {
+  background: #1A3A6B; color: #fff;
+  padding: 14px 18px;
+  display: flex; align-items: center; gap: 10px;
+}
+header h1 { font-size: 16px; font-weight: 700; flex: 1; }
+.back-link { color: rgba(255,255,255,0.65); font-size: 12px; text-decoration: none; }
+.back-link:hover { color: #fff; }
+
+/* 탭 */
+.tab-bar {
+  display: flex; background: #fff;
+  border-bottom: 2px solid #e0e0e0;
+  position: sticky; top: 0; z-index: 10;
+}
+.tab-btn {
+  flex: 1; padding: 13px 8px;
+  font-size: 14px; font-weight: 600;
+  background: none; border: none; cursor: pointer;
+  color: #999; border-bottom: 3px solid transparent;
+  transition: all 0.15s;
+}
+.tab-btn.active { color: #1A3A6B; border-bottom-color: #1A3A6B; }
+
+/* 폼 카드 */
+.form-wrap { max-width: 540px; margin: 0 auto; padding: 16px; }
+.card { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.card-title { font-size: 13px; font-weight: 700; color: #1A3A6B; margin-bottom: 14px; letter-spacing: 0.3px; }
+
+/* 필드 */
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 12px; font-weight: 600; color: #555; margin-bottom: 5px; }
+.req { color: #e53935; }
+.field input, .field select, .field textarea {
+  width: 100%; padding: 10px 12px;
+  border: 1.5px solid #e0e0e0; border-radius: 8px;
+  font-size: 15px; font-family: inherit;
+  outline: none; background: #fff;
+  transition: border-color 0.15s;
+  -webkit-appearance: none;
+}
+.field input:focus, .field select:focus, .field textarea:focus { border-color: #1A3A6B; }
+.field textarea { resize: vertical; min-height: 80px; }
+.field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+
+/* 2열 그리드 */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+/* 체크박스 그룹 */
+.check-group { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 2px; }
+.check-item { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+.check-item input[type=checkbox] { width: 17px; height: 17px; accent-color: #1A3A6B; cursor: pointer; }
+.check-item span { font-size: 13px; }
+
+/* 단위 라벨 */
+.input-unit { position: relative; }
+.input-unit input { padding-right: 40px; }
+.input-unit .unit { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 12px; color: #999; pointer-events: none; }
+
+/* 제출 버튼 */
+.submit-btn {
+  width: 100%; padding: 15px;
+  background: #1A3A6B; color: #fff;
+  border: none; border-radius: 10px;
+  font-size: 16px; font-weight: 700;
+  cursor: pointer; margin-top: 4px;
+  transition: background 0.15s;
+}
+.submit-btn:hover { background: #0d2a55; }
+.submit-btn:disabled { background: #9e9e9e; cursor: default; }
+
+/* 성공 메시지 */
+.success-box {
+  display: none; text-align: center;
+  background: #e8f5e9; border: 1.5px solid #a5d6a7;
+  border-radius: 12px; padding: 32px 20px; margin-bottom: 14px;
+}
+.success-box .icon { font-size: 42px; margin-bottom: 10px; }
+.success-box h2 { color: #2e7d32; font-size: 17px; margin-bottom: 6px; }
+.success-box p { color: #555; font-size: 13px; }
+
+/* 경고 배너 */
+.warn-banner {
+  background: #fff8e1; border: 1px solid #ffe082;
+  border-radius: 8px; padding: 9px 12px;
+  font-size: 12px; color: #6d4c00; margin-bottom: 14px;
+}
+
+/* 탭 패널 */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+@media (max-width: 380px) {
+  .grid2 { grid-template-columns: 1fr; }
+  .grid3 { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📋 현장 기록</h1>
+  <a href="index.html" class="back-link">← 포털</a>
+</header>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('test',this)">🔬 가공 테스트</button>
+  <button class="tab-btn" onclick="switchTab('defect',this)">⚠️ 불량 기록</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     탭 1: 가공 테스트 기록
+════════════════════════════════════════════════════ -->
+<div class="tab-panel active" id="panel-test">
+<div class="form-wrap">
+
+  <div class="warn-banner">⚠️ 테스트 조건은 검증 후 양산 적용. 수치는 사내 경험값으로 기록됩니다.</div>
+
+  <div id="test-form-wrap">
+  <form id="test-form">
+
+    <!-- 기본 정보 -->
+    <div class="card">
+      <div class="card-title">기본 정보</div>
+      <div class="field">
+        <label>날짜 <span class="req">*</span></label>
+        <input type="date" name="date" id="test-date" required>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label>장비 <span class="req">*</span></label>
+          <select name="machine" required>
+            <option value="">선택</option>
+            <option>ANCA MX7</option>
+            <option>ANCA RX7</option>
+            <option>VOLLMER</option>
+            <option>Rollomatic</option>
+            <option>MCT</option>
+            <option>범용 밀링</option>
+            <option>기타</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>소재 <span class="req">*</span></label>
+          <select name="material" required>
+            <option value="">선택</option>
+            <option>초경(WC-Co)</option>
+            <option>S45C</option>
+            <option>SCM440</option>
+            <option>SUS304</option>
+            <option>SUS316</option>
+            <option>AL7075</option>
+            <option>Ti6Al4V</option>
+            <option>NAK80</option>
+            <option>SKD11</option>
+            <option>기타</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 공구 정보 -->
+    <div class="card">
+      <div class="card-title">공구 정보</div>
+      <div class="grid2">
+        <div class="field">
+          <label>공구 형상 <span class="req">*</span></label>
+          <select name="tool_type" required>
+            <option value="">선택</option>
+            <option>평엔드밀</option>
+            <option>볼엔드밀</option>
+            <option>코너엔드밀</option>
+            <option>드릴</option>
+            <option>리머</option>
+            <option>기타</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>제조사·시리즈</label>
+          <input type="text" name="series" placeholder="예) JJ 4VSE, COGO 2CCR">
+        </div>
+      </div>
+      <div class="grid3">
+        <div class="field">
+          <label>날경 Ø (mm) <span class="req">*</span></label>
+          <input type="number" name="diameter" placeholder="예) 6" step="0.1" min="0.1" required>
+        </div>
+        <div class="field">
+          <label>날수</label>
+          <select name="flutes">
+            <option value="">-</option>
+            <option>2</option><option>3</option><option>4</option>
+            <option>5</option><option>6</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>코팅</label>
+          <select name="coating">
+            <option value="">없음/모름</option>
+            <option>TiN</option><option>TiAlN</option><option>AlTiN</option>
+            <option>TiSiN</option><option>AlCrN</option><option>DLC</option>
+            <option>R-TAC</option><option>무코팅</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 절삭 조건 -->
+    <div class="card">
+      <div class="card-title">절삭 조건</div>
+      <div class="grid2">
+        <div class="field">
+          <label>RPM <span class="req">*</span></label>
+          <div class="input-unit">
+            <input type="number" name="rpm" placeholder="예) 3000" step="50" min="1" required>
+            <span class="unit">rpm</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>이송속도 Vf</label>
+          <div class="input-unit">
+            <input type="number" name="feed" placeholder="예) 500" step="10" min="1">
+            <span class="unit">mm/min</span>
+          </div>
+        </div>
+      </div>
+      <div class="grid3">
+        <div class="field">
+          <label>절입 Ap</label>
+          <div class="input-unit">
+            <input type="number" name="ap" placeholder="0.3" step="0.01">
+            <span class="unit">mm</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>절입 Ae</label>
+          <div class="input-unit">
+            <input type="number" name="ae" placeholder="6" step="0.01">
+            <span class="unit">mm</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>가공깊이</label>
+          <div class="input-unit">
+            <input type="number" name="depth" placeholder="10" step="0.5">
+            <span class="unit">mm</span>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label>쿨런트</label>
+        <select name="coolant">
+          <option value="">선택</option>
+          <option>수용성 에멀전</option>
+          <option>수용성 에멀전 (고압)</option>
+          <option>오일미스트</option>
+          <option>에어블로</option>
+          <option>건식(냉각 없음)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 측정 결과 -->
+    <div class="card">
+      <div class="card-title">측정 결과</div>
+      <div class="grid2">
+        <div class="field">
+          <label>표면조도 Ra</label>
+          <div class="input-unit">
+            <input type="number" name="ra" placeholder="0.4" step="0.01">
+            <span class="unit">μm</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>공구 수명</label>
+          <div class="input-unit">
+            <input type="number" name="tool_life" placeholder="45" step="1">
+            <span class="unit">개</span>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label>결과 판정</label>
+        <select name="result">
+          <option value="">선택</option>
+          <option>✅ 양산 적용 가능</option>
+          <option>🔄 추가 검증 필요</option>
+          <option>❌ 재테스트 필요</option>
+          <option>📌 참고 기록만</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>특이사항 / 메모</label>
+        <textarea name="notes" placeholder="이상 증상, 추가 관찰 사항, 다음 테스트 제안 등"></textarea>
+      </div>
+    </div>
+
+    <button type="submit" class="submit-btn" id="test-submit-btn">기록 저장</button>
+  </form>
+  </div><!-- /test-form-wrap -->
+
+  <div class="success-box" id="test-success">
+    <div class="icon">✅</div>
+    <h2>가공 테스트 기록 완료</h2>
+    <p>시트에 저장되었습니다.<br>위키 반영은 당일 자동 처리됩니다.</p>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px;">
+      <a id="test-request-btn" href="request.html" style="display:block;padding:11px 0;background:#c62828;color:#fff;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;">🔧 재연마 의뢰 접수하기</a>
+      <button onclick="resetForm('test')" style="padding:10px 0;background:#1A3A6B;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;width:100%;">새 기록 추가</button>
+    </div>
+  </div>
+
+</div><!-- /form-wrap -->
+</div><!-- /panel-test -->
+
+
+<!-- ═══════════════════════════════════════════════════
+     탭 2: 불량 기록
+════════════════════════════════════════════════════ -->
+<div class="tab-panel" id="panel-defect">
+<div class="form-wrap">
+
+  <div id="defect-form-wrap">
+  <form id="defect-form">
+
+    <!-- 기본 정보 -->
+    <div class="card">
+      <div class="card-title">기본 정보</div>
+      <div class="field">
+        <label>날짜 <span class="req">*</span></label>
+        <input type="date" name="date" id="defect-date" required>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label>장비 <span class="req">*</span></label>
+          <select name="machine" required>
+            <option value="">선택</option>
+            <option>ANCA MX7</option>
+            <option>ANCA RX7</option>
+            <option>VOLLMER</option>
+            <option>Rollomatic</option>
+            <option>MCT</option>
+            <option>범용 밀링</option>
+            <option>기타</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>소재</label>
+          <select name="material">
+            <option value="">선택</option>
+            <option>초경(WC-Co)</option>
+            <option>S45C</option>
+            <option>SCM440</option>
+            <option>SUS304</option>
+            <option>AL7075</option>
+            <option>기타</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 공구 정보 -->
+    <div class="card">
+      <div class="card-title">불량 공구</div>
+      <div class="grid2">
+        <div class="field">
+          <label>공구 형상</label>
+          <select name="tool_type">
+            <option value="">선택</option>
+            <option>평엔드밀</option>
+            <option>볼엔드밀</option>
+            <option>코너엔드밀</option>
+            <option>드릴</option>
+            <option>리머</option>
+            <option>기타</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>날경 Ø (mm)</label>
+          <input type="number" name="diameter" placeholder="예) 6" step="0.1" min="0.1">
+        </div>
+      </div>
+      <div class="field">
+        <label>시리즈·제조사</label>
+        <input type="text" name="series" placeholder="예) JJ 4VSE, COGO 2CCR">
+      </div>
+    </div>
+
+    <!-- 불량 증상 -->
+    <div class="card">
+      <div class="card-title">불량 증상 <span class="req">*</span></div>
+      <div class="check-group">
+        <label class="check-item"><input type="checkbox" name="symptom" value="표면조도불량"><span>표면조도 불량</span></label>
+        <label class="check-item"><input type="checkbox" name="symptom" value="날끝치핑"><span>날끝 치핑</span></label>
+        <label class="check-item"><input type="checkbox" name="symptom" value="연삭화상"><span>연삭 화상</span></label>
+        <label class="check-item"><input type="checkbox" name="symptom" value="버발생"><span>버(Burr) 발생</span></label>
+        <label class="check-item"><input type="checkbox" name="symptom" value="코어편심"><span>코어 편심</span></label>
+        <label class="check-item"><input type="checkbox" name="symptom" value="런아웃증가"><span>런아웃 증가</span></label>
+        <label class="check-item"><input type="checkbox" name="symptom" value="조기마모"><span>조기 마모</span></label>
+        <label class="check-item"><input type="checkbox" name="symptom" value="파손"><span>파손/절손</span></label>
+        <label class="check-item"><input type="checkbox" name="symptom" value="치수불량"><span>치수 불량</span></label>
+      </div>
+    </div>
+
+    <!-- 상세 내용 -->
+    <div class="card">
+      <div class="card-title">상세 내용</div>
+      <div class="field">
+        <label>발생 위치</label>
+        <input type="text" name="location" placeholder="예) 플루트 날끝, 생크부, 가공 홀 내경">
+      </div>
+      <div class="field">
+        <label>추정 원인</label>
+        <select name="cause">
+          <option value="">선택 또는 직접 입력</option>
+          <option>RPM 과다</option>
+          <option>이송속도 과다</option>
+          <option>절입량 과다</option>
+          <option>쿨런트 부족</option>
+          <option>휠 마모</option>
+          <option>드레싱 불량</option>
+          <option>공구 고정 불량</option>
+          <option>소재 경도 이상</option>
+          <option>기타</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>추가 원인 메모</label>
+        <input type="text" name="cause_note" placeholder="구체적인 원인 내용">
+      </div>
+      <div class="field">
+        <label>대응 방법 <span class="req">*</span></label>
+        <textarea name="action" placeholder="취한 조치, 조건 변경 내용, 재가공 여부 등" required></textarea>
+      </div>
+      <div class="field">
+        <label>재발 여부</label>
+        <select name="recurring">
+          <option value="">선택</option>
+          <option>최초 발생</option>
+          <option>재발 (2회차)</option>
+          <option>재발 (3회 이상)</option>
+        </select>
+      </div>
+    </div>
+
+    <button type="submit" class="submit-btn" id="defect-submit-btn">불량 기록 저장</button>
+  </form>
+  </div><!-- /defect-form-wrap -->
+
+  <div class="success-box" id="defect-success">
+    <div class="icon">✅</div>
+    <h2>불량 기록 완료</h2>
+    <p>트러블슈팅 시트에 저장되었습니다.<br>위키 반영은 당일 자동 처리됩니다.</p>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px;">
+      <a id="defect-request-btn" href="request.html" style="display:block;padding:11px 0;background:#c62828;color:#fff;border-radius:8px;font-size:14px;font-weight:700;text-decoration:none;text-align:center;">🔧 재연마 의뢰 접수하기</a>
+      <button onclick="resetForm('defect')" style="padding:10px 0;background:#1A3A6B;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;width:100%;">새 기록 추가</button>
+    </div>
+  </div>
+
+</div><!-- /form-wrap -->
+</div><!-- /panel-defect -->
+
+
+<iframe name="hidden-target" style="display:none;"></iframe>
+<script>
+// ── 설정 ──────────────────────────────────────────────────────────────────
+// Google Apps Script 배포 URL로 변경하세요 (field-record-apps-script.js 배포 후)
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbzO00KKfNHFcmMRPGLZcaYb95JiYbqqMZbMgyhdCIuq77VLSHZI0Bx1JVYBoxfVrM88Sw/exec';
+// ─────────────────────────────────────────────────────────────────────────
+
+// 오늘 날짜 자동 세팅
+(function() {
+  var today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+  document.getElementById('test-date').value = today;
+  document.getElementById('defect-date').value = today;
+})();
+
+// 탭 전환
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// 재연마 의뢰 버튼 URL 생성
+var _lastTestData   = {};
+var _lastDefectData = {};
+
+function buildRequestUrl(data) {
+  var p = new URLSearchParams();
+  if (data.tool_type) p.set('tool_type', data.tool_type);
+  if (data.series)    p.set('series',    data.series);
+  if (data.diameter)  p.set('diameter',  data.diameter);
+  return 'request.html?' + p.toString();
+}
+
+// 폼 리셋
+function resetForm(type) {
+  document.getElementById(type + '-form').reset();
+  var today = new Date().toLocaleDateString('en-CA');
+  document.getElementById(type + '-date').value = today;
+  document.getElementById(type + '-form-wrap').style.display = 'block';
+  document.getElementById(type + '-success').style.display = 'none';
+}
+
+// 체크박스 값 수집 헬퍼
+function getCheckedValues(form, name) {
+  return Array.from(form.querySelectorAll('input[name="' + name + '"]:checked'))
+    .map(cb => cb.value).join(', ');
+}
+
+// ── 가공 테스트 제출 ────────────────────────────────────────────────────
+document.getElementById('test-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  var btn = document.getElementById('test-submit-btn');
+  btn.disabled = true; btn.textContent = '저장 중...';
+
+  var fd = new FormData(this);
+  var data = { type: 'test' };
+  fd.forEach(function(v, k) { data[k] = v; });
+  _lastTestData = data;
+
+  submitData(data, function() {
+    document.getElementById('test-request-btn').href = buildRequestUrl(_lastTestData);
+    document.getElementById('test-form-wrap').style.display = 'none';
+    document.getElementById('test-success').style.display = 'block';
+    btn.disabled = false; btn.textContent = '기록 저장';
+  });
+});
+
+// ── 불량 기록 제출 ────────────────────────────────────────────────────
+document.getElementById('defect-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  var form = this;
+  var btn = document.getElementById('defect-submit-btn');
+
+  // 증상 체크 검증
+  var symptoms = getCheckedValues(form, 'symptom');
+  if (!symptoms) { alert('불량 증상을 하나 이상 선택해 주세요.'); return; }
+
+  btn.disabled = true; btn.textContent = '저장 중...';
+
+  var fd = new FormData(form);
+  var data = { type: 'defect', symptom: symptoms };
+  fd.forEach(function(v, k) { if (k !== 'symptom') data[k] = v; });
+  _lastDefectData = data;
+
+  submitData(data, function() {
+    document.getElementById('defect-request-btn').href = buildRequestUrl(_lastDefectData);
+    document.getElementById('defect-form-wrap').style.display = 'none';
+    document.getElementById('defect-success').style.display = 'block';
+    btn.disabled = false; btn.textContent = '불량 기록 저장';
+  });
+});
+
+// ── 공통 전송 함수 ────────────────────────────────────────────────────
+function submitData(data, onSuccess) {
+  // GAS URL이 설정되지 않은 경우: 로컬 저장만 (개발/테스트 모드)
+  if (GAS_URL.indexOf('YOUR_DEPLOYMENT_ID') !== -1) {
+    saveLocal(data);
+    setTimeout(onSuccess, 600);
+    return;
+  }
+
+  var params = new URLSearchParams(data).toString();
+  fetch(GAS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params
+  }).then(function() {
+    saveLocal(data);
+    onSuccess();
+  }).catch(function() {
+    // 네트워크 오류 시 로컬 저장만
+    saveLocal(data);
+    onSuccess();
+  });
+}
+
+// ── 로컬 저장 (오프라인 백업) ────────────────────────────────────────
+function saveLocal(data) {
+  var key = data.type === 'test' ? 'cnc_test_records' : 'cnc_defect_records';
+  var records = JSON.parse(localStorage.getItem(key) || '[]');
+  data._saved_at = new Date().toISOString();
+  records.unshift(data);
+  if (records.length > 200) records = records.slice(0, 200);
+  localStorage.setItem(key, JSON.stringify(records));
+}
+</script>
+
+<style>
+.quick-nav { position:fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid #e0e0e0; display:flex; z-index:200; box-shadow:0 -2px 10px rgba(0,0,0,0.09); }
+.qn-btn { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:8px 2px 6px; text-decoration:none; color:#999; font-size:10px; gap:3px; transition:color 0.15s; border:none; background:none; cursor:pointer; }
+.qn-icon { font-size:20px; line-height:1; }
+.qn-btn.qn-active, .qn-btn:hover { color:#1A3A6B; }
+</style>
+<nav class="quick-nav">
+  <a class="qn-btn" href="index.html"><span class="qn-icon">🏠</span>포털</a>
+  <a class="qn-btn" href="절삭조건-검색.html"><span class="qn-icon">⚙️</span>조건검색</a>
+  <a class="qn-btn" href="field-record.html"><span class="qn-icon">📝</span>현장기록</a>
+  <a class="qn-btn" href="request.html"><span class="qn-icon">🔧</span>재연마의뢰</a>
+  <a class="qn-btn" href="dashboard.html"><span class="qn-icon">📊</span>현황판</a>
+</nav>
+<script>
+(function(){
+  var cur = location.pathname.split('/').pop() || 'index.html';
+  document.querySelectorAll('.qn-btn').forEach(function(a){
+    if(a.getAttribute('href') === cur) a.classList.add('qn-active');
+  });
+  // body에 하단 여백 확보
+  document.body.style.paddingBottom = '64px';
+})();
+</script>
+
+</body>
+</html>

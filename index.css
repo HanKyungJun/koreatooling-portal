@@ -1,0 +1,66 @@
+/* =====================================================
+   index.css — 코리아툴링 포털 메인(index.html) 전용 스타일
+   최종 수정: 2026-06-15
+   ===================================================== */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5; min-height: 100vh; }
+
+/* ── 헤더 ──────────────────────────────────────────── */
+header { background: #1A3A6B; color: white; padding: 32px; text-align: center; }
+.co-name {
+  font-size: 0.72rem; font-weight: 600; letter-spacing: 0.18em;
+  opacity: 0.6; text-transform: uppercase; margin-bottom: 10px;
+}
+header h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 6px; }
+header p  { font-size: 0.83rem; opacity: 0.6; }
+
+/* ── 레이아웃 ─────────────────────────────────────── */
+main { max-width: 880px; margin: 40px auto; padding: 0 20px 60px; }
+
+/* ── 섹션 라벨 ─────────────────────────────────────── */
+.sec-label {
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em;
+  color: #aaa; text-transform: uppercase;
+  margin-bottom: 16px; padding-bottom: 10px;
+  border-bottom: 2px solid #e8e8e8;
+}
+
+/* ── 카드 그리드 ────────────────────────────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px; margin-bottom: 40px;
+}
+.card {
+  background: white; border-radius: 14px; padding: 26px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+  text-decoration: none; color: inherit; display: block;
+  transition: transform 0.18s, box-shadow 0.18s;
+  border-top: 4px solid #1A3A6B;
+}
+.card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+.card.staff { border-top-color: #c0392b; }
+.card-icon  { font-size: 1.8rem; margin-bottom: 14px; }
+.card-title { font-size: 0.97rem; font-weight: 700; color: #1a1a2e; margin-bottom: 6px; }
+.card-desc  { font-size: 0.79rem; color: #999; line-height: 1.55; }
+
+/* ── 직원 전용 ─────────────────────────────────────── */
+.staff-badge {
+  display: inline-block; font-size: 0.62rem;
+  background: #fff0f0; color: #c0392b;
+  border-radius: 4px; padding: 2px 7px; font-weight: 700;
+  vertical-align: middle; margin-left: 6px;
+}
+.staff-toggle {
+  background: none; border: none; color: #ccc;
+  font-size: 0.72rem; cursor: pointer;
+  padding: 4px 0; margin-bottom: 4px; letter-spacing: 0.05em;
+}
+.staff-toggle:hover { color: #999; }
+
+/* ── 푸터 ──────────────────────────────────────────── */
+footer { text-align: center; padding: 24px; color: #ccc; font-size: 0.75rem; }
+
+/* ── 반응형 ───────────────────────────────────────── */
+@media (max-width: 560px) { header { padding: 24px 20px; } }

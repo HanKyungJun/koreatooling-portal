@@ -1,0 +1,91 @@
+/* =====================================================
+   dashboard.css — 재연마 현황판 전용 스타일
+   최종 수정: 2026-06-15
+   ===================================================== */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #1a1a2e; }
+
+/* ── 헤더 ──────────────────────────────────────────── */
+header {
+  background: #1A3A6B; color: white; padding: 14px 28px;
+  display: flex; align-items: center; gap: 16px;
+}
+header h1 { font-size: 1.15rem; font-weight: 700; }
+.header-meta { margin-left: auto; font-size: 0.78rem; opacity: 0.75; text-align: right; }
+.header-meta span { display: block; }
+.back-link { color: rgba(255,255,255,0.65); font-size: 0.8rem; text-decoration: none; white-space: nowrap; }
+.back-link:hover { color: white; }
+
+/* ── 레이아웃 ─────────────────────────────────────── */
+main { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
+.section-title-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.section-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #888; }
+.section-date { font-size: 0.85rem; font-weight: 600; color: #1a73e8; }
+
+/* ── KPI 카드 ──────────────────────────────────────── */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px; }
+.kpi-card { background: white; border-radius: 12px; padding: 18px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); border-left: 4px solid #1A3A6B; }
+.kpi-card.gx7   { border-color: #34a853; }
+.kpi-card.total { border-color: #fbbc04; }
+.kpi-card.cum   { border-color: #9c27b0; }
+.kpi-label { font-size: 0.76rem; color: #888; font-weight: 600; margin-bottom: 6px; }
+.kpi-value { font-size: 1.9rem; font-weight: 700; color: #1a1a2e; line-height: 1; }
+.kpi-unit  { font-size: 0.82rem; color: #aaa; margin-left: 2px; }
+.kpi-sub   { font-size: 0.76rem; color: #aaa; margin-top: 6px; }
+
+/* ── 차트 카드 ─────────────────────────────────────── */
+.chart-card { background: white; border-radius: 12px; padding: 22px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); margin-bottom: 24px; }
+.chart-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 14px; }
+.chart-sub { font-size: 0.78rem; color: #888; margin-bottom: 14px; }
+.chart-wrap { position: relative; height: 300px; }
+
+/* ── 테이블 ────────────────────────────────────────── */
+.table-wrap { overflow-x: auto; margin-top: 20px; }
+table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+thead th { background: #f8f9fa; padding: 8px 10px; text-align: center; font-weight: 700; color: #555; border-bottom: 2px solid #e0e0e0; white-space: nowrap; }
+thead th:nth-child(2) { text-align: left; }
+tbody td { padding: 7px 10px; text-align: center; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }
+tbody td:nth-child(2) { text-align: left; max-width: 170px; overflow: hidden; text-overflow: ellipsis; }
+tbody tr:hover { background: #f8f9fa; }
+tbody tr:last-child td { font-weight: 700; background: #f0f4ff; border-top: 2px solid #c5d8ff; }
+
+/* ── 랭크 뱃지 ─────────────────────────────────────── */
+.rank-badge { display: inline-block; width: 20px; height: 20px; line-height: 20px; border-radius: 50%; font-size: 0.7rem; font-weight: 700; text-align: center; background: #e8f0fe; color: #1a73e8; }
+.rank-badge.gold   { background: #fff3cd; color: #b8860b; }
+.rank-badge.silver { background: #f0f0f0; color: #666; }
+.rank-badge.bronze { background: #fde8d8; color: #a0522d; }
+td.zero { color: #ddd; }
+td.hi   { font-weight: 700; color: #1a73e8; }
+
+/* ── 탭 ────────────────────────────────────────────── */
+.tab-bar { display: flex; gap: 4px; border-bottom: 2px solid #e0e0e0; margin-bottom: 20px; }
+.tab-btn { padding: 9px 22px; border: none; background: none; font-size: 0.9rem; font-weight: 600; color: #888; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: color 0.15s; }
+.tab-btn:hover { color: #1A3A6B; }
+.tab-btn.active { color: #1A3A6B; border-bottom-color: #1A3A6B; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── 섹션 카드 ─────────────────────────────────────── */
+.section-card { background: white; border-radius: 12px; padding: 22px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); margin-bottom: 24px; }
+.sub-tab-bar { display: flex; gap: 4px; border-bottom: 1px solid #e0e0e0; margin-bottom: 16px; flex-wrap: wrap; }
+.sub-tab-btn { padding: 7px 16px; border: none; background: none; font-size: 0.82rem; font-weight: 600; color: #888; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.sub-tab-btn.active { color: #1A3A6B; border-bottom-color: #1A3A6B; }
+.sub-tab-panel { display: none; }
+.sub-tab-panel.active { display: block; }
+
+/* ── 접수현황 테이블 ────────────────────────────────── */
+.form-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+.form-table th { background: #f0f4ff; padding: 7px 10px; text-align: left; font-weight: 700; color: #555; border-bottom: 2px solid #dce6ff; white-space: nowrap; }
+.form-table td { padding: 7px 10px; border-bottom: 1px solid #f0f0f0; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.form-table tr:hover td { background: #f8f9fa; }
+
+/* ── 새로고침 행 ────────────────────────────────────── */
+.refresh-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.refresh-btn { padding: 5px 14px; border: 1px solid #1A3A6B; border-radius: 6px; background: white; color: #1A3A6B; font-size: 0.78rem; font-weight: 600; cursor: pointer; }
+.refresh-btn:hover { background: #1A3A6B; color: white; }
+.refresh-info { font-size: 0.75rem; color: #aaa; }
+
+/* ── 뱃지 · 기타 ────────────────────────────────────── */
+.badge { display: inline-block; background: #e8f0fe; color: #1a73e8; border-radius: 10px; padding: 1px 8px; font-size: 0.7rem; font-weight: 700; margin-left: 4px; }
+.no-data { color: #bbb; padding: 20px; text-align: center; font-size: 0.85rem; }

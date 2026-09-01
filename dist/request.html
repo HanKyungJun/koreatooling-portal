@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>재연마 의뢰 접수 — 코리아툴링</title>
+<link rel="stylesheet" href="portal.css">
+</head>
+<body>
+
+<header>
+  <h1>🔧 재연마 의뢰 접수</h1>
+  <a href="index.html" class="back-link">← 메인으로</a>
+</header>
+<main>
+  <div id="form-wrap" class="card">
+    <div class="card-title">🔧 재연마 의뢰 접수</div>
+    <div class="card-sub">＊ 표시는 필수 입력 항목입니다.</div>
+    <form name="request-form" method="POST">
+      <input type="hidden" name="form-name" value="request-form">
+
+      <div class="row2">
+        <div class="field">
+          <label>회사명 <span class="req">＊</span></label>
+          <input type="text" name="company" placeholder="예) 코리아툴링" required>
+        </div>
+        <div class="field">
+          <label>담당자 <span class="req">＊</span></label>
+          <input type="text" name="contact" placeholder="이름" required>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>연락처 <span class="req">＊</span></label>
+          <input type="tel" name="phone" placeholder="010-0000-0000" required>
+        </div>
+        <div class="field">
+          <label>이메일</label>
+          <input type="email" name="email" placeholder="example@email.com">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>공구 종류 <span class="req">＊</span></label>
+          <select name="tool_type" required>
+            <option value="">선택하세요</option>
+            <option>엔드밀</option>
+            <option>드릴</option>
+            <option>리머</option>
+            <option>탭</option>
+            <option>기타</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>재질</label>
+          <select name="material">
+            <option value="">선택하세요</option>
+            <option>초경</option>
+            <option>HSS</option>
+            <option>SKD</option>
+            <option>기타</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>규격 / 수량 <span class="req">＊</span>
+          <span style="font-weight:400;color:#aaa;font-size:0.75rem;margin-left:6px;">품종이 여러 개면 행 추가</span>
+        </label>
+        <div id="spec-rows">
+          <div class="spec-row" style="display:grid;grid-template-columns:1fr 90px 32px;gap:8px;margin-bottom:8px;">
+            <input type="text" name="spec[]" placeholder="규격 (예: Ø10 4날, R0.5)" required
+              style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;">
+            <input type="number" name="quantity[]" placeholder="수량" min="1" required
+              style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;text-align:center;">
+            <button type="button" onclick="removeRow(this)"
+              style="background:#fff0f0;color:#e53935;border:1.5px solid #ffd0d0;border-radius:8px;font-size:1.1rem;cursor:pointer;display:none;">✕</button>
+          </div>
+        </div>
+        <button type="button" onclick="addSpecRow()"
+          style="margin-top:4px;padding:8px 16px;background:#f0f4ff;color:#1A3A6B;border:1.5px dashed #b0c4f0;border-radius:8px;font-size:0.82rem;font-weight:600;cursor:pointer;">
+          + 규격 추가
+        </button>
+      </div>
+      <div class="field">
+        <label>특이사항 / 요청사항</label>
+        <textarea name="notes" placeholder="재연마 특이사항, 요청사항을 입력해주세요."></textarea>
+      </div>
+      <div class="field">
+        <label>도면 / 사진 첨부 <span style="font-weight:400;color:#aaa;font-size:0.75rem">(선택 · 최대 5MB)</span></label>
+        <label class="file-drop" for="attach-input" id="file-drop-zone">
+          <span id="file-drop-text">📎 클릭하거나 파일을 드래그하세요<br>
+          <span style="font-size:0.75rem;color:#bbb">JPG · PNG · PDF · DWG · DXF</span></span>
+        </label>
+        <input type="file" id="attach-input" accept="image/*,.pdf,.dwg,.dxf" style="display:none">
+        <input type="hidden" name="file-data" id="file-data">
+        <input type="hidden" name="file-name" id="file-name">
+        <input type="hidden" name="file-type" id="file-type">
+      </div>
+      <button type="submit" class="submit-btn">제출하기 →</button>
+    </form>
+  </div>
+  <div id="success" style="display:none" class="card">
+    <div class="success-box">
+      <div class="icon">✅</div>
+      <h2>제출이 완료되었습니다</h2>
+      <p>담당자가 확인 후 연락드리겠습니다.<br>감사합니다.</p>
+      <a href="index.html" class="home-btn">메인으로 돌아가기</a>
+    </div>
+  </div>
+</main>
+<footer>© 2026 코리아툴링 | Korea Tooling Co., Ltd.</footer>
+<iframe name="hidden-target" style="display:none;"></iframe>
+<script src="portal.js"></script>
+</body>
+</html><script>
+function addSpecRow() {
+  var container = document.getElementById('spec-rows');
+  var row = document.createElement('div');
+  row.className = 'spec-row';
+  row.style.cssText = 'display:grid;grid-template-columns:1fr 90px 32px;gap:8px;margin-bottom:8px;';
+  row.innerHTML = '<input type="text" name="spec[]" placeholder="규격 (예: Ø10 4날, R0.5)"'
+    + ' style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;">'
+    + '<input type="number" name="quantity[]" placeholder="수량" min="1"'
+    + ' style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;text-align:center;">'
+    + '<button type="button" onclick="removeRow(this)"'
+    + ' style="background:#fff0f0;color:#e53935;border:1.5px solid #ffd0d0;border-radius:8px;font-size:1.1rem;cursor:pointer;">✕</button>';
+  container.appendChild(row);
+  updateRemoveButtons();
+  row.querySelector('input').focus();
+}
+function removeRow(btn) {
+  btn.closest('.spec-row').remove();
+  updateRemoveButtons();
+}
+function updateRemoveButtons() {
+  var rows = document.querySelectorAll('.spec-row');
+  rows.forEach(function(r, i) {
+    r.querySelector('button').style.display = rows.length > 1 ? '' : 'none';
+  });
+}
+
+// ── 파일 첨부 ─────────────────────────────────────────────────────────────────
+var dropZone = document.getElementById('file-drop-zone');
+document.getElementById('attach-input').addEventListener('change', function(e) {
+  handleAttach(e.target.files[0]);
+});
+dropZone.addEventListener('dragover', function(e) {
+  e.preventDefault(); dropZone.style.borderColor = '#1A3A6B';
+});
+dropZone.addEventListener('dragleave', function() {
+  dropZone.style.borderColor = '';
+});
+dropZone.addEventListener('drop', function(e) {
+  e.preventDefault(); dropZone.style.borderColor = '';
+  handleAttach(e.dataTransfer.files[0]);
+});
+function handleAttach(file) {
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    alert('파일 크기는 5MB 이하로 첨부해 주세요.');
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    document.getElementById('file-data').value = ev.target.result;
+    document.getElementById('file-name').value = file.name;
+    document.getElementById('file-type').value = file.type;
+    document.getElementById('file-drop-text').innerHTML =
+      '✅ ' + file.name + '<br><span style="font-size:0.75rem;color:#888">'
+      + (file.size/1024).toFixed(0) + 'KB · 클릭해서 변경</span>';
+    dropZone.classList.add('has-file');
+  };
+  reader.readAsDataURL(file);
+}
+</script>

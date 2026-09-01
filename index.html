@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>코리아툴링 생산팀 포털</title>
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+<header>
+  <div class="co-name">Korea Tooling Co., Ltd.</div>
+  <h1>생산팀 포털</h1>
+  <p>서비스를 선택해 주세요</p>
+</header>
+<main>
+  <div class="sec-label">🌐 고객 서비스</div>
+  <div class="grid">
+    <a class="card" href="request.html">
+      <div class="card-icon">🔧</div>
+      <div class="card-title">재연마 의뢰 접수</div>
+      <div class="card-desc">공구 재연마를 의뢰하고 수량·납기를 등록합니다.</div>
+    </a>
+    <a class="card" href="defect.html">
+      <div class="card-icon">⚠️</div>
+      <div class="card-title">공구 불량 신고</div>
+      <div class="card-desc">불량 공구의 증상 및 발생 현황을 신고합니다.</div>
+    </a>
+    <a class="card" href="inquiry.html">
+      <div class="card-icon">📋</div>
+      <div class="card-title">작업 진행 문의</div>
+      <div class="card-desc">의뢰한 공구의 진행 현황을 문의합니다.</div>
+    </a>
+    <a class="card" href="절삭조건-검색.html">
+      <div class="card-icon">⚙️</div>
+      <div class="card-title">절삭 조건 검색</div>
+      <div class="card-desc">JJ · COGO 카탈로그 기준 절삭 조건을 검색합니다.</div>
+    </a>
+  </div>
+
+  <button class="staff-toggle" onclick="showStaffAuth()">🔒 직원 전용</button>
+
+  <!-- 비밀번호 모달 -->
+  <div id="staff-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:100;display:none;align-items:center;justify-content:center;">
+    <div style="background:white;border-radius:16px;padding:32px 28px;width:320px;max-width:90vw;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+      <div style="font-size:2rem;margin-bottom:10px;">🔒</div>
+      <h2 style="color:#1A3A6B;font-size:1rem;margin-bottom:6px;">직원 전용</h2>
+      <p style="color:#999;font-size:0.78rem;margin-bottom:18px;">비밀번호를 입력하세요.</p>
+      <input id="staff-pass-input" type="password" placeholder="비밀번호"
+        style="width:100%;padding:10px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:0.95rem;margin-bottom:10px;outline:none;text-align:center;"
+        onkeydown="if(event.key==='Enter') checkStaffPass()">
+      <p id="staff-pass-error" style="color:#e53935;font-size:0.78rem;min-height:18px;margin-bottom:8px;"></p>
+      <button onclick="checkStaffPass()"
+        style="width:100%;padding:11px;background:#1A3A6B;color:white;border:none;border-radius:8px;font-size:0.9rem;font-weight:700;cursor:pointer;margin-bottom:8px;">
+        확인
+      </button>
+      <button onclick="closeStaffModal()"
+        style="width:100%;padding:9px;background:none;border:1px solid #ddd;border-radius:8px;font-size:0.85rem;color:#aaa;cursor:pointer;">
+        취소
+      </button>
+    </div>
+  </div>
+
+  <div id="staff-section" style="display:none">
+    <div class="sec-label" style="margin-top:16px">🔒 직원 전용 <span class="staff-badge">PASSWORD</span></div>
+    <div class="grid">
+      <a class="card staff" href="dashboard.html">
+        <div class="card-icon">📊</div>
+        <div class="card-title">재연마 현황판</div>
+        <div class="card-desc">출하현황 및 일일 생산 실적을 확인합니다.</div>
+      </a>
+      <a class="card staff" href="supplies.html">
+        <div class="card-icon">🛒</div>
+        <div class="card-title">소모품 구매 요청</div>
+        <div class="card-desc">소모품 및 물품 구매를 요청합니다.</div>
+      </a>
+      <a class="card staff" href="field-record.html">
+        <div class="card-icon">📝</div>
+        <div class="card-title">현장 기록</div>
+        <div class="card-desc">가공 테스트 결과 및 불량 현황을 현장에서 바로 기록합니다.</div>
+      </a>
+    </div>
+  </div>
+  <script>
+  function showStaffAuth() {
+    var modal = document.getElementById('staff-modal');
+    modal.style.display = 'flex';
+    setTimeout(function(){ document.getElementById('staff-pass-input').focus(); }, 50);
+  }
+  function closeStaffModal() {
+    document.getElementById('staff-modal').style.display = 'none';
+    document.getElementById('staff-pass-input').value = '';
+    document.getElementById('staff-pass-error').textContent = '';
+  }
+  function checkStaffPass() {
+    var val = document.getElementById('staff-pass-input').value;
+    if (val === '1234') {
+      closeStaffModal();
+      document.getElementById('staff-section').style.display = 'block';
+      document.querySelector('.staff-toggle').style.display = 'none';
+    } else {
+      document.getElementById('staff-pass-error').textContent = '비밀번호가 올바르지 않습니다.';
+      document.getElementById('staff-pass-input').value = '';
+      document.getElementById('staff-pass-input').focus();
+    }
+  }
+  </script>
+</main>
+<footer>© 2026 코리아툴링 생산팀 포털 | Korea Tooling Co., Ltd.</footer>
+</body>
+</html>

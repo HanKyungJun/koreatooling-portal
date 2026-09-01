@@ -1,0 +1,119 @@
+# ============================================================
+# anca_scraper 설정
+# ============================================================
+
+# 검색 키워드 (제목에 하나라도 포함 시 매물로 인식)
+keywords:
+  # 브랜드
+  - ANCA
+  - 안카
+  # 시리즈명 단독 (모델 번호 없이 표기된 매물 대응)
+  - MX
+  - TX
+  - FX
+  - GX
+  - FAST
+  # MX 시리즈 (범용 공구연삭)
+  - MX7
+  - MX5
+  - MX Linear
+  # TX 시리즈 (툴룸)
+  - TX7
+  - TX Linear
+  - TXcell
+  # FX 시리즈 (고속)
+  - FX7
+  - FX5
+  - FX Linear
+  # GX 시리즈 (고속 소경)
+  - GX7
+  - GX5
+  # FastGrind (고속 양산)
+  - FastGrind
+  - Fast-Grind
+  # CPX (원통연삭)
+  - CPX
+  # LinX (리니어 모터)
+  - LinX
+  # EDGe (의료·치과용 초소형)
+  - EDGe
+  # 한글 검색어
+  - 공구연삭
+  - 툴그라인더
+  - 공구연삭기
+
+# 사이트별 최대 수집 건수 (페이지당)
+max_per_site: 50
+
+# 사이트 간 요청 딜레이 (초)
+delay_between_sites: 4
+
+# 매일 자동 실행 시각 (--schedule 모드용)
+schedule_time: "13:00"
+
+# ── 이메일 설정 ─────────────────────────────────────────────
+email:
+  from: "hzn2001@toolkorea.co.kr"
+  password: ""
+  to: "hzn2001@toolkorea.co.kr"
+
+# ── 스크래핑 대상 사이트 ────────────────────────────────────
+# ⚠️ 셀렉터가 맞지 않으면:
+#   python anca_scraper.py --debug
+#   → data/debug_*.html 저장 → F12 개발자 도구로 클래스명 확인 후 수정
+
+sites:
+
+  # ── 국내 (우선) ─────────────────────────────────────────
+
+  - name: 다아라
+    base_url: "https://mc.daara.co.kr"
+    url: "https://mc.daara.co.kr/search/list?keyword=ANCA&cate=1"
+    selectors:
+      container: "li.item, div.item-wrap, div.product-item, ul.list-wrap > li"
+      title:     "strong.tit, .item-tit, h3, .product-name, a.tit"
+      price:     ".price, .item-price, strong.price"
+      location:  ".loc, .area, .item-area"
+      link:      "a"
+
+  - name: 엔씨넷
+    base_url: "https://www.ncnet.co.kr"
+    url: "https://www.ncnet.co.kr/market/search?keyword=ANCA"
+    selectors:
+      container: "div.item, li.product, div.goods-item, div.machine-item"
+      title:     "h3, h4, .item-name, .goods-name, .tit"
+      price:     ".price, .item-price, .cost"
+      location:  ".loc, .area, .region"
+      link:      "a"
+
+  - name: 기계뱅크
+    base_url: "https://www.kibank.co.kr"
+    url: "https://www.kibank.co.kr/search?q=ANCA"
+    selectors:
+      container: "div.item-box, li.machine, div.product, article"
+      title:     "h3, h4, .subject, .tit, .name"
+      price:     ".price, .amt, .cost"
+      location:  ".loc, .area, .place"
+      link:      "a"
+
+  # ── 해외 (보조) ─────────────────────────────────────────
+
+  - name: SurplusRecord
+    base_url: "https://www.surplusrecord.com"
+    url: "https://www.surplusrecord.com/machinery-equipment/cnc-tool-and-cutter-grinders/anca/"
+    selectors:
+      container: "div.listing-item, article.listing, div.srListing, div.item-block"
+      title:     "h2, h3, .listing-title, .srTitle a, .item-title"
+      price:     ".price, .listing-price, .srPrice"
+      location:  ".location, .city, .srLocation"
+      link:      "a"
+
+  - name: MachineTools
+    base_url: "https://www.machinetools.com"
+    url: "https://www.machinetools.com/en/for-sale/brand/anca"
+    selectors:
+      container: "div.machine, article.machine, li.machine-listing, div.product-item"
+      title:     "h2, h3, .machine-name, .product-title"
+      price:     ".price, .machine-price, .product-price"
+      location:  ".location, .country, .seller-location"
+      link:      "a"

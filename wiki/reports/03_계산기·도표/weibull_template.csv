@@ -1,0 +1,30 @@
+# weibull_template.csv — 공구 수명 Weibull 분석 입력 양식
+# 사용법: 아래 헤더와 예시 데이터를 복사해서 실제 데이터로 채운 후 저장
+# 실행: python scripts/weibull_tool_life.py --input wiki/reports/03_계산기·도표/weibull_template.csv
+#
+# 컬럼 설명:
+#   tool_id      - 공구 식별 번호 (자유 형식, 예: T001)
+#   tool_type    - 공구 형상 (FL/CO/BA/DR/NCK 등)
+#   diameter_mm  - 공구 직경 (mm)
+#   flute_count  - 날수
+#   material     - 피삭재 (S45C / SUS304 / AL6061 등, 선택)
+#   failure_life - 수명 수치 (재연마 횟수 또는 가공 수량)
+#   life_unit    - 수명 단위 설명 (참고용, 분석에 미사용)
+#   censored     - 0=파손/교체 완료(완전고장), 1=현재 사용 중(검열)
+#   note         - 메모 (파손 원인, 이상 상황 등, 선택)
+#
+# ★ 최소 요건: censored=0 데이터 6개 이상 권장 (그 미만은 추정값으로만 사용)
+# ★ 같은 공구 종류·직경끼리 묶어서 분석 (혼합하면 β 해석 어려움)
+#
+tool_id,tool_type,diameter_mm,flute_count,material,failure_life,life_unit,censored,note
+# --- 아래는 예시 데이터 (실제 데이터로 교체) ---
+T001,FL,6,4,S45C,120,재연마횟수,0,정상 마모
+T002,FL,6,4,S45C,98,재연마횟수,0,코팅 탈락
+T003,FL,6,4,S45C,145,재연마횟수,0,정상 마모
+T004,FL,6,4,S45C,110,재연마횟수,0,정상 마모
+T005,FL,6,4,S45C,87,재연마횟수,0,치핑 발생
+T006,FL,6,4,S45C,132,재연마횟수,0,정상 마모
+T007,FL,6,4,S45C,155,재연마횟수,0,정상 마모
+T008,FL,6,4,S45C,102,재연마횟수,0,정상 마모
+T009,FL,6,4,S45C,118,재연마횟수,1,현재 사용 중
+T010,FL,6,4,S45C,95,재연마횟수,1,현재 사용 중

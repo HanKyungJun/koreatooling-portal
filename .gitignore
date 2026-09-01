@@ -1,0 +1,143 @@
+# =====================================================
+# cnc-wiki .gitignore
+# 목적: 핸드오프·위키·원본 데이터는 추적, 임시·캐시 파일은 제외
+# 작성일: 2026-05-08 (ADR-003 채택)
+# =====================================================
+
+# --- Python 관련 ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# --- OS 임시 파일 ---
+Thumbs.db
+desktop.ini
+.DS_Store
+ehthumbs.db
+
+# --- Office 잠금 파일 (편집 중 임시 파일) ---
+~$*
+*.~lock.*
+*.tmp
+
+# --- 한글 워드프로세서 임시 파일 ---
+*.gul
+
+# --- pdf_search.py 등이 생성하는 캐시 ---
+*.cache.json
+.cache/
+
+# --- 에디터 설정 (개인 환경) ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- 로그 파일 (작업 로그가 아닌 시스템 로그) ---
+*.log
+logs/
+
+# --- 빌드/배포 산출물 (해당 시) ---
+# dist/ — 2026-06-09 추적 대상으로 변경. 직접 작성한 HTML 포털 소스이므로 git 관리 필요.
+build/
+node_modules/
+
+# --- Cowork/Claude 임시 산출물 (2026-06-02 추가) ---
+# outputs/ 폴더: Cowork 세션 임시 작업물, git 추적 불필요
+outputs/
+
+# --- 민감 정보 (2026-05-11 추가) ---
+# Google OAuth 클라이언트 시크릿 + 토큰
+client_secret*.json
+_unused_client_secret*.json
+token.json
+token_*.json
+_unused_token*.json
+sheets_id.json
+
+# 환경변수 파일 (.env.example만 추적, 실제 .env는 제외)
+.env
+.env.local
+.env.*.local
+
+# --- 명시적으로 추적하는 항목 (위 패턴에 걸려도 살림) ---
+!.env.example
+# !raw/notes/.gitkeep
+
+raw/Catalog/*.pdf
+raw/Catalog/*.json
+
+*.zip
+
+# --- 대용량 미디어 파일 (2026-07-08 추가) ---
+# repo 비대화로 인한 git push 타임아웃 재발 방지 (2026-06-30~07-07 사이 반복 발생·해결 이력 참조)
+# raw/report/6.al엔드밀/가공 영상/ (181MB, mp4 5건)에서 처음 발견 — 로컬에는 보존, git 추적만 제외
+*.mp4
+*.mov
+*.avi
+
+# --- raw/report 대용량 원본 파일 (2026-07-09 추가) ---
+# 2026-07-09 한경준님이 PowerShell에서 직접 git add . 실행(commit f378aff, 이미 push됨) →
+# raw/report 전체(1.2GB, jpg 287·xlsx 24·hwp 11·pdf 16·tif 6·docx 1건 등)가 처음으로 git에 추적됨.
+# .git 1.1GB로 증가. 기존 push 타임아웃 이력(2026-06-30~07-08, .git 830MB 시점에도 반복 발생)과
+# 동일 패턴 재발 위험 판단. 이미 push된 커밋 자체는 되돌리지 않고(기존 이력 유지), 향후
+# 추가·수정되는 대용량 원본만 git 추적에서 제외.
+# ⚠️ 새로 추가되는 파일만 막음 — 이미 추적 중인 기존 파일은 `git rm --cached`로 별도 해제 필요(아래 안내).
+raw/report/**/*.jpg
+raw/report/**/*.jpeg
+raw/report/**/*.png
+raw/report/**/*.tif
+raw/report/**/*.tiff
+raw/report/**/*.pdf
+raw/report/**/*.hwp
+raw/report/**/*.db
+
+# --- 로컬 전용 폴더 (업로드 금지) ---
+# _local/ : GitHub에 올리면 안 되는 파일 보관 전용
+# 어떤 파일을 넣어도 git이 절대 추적하지 않음
+_local/
+
+# --- 삭제 대기 폴더 (Cowork가 device_bash로 삭제 불가할 때 임시 이동) ---
+# 2026-08-25 추가: 중복 파일이 커밋에 실려 가는 것을 방지
+_to_delete/
+
+# --- 공수 DB 중간 산출물 (재생성 가능) ---
+outputs/worklog_parsed/
+
+# --- 
+
+# --- 작업환경측정 결과보고서 (사업장 주소·대표자명·측정자 실명·자격등록번호 포함) ---
+raw/작업환경측정/*작업환경측정결과보고서.pdf
+raw/작업환경측정/*작업환경측정결과서*.pdf
+
+# =====================================================
+# raw/ 원본 자료 전체 추적 제외 (2026-08-28)
+# 사유: 저장소가 Public이고 GitHub Pages가 리포지토리 루트를 서빙하므로
+#       raw/ 파일이 https://HanKyungJun.github.io/koreatooling-portal/raw/... 로
+#       직접 다운로드된다. 실거래 단가·금융문서·개인정보가 포함돼 있어 제외한다.
+# 영향 없음: generate.py 는 *.html·*.css·*.js·dist/ 만 git add 한다.
+# 원본은 로컬 디스크와 사내 서버(\192.168.0.252\ToolKorea\...)에 보관.
+# =====================================================
+raw/
+
+# =====================================================
+# wiki/_private/ 추적 제외 (2026-08-28)
+# 사유: 실거래 단가·거래처 실명이 들어 있는데 추적 중이었고,
+#       https://HanKyungJun.github.io/koreatooling-portal/wiki/_private/... 로
+#       200 응답이 확인됐다(공개 노출). raw/ 건과 동일 구조.
+#       파일 자체에 "[대외비] git 추적 제외 대상"이라 적혀 있었으나 제외되지 않았다.
+# 영향 없음: 포털 생성물(*.html·*.css·*.js·dist/)과 무관.
+# =====================================================
+wiki/_private/
+
+# 일일보고 소급 재생성 시 만든 백업 사본 (2026-08-31)
+# 사유: 원본과 동일한 xlsx가 저장소에 중복 적재되는 것을 막는다. 로컬에는 그대로 보존.
+wiki/reports/daily/_구버전_*/
+
+# Claude Code worktree 잔재 (2026-09-01, .git/info/exclude 에서 이관)
+.claude/worktrees/

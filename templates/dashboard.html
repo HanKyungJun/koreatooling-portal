@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>재연마 현황판</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #1a1a2e; }
+
+    header {
+      background: linear-gradient(135deg, #1a73e8, #0d47a1);
+      color: white; padding: 16px 32px;
+      display: flex; align-items: center; gap: 16px;
+    }
+    header h1 { font-size: 1.3rem; font-weight: 700; }
+    .header-meta { margin-left: auto; font-size: 0.8rem; opacity: 0.8; text-align: right; }
+    .header-meta span { display: block; }
+
+    .btn-refresh {
+      padding: 8px 18px; background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.5); border-radius: 6px;
+      color: white; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-refresh:hover { background: rgba(255,255,255,0.35); }
+    .btn-refresh:disabled { opacity: 0.5; cursor: default; }
+
+    .nav-link { color: rgba(255,255,255,0.7); font-size: 0.8rem; text-decoration: none; }
+    .nav-link:hover { color: white; }
+
+    main { max-width: 1100px; margin: 28px auto; padding: 0 16px; }
+
+    /* ── 섹션 제목 ── */
+    .section-title {
+      font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: #888; margin-bottom: 12px;
+    }
+
+    /* ── KPI 카드 ── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px; margin-bottom: 28px;
+    }
+    .kpi-card {
+      background: white; border-radius: 12px;
+      padding: 18px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      border-left: 4px solid #1a73e8;
+    }
+    .kpi-card.gx7   { border-color: #34a853; }
+    .kpi-card.total { border-color: #fbbc04; }
+    .kpi-card.cum   { border-color: #9c27b0; }
+
+    .kpi-label { font-size: 0.78rem; color: #888; font-weight: 600; margin-bottom: 6px; }
+    .kpi-value { font-size: 2rem; font-weight: 700; color: #1a1a2e; line-height: 1; }
+    .kpi-unit  { font-size: 0.85rem; color: #aaa; margin-left: 2px; }
+    .kpi-sub   { font-size: 0.78rem; color: #aaa; margin-top: 6px; }
+    .kpi-avg   { font-size: 0.78rem; color: #1a73e8; margin-top: 4px; font-weight: 600; }
+
+    /* ── 차트 카드 ── */
+    .chart-card {
+      background: white; border-radius: 12px;
+      padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      margin-bottom: 28px;
+    }
+    .chart-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .chart-title { font-size: 1rem; font-weight: 700; }
+    .chart-sub   { font-size: 0.8rem; color: #888; margin-top: 2px; }
+
+    .top-filter { display: flex; gap: 6px; }
+    .top-filter button {
+      padding: 4px 12px; border-radius: 20px; border: 1px solid #ddd;
+      font-size: 0.78rem; cursor: pointer; background: white; color: #555;
+      transition: all 0.15s;
+    }
+    .top-filter button.active { background: #1a73e8; border-color: #1a73e8; color: white; }
+
+    .chart-wrap { position: relative; height: 320px; }
+
+    /* ── 테이블 ── */
+    .table-wrap { overflow-x: auto; margin-top: 8px; }
+    table {
+      width: 100%; border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+    thead th {
+      background: #f8f9fa; padding: 9px 10px;
+      text-align: center; font-weight: 700; color: #555;
+      border-bottom: 2px solid #e0e0e0; white-space: nowrap;
+    }
+    thead th:nth-child(2) { text-align: left; }
+    tbody td {
+      padding: 8px 10px; text-align: center;
+      border-bottom: 1px solid #f0f0f0; white-space: nowrap;
+    }
+    tbody td:nth-child(2) { text-align: left; max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+    tbody tr:hover { background: #f8f9fa; }
+    tbody tr:last-child td { font-weight: 700; background: #f0f4ff; border-top: 2px solid #c5d8ff; }
+    .rank-badge {
+      display: inline-block; width: 22px; height: 22px; line-height: 22px;
+      border-radius: 50%; font-size: 0.72rem; font-weight: 700;
+      text-align: center; background: #e8f0fe; color: #1a73e8;
+    }
+    .rank-badge.gold   { background: #fff3cd; color: #b8860b; }
+    .rank-badge.silver { background: #f0f0f0; color: #666; }
+    .rank-badge.bronze { background: #fde8d8; color: #a0522d; }
+    td.zero { color: #ccc; }
+    td.hi   { font-weight: 700; color: #1a73e8; }
+
+    /* ── 로딩/에러 ── */
+    .status-bar {
+      text-align: center; padding: 60px 20px;
+      color: #aaa; font-size: 0.9rem;
+    }
+    .spinner-large {
+      width: 36px; height: 36px; border: 3px solid #e0e0e0;
+      border-top-color: #1a73e8; border-radius: 50%;
+      animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-box {
+      background: #fce8e6; border-radius: 8px; padding: 16px 20px;
+      color: #c5221f; font-size: 0.85rem; margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>재연마 현황판</h1>
+    <a class="nav-link" href="/">← Drive 관리로 돌아가기</a>
+  </div>
+  <div class="header-meta">
+    <span id="fetch-time">로딩 중…</span>
+    <span id="daily-file"></span>
+  </div>
+  <button class="btn-refresh" id="btn-refresh" onclick="loadData()">새로고침</button>
+</header>
+
+<main>
+  <div id="error-area"></div>
+
+  <!-- KPI 카드 -->
+  <div class="section-title">오늘 실적</div>
+  <div class="kpi-grid" id="kpi-grid">
+    <div class="status-bar"><div class="spinner-large"></div>Drive에서 데이터 가져오는 중…</div>
+  </div>
+
+  <!-- 출하현황 차트 -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <div>
+        <div class="chart-title">2025 납품처별 월별 출하현황</div>
+        <div class="chart-sub" id="chart-sub">데이터 로딩 중</div>
+      </div>
+      <div class="top-filter" style="display:none">
+        <button id="btn-top5">상위 5</button>
+        <button id="btn-top10">상위 10</button>
+        <button id="btn-topAll">전체</button>
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="shippingChart"></canvas>
+    </div>
+
+    <!-- 상위 10 테이블 -->
+    <div class="table-wrap" style="margin-top:24px;">
+      <table id="shipping-table">
+        <thead><tr><th>순위</th><th>납품처</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<script>
+const COLORS = [
+  '#1a73e8','#34a853','#fbbc04','#ea4335',
+  '#9c27b0','#00acc1','#ff7043','#43a047',
+  '#8d6e63','#546e7a','#bdbdbd'
+];
+
+let shippingData = null;
+let chartInstance = null;
+const TOP_N = 10;
+
+async function loadData() {
+  const btn = document.getElementById('btn-refresh');
+  btn.disabled = true;
+  btn.textContent = '로딩 중…';
+  document.getElementById('error-area').innerHTML = '';
+
+  try {
+    const res = await fetch('/api/dashboard-data');
+    const data = await res.json();
+
+    if (!data.ok) {
+      showError(data.error || '알 수 없는 오류');
+      return;
+    }
+
+    document.getElementById('fetch-time').textContent = '갱신: ' + data.fetched_at;
+    document.getElementById('daily-file').textContent = data.daily_file || '';
+
+    renderKPI(data.daily);
+    shippingData = data.shipping;
+    renderChart();
+  } catch (e) {
+    showError('서버 연결 실패: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '새로고침';
+  }
+}
+
+function showError(msg) {
+  document.getElementById('error-area').innerHTML =
+    `<div class="error-box">⚠ ${msg}</div>`;
+}
+
+function renderKPI(daily) {
+  const grid = document.getElementById('kpi-grid');
+  if (!daily) {
+    grid.innerHTML = '<div style="color:#aaa;font-size:0.85rem;">일일보고 데이터 없음</div>';
+    return;
+  }
+
+  function minToHM(min) {
+    if (!min && min !== 0) return '-';
+    const h = Math.floor(min / 60), m = Math.round(min % 60);
+    return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  }
+  function pct(actual, avg) {
+    if (!avg || avg === 0) return '';
+    return ((actual / avg) * 100).toFixed(0) + '%';
+  }
+
+  const cards = [
+    {
+      cls: '',
+      label: 'FAST GRIND — 오늘 수량',
+      value: daily.fast.qty_actual ?? '-',
+      unit: '개',
+      sub: `가동: ${minToHM(daily.fast.time_actual)}`,
+      avg: daily.fast.qty_avg ? `일평균 ${daily.fast.qty_avg.toFixed(1)}개 기준 ${pct(daily.fast.qty_actual, daily.fast.qty_avg)}` : '',
+    },
+    {
+      cls: 'gx7',
+      label: 'GX7 — 오늘 수량',
+      value: daily.gx7.qty_actual ?? '-',
+      unit: '개',
+      sub: `가동: ${minToHM(daily.gx7.time_actual)}`,
+      avg: daily.gx7.qty_avg ? `일평균 ${daily.gx7.qty_avg.toFixed(1)}개 기준 ${pct(daily.gx7.qty_actual, daily.gx7.qty_avg)}` : '',
+    },
+    {
+      cls: 'total',
+      label: '합계 — 오늘 수량',
+      value: daily.total.qty_actual ?? '-',
+      unit: '개',
+      sub: `가동: ${minToHM(daily.total.time_actual)}`,
+      avg: '',
+    },
+    {
+      cls: 'cum',
+      label: '월 누계',
+      value: daily.cumulative ?? '-',
+      unit: '개',
+      sub: daily.cumulative_info ? String(daily.cumulative_info).replace(/\(.*?\)/g, '').trim() : '',
+      avg: '',
+    },
+  ];
+
+  grid.innerHTML = cards.map(c => `
+    <div class="kpi-card ${c.cls}">
+      <div class="kpi-label">${c.label}</div>
+      <div class="kpi-value">${c.value}<span class="kpi-unit">${c.unit}</span></div>
+      ${c.sub  ? `<div class="kpi-sub">${c.sub}</div>` : ''}
+      ${c.avg  ? `<div class="kpi-avg">${c.avg}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+function renderChart() {
+  if (!shippingData) return;
+
+  const { months, customers } = shippingData;
+  const top    = customers.slice(0, TOP_N);
+  const others = customers.slice(TOP_N);
+
+  const datasets = top.map((c, i) => ({
+    label: c.name,
+    data: c.monthly,
+    backgroundColor: COLORS[i % COLORS.length],
+    stack: 'stack',
+    borderWidth: 0,
+    borderRadius: 2,
+  }));
+
+  if (others.length > 0) {
+    const otherMonthly = months.map((_, mi) =>
+      others.reduce((s, c) => s + (c.monthly[mi] || 0), 0));
+    datasets.push({
+      label: `기타 (${others.length}개사)`,
+      data: otherMonthly,
+      backgroundColor: COLORS[COLORS.length - 1],
+      stack: 'stack',
+      borderWidth: 0,
+      borderRadius: 2,
+    });
+  }
+
+  const monthTotals = months.map((_, mi) =>
+    customers.reduce((s, c) => s + (c.monthly[mi] || 0), 0));
+  const grandTotal = monthTotals.reduce((a, b) => a + b, 0);
+  document.getElementById('chart-sub').textContent =
+    `연간 합계 ${grandTotal.toLocaleString()}개 | 납품처 ${customers.length}개사`;
+
+  const ctx = document.getElementById('shippingChart').getContext('2d');
+  if (chartInstance) chartInstance.destroy();
+
+  chartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: { labels: months, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { font: { size: 11 }, padding: 12, boxWidth: 14 },
+        },
+        tooltip: {
+          callbacks: {
+            footer(items) {
+              const monthIdx = items[0].dataIndex;
+              return `월합계: ${monthTotals[monthIdx].toLocaleString()}개`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { stacked: true, grid: { display: false } },
+        y: {
+          stacked: true,
+          beginAtZero: true,
+          ticks: { callback: v => v.toLocaleString() },
+          grid: { color: '#f0f0f0' },
+        },
+      },
+    }
+  });
+
+  renderTable(top, others, months, monthTotals);
+}
+
+function renderTable(top, others, months, monthTotals) {
+  const rankClass = i => i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+
+  // 월별 최댓값 (하이라이트 기준)
+  const colMax = months.map((_, mi) =>
+    Math.max(...top.map(c => c.monthly[mi] || 0)));
+
+  const thead = document.querySelector('#shipping-table thead tr');
+  thead.innerHTML = '<th>순위</th><th>납품처</th>' +
+    months.map(m => `<th>${m}</th>`).join('') +
+    '<th>연간합계</th>';
+
+  const tbody = document.querySelector('#shipping-table tbody');
+
+  const rows = top.map((c, i) => {
+    const cells = c.monthly.map((v, mi) => {
+      const cls = v === 0 ? 'zero' : v === colMax[mi] ? 'hi' : '';
+      return `<td class="${cls}">${v === 0 ? '-' : v.toLocaleString()}</td>`;
+    }).join('');
+    return `<tr>
+      <td><span class="rank-badge ${rankClass(i)}">${i + 1}</span></td>
+      <td title="${c.name}">${c.name}</td>
+      ${cells}
+      <td><strong>${c.total.toLocaleString()}</strong></td>
+    </tr>`;
+  });
+
+  // 기타 행
+  if (others.length > 0) {
+    const otherMonthly = months.map((_, mi) =>
+      others.reduce((s, c) => s + (c.monthly[mi] || 0), 0));
+    const otherTotal = otherMonthly.reduce((a, b) => a + b, 0);
+    const otherCells = otherMonthly.map(v =>
+      `<td class="${v === 0 ? 'zero' : ''}">${v === 0 ? '-' : v.toLocaleString()}</td>`).join('');
+    rows.push(`<tr>
+      <td><span class="rank-badge" style="background:#eee;color:#999">기타</span></td>
+      <td>${others.length}개사 합산</td>
+      ${otherCells}
+      <td><strong>${otherTotal.toLocaleString()}</strong></td>
+    </tr>`);
+  }
+
+  // 합계 행
+  const totalCells = monthTotals.map(v => `<td>${v.toLocaleString()}</td>`).join('');
+  const grandTotal = monthTotals.reduce((a, b) => a + b, 0);
+  rows.push(`<tr>
+    <td colspan="2">합계</td>
+    ${totalCells}
+    <td>${grandTotal.toLocaleString()}</td>
+  </tr>`);
+
+  tbody.innerHTML = rows.join('');
+}
+
+// 자동 새로고침 10분
+loadData();
+setInterval(loadData, 10 * 60 * 1000);
+</script>
+</body>
+</html>
