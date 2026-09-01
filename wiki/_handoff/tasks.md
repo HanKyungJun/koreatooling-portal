@@ -34,7 +34,21 @@
   - 관련: decisions.md **2026-08-31 (6)**, `raw/단가표/`
   - ⚠️ 단가·금액은 위키 미기재 원칙 유지 — 원본 파일 참조.
 
-- [ ] **🔴 공개 노출 이력 2건 — ✅ D안(저장소 갈아타기) 확정, 2026-09 초 실행 대기** (P1, 2026-08-28 등재, **2026-08-31 방향 확정**) — `raw/`(사내 자료, 08-28 오전 차단)와 `wiki/_private/`(**거래처 실거래 단가·실명 3사**, 08-28 오후 차단) 둘 다 추적은 끊겼으나 **과거 커밋에는 남아 있다.** 커밋을 파면 여전히 접근 가능하다.
+- [x] **✅ 공개 노출 이력 2건 — D안 실행 완료 (2026-09-01)** (P1, 2026-08-28 등재, 2026-08-31 방향 확정, **2026-09-01 실행·검증 완료**)
+  - **결과**: archive 저장소 Private 격리(420커밋) · 새 공개 저장소 `eaf8e6f` **481파일 / 53 MB**(옛 940.1 MB 대비 −94%) · 포털 URL 불변 · `generate.py` 수정 0줄. 검증 4건 통과(포털 200 · dashboard 200 · `_private` 404 · `raw` 404), archive 시크릿 창 404.
+  - **실행 중 함정 2건 발견·회피**: ⓐ`.git/info/exclude` 소멸(§0-A 선결 조치로 처리) ⓑ백업 `.git-archive-backup` 이 `git add -A` 에 통째로 잡힘 — **8,598 파일 스테이징을 커밋 직전 적발**, 백업을 작업 트리 밖으로 이동해 해결.
+  - ⚠️ **잔여 리스크는 변함없음** — 이미 공개됐던 60일/112일은 되돌릴 수 없고 실제 열람 여부는 확인 불가.
+  - ⚠️ **백업 3중 유지 중** — 정상 동작 1~2주 확인 전까지 삭제 금지. → 아래 신규 항목 참조.
+  - 상세: decisions.md **2026-09-01 (2)**, [[_handoff/runbook-저장소-갈아타기-D안]]
+
+- [ ] **🗓 D안 사후 정리 — 백업 3중 해제 판단 (2026-09 중순)** (P3, 2026-09-01 등재) — 새 저장소가 1~2주 정상 동작하면 백업을 정리한다. **그 전에는 어느 것도 지우지 않는다.**
+  - 담당: 한경준
+  - **대상**: ⓐ`Desktop\cnc-wiki-git-archive-backup`(옛 `.git`) ⓑ`Desktop\koreatooling-portal-backup.git`(미러 1.35 GB) ⓒGitHub `koreatooling-portal-archive`(Private)
+  - **⚠️ ⓒ는 남긴다** — 위키가 인용하는 커밋 SHA(`9a9aac2`·`b292878`·`40987e6`·`59cdae9` 등)의 **증거 재현이 여기에 달려 있다**(D안을 A안보다 우위로 판단한 근거 ②ⓑ). 보존 기간은 챗 논의 대상.
+  - **판단 기준**: 16:00 배치 10회 이상 무오류 + 포털 정상 + Drive 동기화 정상
+  - 관련: decisions.md 2026-09-01 (2) ⑦, 2026-08-31 ②ⓑ
+
+- [x] ~~**🔴 공개 노출 이력 2건 — D안 확정, 실행 대기**~~ (아래는 실행 전 기록 — 삭제하지 않음) — `raw/`(사내 자료, 08-28 오전 차단)와 `wiki/_private/`(**거래처 실거래 단가·실명 3사**, 08-28 오후 차단) 둘 다 추적은 끊겼으나 **과거 커밋에는 남아 있다.** 커밋을 파면 여전히 접근 가능하다.
   - **✅ 채택 — D안(저장소 갈아타기)**: ⓐ기존 저장소를 `koreatooling-portal-archive` 로 rename → ⓑ**Private 전환**(406커밋 통째 비공개) → ⓒ새 공개 저장소를 **원래 이름**으로 생성 → ⓓ현재 파일 532개만 커밋 1개로 push → ⓔPages 활성화. **코드 수정 0줄**(`generate.py:31` 이 `os.getenv('GITHUB_REPO','koreatooling-portal')`), **포털 URL 불변**, **force push 불필요**, 소요 30분~1시간. **실행 절차·롤백·검증 체크리스트: [[_handoff/runbook-저장소-갈아타기-D안]]**
   - **📌 아래 A·B·C는 미채택 이력**(삭제하지 않음, 사유는 decisions.md 2026-08-31 ⑧)
   - **A안 — `git filter-repo` 히스토리 재작성**: 두 건을 한 번에 제거. 약 380커밋 재작성 + force push. 클론본이 있으면 전부 재클론 필요.
@@ -53,7 +67,9 @@
   - **검토안**: Git Credential Manager 사용, 또는 push 시에만 일회성 URL 사용 후 `remote set-url` 로 토큰 제거.
   - 관련: `generate.py` 688·726행, decisions.md 2026-08-31
 
-- [ ] **`.git` 정리 — gc 미실행 + worktree 사본 3건** (P3, 2026-08-31 등재) — `git count-objects -vH` 실측: loose object **7,918개 / 1.35 GiB**, in-pack 283개 / **82.33 KiB**, `tmp_obj_*` **garbage 52건 / 431.63 KiB**. 즉 **gc가 사실상 돌지 않았고**, 중단된 git 작업의 임시객체가 남아 있다(08-28 `index.lock` 사태와 같은 계열).
+- [x] **✅ `.git` 정리 — 2026-09-01 D안 실행으로 종결** (P3, 2026-08-31 등재) — `git init` 으로 `.git` 이 새로 생성돼 loose object 7,918개·garbage 52건 문제가 소멸했고, `.claude/worktrees/` **4개(실측 — 기존 표기 3건은 오기) · 1.4 GB** 는 §0-A에서 제거하고 제외 규칙을 `.gitignore` 로 이관했다. 로컬 브랜치 `claude/*` 4개도 함께 소멸. ⚠️ 옛 `.git` 은 `Desktop\cnc-wiki-git-archive-backup` 에 보존 중 — 「D안 사후 정리」 항목 참조. (이하 원문)
+
+- [ ] ~~**`.git` 정리 — gc 미실행 + worktree 사본 3건**~~ (원문 보존, P3, 2026-08-31 등재) — `git count-objects -vH` 실측: loose object **7,918개 / 1.35 GiB**, in-pack 283개 / **82.33 KiB**, `tmp_obj_*` **garbage 52건 / 431.63 KiB**. 즉 **gc가 사실상 돌지 않았고**, 중단된 git 작업의 임시객체가 남아 있다(08-28 `index.lock` 사태와 같은 계열).
   - 담당: 한경준
   - **조치**: PowerShell에서 `git gc --prune=now`. ⚠️ 저장소 갈아타기(D안) 실행 시 `.git` 을 새로 만들므로 자동 해소되나, 백업 `.git-archive-backup` 정리 전까지는 유효한 항목.
   - **함께**: `.claude/worktrees/` 아래 옛 `generate.py` 사본 3건(`hardcore-hermann-b67cf1`·`interesting-bell-80d5fb`·`jolly-bohr-6d6ceb`) — 저장소 이름이 기본값으로 하드코딩돼 있어 혼동 소지. 로컬 브랜치 `claude/*` 4개도 함께 정리 대상.

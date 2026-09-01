@@ -3,6 +3,25 @@
 > 무엇을(What), 왜(Why), 출처(Where)를 **시간 역순(최신이 맨 위)** 으로 기록합니다.
 > 챗에서 결정된 내용도 반드시 여기로 옮겨야 Code/Cowork가 따라옵니다.
 
+## 2026-09-01 (2): **D안(저장소 갈아타기) 실행 완료** — 노출 히스토리 비공개 격리, 새 공개 저장소 481파일
+
+- 결정: 2026-08-31에 확정한 D안을 **실행 완료**한다. 옛 저장소는 `koreatooling-portal-archive`(Private, 420커밋)로 격리됐고, 포털은 **원래 이름의 새 공개 저장소**에서 커밋 1개(`eaf8e6f`, 481파일)로 다시 시작한다. 롤백 수단 3중은 당분간 유지한다.
+  **① ✅ 결과** — 새 저장소 `koreatooling-portal`(Public) · 커밋 **`eaf8e6f`** · **481파일 / 53 MB**. 옛 저장소 원격 크기가 **940.1 MB**였으므로 **약 94% 감소** [실측 검증]. 포털 URL `HanKyungJun.github.io/koreatooling-portal/` **불변**, `generate.py` **코드 수정 0줄**.
+  **② ✅ 검증 통과** — 포털 루트 **200** · `dashboard.html` **200** · `wiki/_private/소재-단가-이력.md` **404** · `raw/CNC 정보/` **404** · archive 저장소는 시크릿 창에서 **404**(비공개 확인). Task Scheduler 3개 재개 후 **Ready** [실측 검증].
+  **③ ✅ 런북 §5 미확인 3건 전부 해소** — ⓐ**저장소 이름 재사용 가능**(rename 리다이렉트가 옛 이름을 점유하지 않는다 — 미실측이던 최대 리스크) ⓑ**원격 실제 크기 940.1 MB**(GitHub API 403이 이번엔 뚫렸다) ⓒ**관련 예약 작업 6개**(정지 필요 3 / 무해 3).
+  **④ 🔴 실행 중 발견한 함정 1 — `.git/info/exclude` 소멸.** `.claude/worktrees/`(4개 · **1.4 GB**, 그중 **`raw/` 사본 1,654파일 / 1.39 GB**)가 `.gitignore` 가 아니라 **`.git/info/exclude` 로만** 제외돼 있었다. ⑤단계의 `git init` 은 `info/exclude` 를 새로 만들므로 이 규칙이 **소멸**한다. **선결 조치(§0-A)로 worktree 4개를 제거하고 규칙을 `.gitignore` 로 이관**해 막았다 [실측 검증]. 부수로 디스크 1.4 GB 확보, 런북 §6-2·tasks P3 항목 종결.
+  **⑤ 🔴 실행 중 발견한 함정 2 — 백업 `.git-archive-backup` 이 `git add -A` 에 통째로 잡힌다.** 런북 ⑤단계는 옛 `.git` 을 **작업 트리 안에** rename해 두라고 지시하는데, 그 순간 평범한 폴더가 되어 loose object 7,918개(1.35 GB)가 전부 스테이징된다. **실제로 8,598 파일이 스테이징됐고 커밋 직전에 잡혔다.** 그 object 안에는 **`raw/`·`wiki/_private/` 과거 blob이 그대로** 들어 있어, 커밋됐다면 **D안의 목적이 정반대로 무너질 뻔했다.**
+    - 🔴 **Cowork 검증 실수** — 유입 검사 패턴을 `raw/|_private|\.env|worktrees` 로만 짜서 **`.git-archive-backup` 을 빠뜨렸다.** 그 결과 ⓐ검사는 통과처럼 보였고, **파일 수(8,598)가 아니었으면 그대로 커밋됐다.** → **개수 확인이 패턴 검사보다 먼저다.**
+    - **조치**: 백업을 **작업 트리 밖**(`Desktop\cnc-wiki-git-archive-backup`)으로 이동. 런북 ⑤단계를 이 방식으로 개정했다.
+  **⑥ ✅ 추적 파일 534 → 481, 빠진 53건은 전부 정리 대상.** `git init` 으로 `.gitignore` 가 **기존 추적 파일에도 처음 적용**되면서 걸러진 것들이다 — `outputs/barcode_checker/` 빌드 산출물·exe 19 · `outputs/과제자료/` 31 · `__pycache__` 1 · `_to_delete/` 1 · `.claude/settings.local.json` 1. **포털 서빙 파일(`dist/` 17 · 루트 html/css/js · `.nojekyll`)과 위키 콘텐츠 358은 하나도 빠지지 않았고**, 「새로 추가됨」은 **0건**이다 [실측 검증 — 백업 미러 `ls-tree` 와 새 index `ls-files` 전수 대조]. 53건은 로컬 디스크와 archive 히스토리에 보존된다. **exe 바이너리가 공개 저장소에서 빠지는 부수 이득.**
+  **⑦ 백업은 3중으로 유지** — ⓐ`Desktop\cnc-wiki-git-archive-backup`(옛 `.git`) ⓑ`Desktop\koreatooling-portal-backup.git`(미러 1.35 GB, `--no-hardlinks` 로 생성 — 같은 드라이브 로컬 클론은 기본이 하드링크라 그러면 백업이 아니다) ⓒGitHub `koreatooling-portal-archive`(Private, 420커밋). **정상 동작 1~2주 확인 전까지 어느 것도 지우지 않는다.**
+  **⑧ ⚠️ 이 조치가 해결하지 못하는 것은 그대로다** — `wiki/_private/` 약 60일 · `raw/` 약 112일 공개돼 있었고 **실제 열람 여부는 확인 불가**. D안의 실효는 「없던 일로 만들기」가 아니라 **「앞으로 발견될 확률 저감」**이다(2026-08-31 ④ 재확인).
+  **⑨ Cowork git 판독 오탐 재확인** — 세션 초 Cowork(리눅스 마운트)에서 미커밋 **16건**으로 보였으나 PowerShell 실측은 **3건**이었다. CRLF 차이에 의한 오탐이며, **git 상태 판정은 PowerShell이 정답**이라는 기존 규칙이 실측으로 재확인됐다.
+- 근거: PowerShell 실행 로그 전 단계(`git worktree`·`git add`·`git commit`·`git push`·`Invoke-WebRequest`·`Get-ScheduledTask`), 백업 미러 `ls-tree` ↔ 새 index `ls-files` 전수 대조, GitHub API `repos` 조회 — 전부 실측.
+- ⚠️ 신뢰도: 실행 결과·검증 4건·파일 대조·크기는 **실측 검증**. 자동화 정상 여부는 **다음 16:00 배치까지 미확정** — `generate.py` 시험 실행과 실배치 로그로 확인 필요.
+- 출처: 챗 (한경준님 실행 + Cowork 절차·검증, 2026-09-01)
+- 영향: 저장소 2개(archive Private 신설·portal 재생성), `.gitignore`(`.claude/worktrees/` 이관), `wiki/_handoff/runbook-저장소-갈아타기-D안.md`(§0-A 신설·⑤단계 개정·§5 해소), tasks.md(노출 항목 종결·`.git` 정리 항목 종결). 로컬 파일은 **어느 것도 삭제하지 않음**.
+
 ## 2026-09-01: 8월 월간 통계 **확정** + 08-31 일일보고 신규 불일치 1건 정정 — **8월 마감**
 
 - 결정: 2026-08-31 (2) ⑦에서 「잠정」으로 남겨둔 8월 월간 통계를 **확정치로 갱신**하고, 그 과정에서 발견된 **08-31 일일보고 불일치 1건을 소급 재생성**해 정정한다. 이로써 8월 일일보고는 **18일 전부 원본과 일치**한다.

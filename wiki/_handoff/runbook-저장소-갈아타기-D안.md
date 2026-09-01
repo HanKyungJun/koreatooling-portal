@@ -21,6 +21,7 @@ updated: 2026-09-01
 | 예상 소요 | 30분~1시간 (①백업 클론 제외 — 별도 소요) |
 | 코드 수정 | **0줄** (저장소 이름을 유지하는 경우) |
 | 되돌리기 | 가능 — 원본이 archive 저장소 + 백업 클론 + `.git-archive-backup` 3중으로 남음 |
+| **실행 결과** | **✅ 2026-09-01 완료** — 새 저장소 `eaf8e6f` · 481파일 / 53 MB(옛 940.1 MB, −94%) · 검증 4건 통과. 상세는 decisions.md **2026-09-01 (2)** |
 
 ### 결과 상태
 
@@ -190,22 +191,57 @@ GitHub → New repository
 
 파일은 그대로 두고 **이력만** 새로 시작합니다. `.gitignore` 가 이미 있으므로 `raw/`·`wiki/_private/`·`.env` 는 자동 제외됩니다.
 
+> 🔴 **2026-09-01 개정 — 백업은 반드시 작업 트리 「밖」으로 옮긴다.**
+> 옛 절차는 `Rename-Item .git .git-archive-backup` 으로 **작업 트리 안에** 남기라고 했는데, 그 순간 그것은 `.git` 이 아닌 **평범한 폴더**가 되어 `git add -A` 가 loose object 7,918개(1.35 GB)를 **전부 스테이징**한다. 2026-09-01 실행에서 **8,598 파일이 스테이징됐고 커밋 직전에 잡혔다.** 그 object 안에는 **`raw/`·`wiki/_private/` 과거 blob이 그대로** 있어, 커밋됐다면 **D안의 목적이 정반대로 무너졌다.**
+
 ```powershell
 cd C:\Users\TOOLKOREA\Desktop\cnc-wiki
 
-# 5-1. 기존 .git 을 보존 (삭제 아님)
-Rename-Item .git .git-archive-backup
+# 5-1. 기존 .git 을 작업 트리 「밖」으로 보존 (삭제 아님)
+Move-Item .git ..\cnc-wiki-git-archive-backup
+Test-Path ..\cnc-wiki-git-archive-backup    # True
+Test-Path .\.git                            # False
 
 # 5-2. 새 이력 시작
 git init
 git branch -M main
+
+# 5-3. 커밋 신원 (새 .git 이라 로컬 config 가 비어 있음)
+git config user.name  "HanKyungJun"
+git config user.email "hzn2001@toolkorea.co.kr"
+git config core.quotepath false
+
 git add -A
+```
 
-# 5-3. ⚠️ 커밋 전 반드시 확인 — raw/ · wiki/_private/ 가 없어야 함
-git status --short | Select-String -Pattern "raw/|_private|\.env" 
-#   → 아무것도 출력되지 않아야 정상. 뭔가 나오면 중단하고 .gitignore 점검.
-git status --short | Measure-Object -Line     # 532 내외여야 함
+**🔴 커밋 전 3단 검증 — 순서를 지킬 것**
 
+```powershell
+# ⓑ 먼저 개수. 패턴 검사보다 이게 먼저다.
+(git status --short | Measure-Object -Line).Lines
+#   → 480 내외. 2,000 을 넘으면 즉시 중단 (백업·worktree 유입)
+
+# ⓐ 유입 검사 — .env.example 외에는 아무것도 나오지 않아야 정상
+git status --short | Select-String -Pattern "raw/|_private|archive-backup|\.git/|worktrees|__pycache__"
+
+# ⓒ 최상위 폴더 분포 — 낯선 항목이 있는지 눈으로
+git status --short | ForEach-Object { ($_ -split '\s+')[1] -split '/' | Select-Object -First 1 } |
+  Group-Object | Sort-Object Count -Descending | Select-Object -First 15 Count, Name
+
+# ⓓ 옛 저장소와 파일 목록 대조 — 무엇이 빠지는지 전수 확인
+git -C ..\koreatooling-portal-backup.git config core.quotepath false
+git -C ..\koreatooling-portal-backup.git ls-tree -r --name-only main | Sort-Object | Set-Content -Encoding UTF8 $env:TEMP\old.txt
+git ls-files | Sort-Object | Set-Content -Encoding UTF8 $env:TEMP\new.txt
+Compare-Object (Get-Content $env:TEMP\old.txt -Encoding UTF8) (Get-Content $env:TEMP\new.txt -Encoding UTF8)
+#   '<=' = 빠진 것(빌드산출물·캐시면 정상, 포털 서빙 파일이면 중단)
+#   '=>' = 새로 들어온 것(0건이어야 정상)
+```
+
+⚠️ **개수를 먼저 보는 이유**: 2026-09-01 실행에서 ⓐ 패턴에 `.git-archive-backup` 이 빠져 있어 **검사가 통과처럼 보였다.** 유입을 실제로 잡아낸 것은 **8,598이라는 숫자**였다.
+
+📌 **2026-09-01 실측 참고값** — 옛 저장소 추적 534 → 새 저장소 **481**. 차이 53건은 `git init` 으로 `.gitignore` 가 **기존 추적 파일에도 처음 적용**된 결과이며, 전부 빌드 산출물·캐시·`_to_delete`·개인 로컬 설정이었다. **포털 서빙 파일과 위키 콘텐츠는 하나도 빠지지 않았다.**
+
+```powershell
 git commit -m "init: 포털 저장소 재구성 (D안) - 이력은 koreatooling-portal-archive 참조"
 ```
 
@@ -271,7 +307,7 @@ foreach ($p in @("/", "/wiki/_private/%EC%86%8C%EC%9E%AC-%EB%8B%A8%EA%B0%80-%EC%
 | 중단 시점 | 되돌리는 법 |
 |---|---|
 | ①~④ 사이 | archive 저장소를 원래 이름으로 rename → Public 전환 → Pages 재설정 |
-| ⑤ 이후 | `Remove-Item .git -Recurse -Force` → `Rename-Item .git-archive-backup .git` → 위와 동일 |
+| ⑤ 이후 | `Remove-Item .git -Recurse -Force` → `Move-Item ..\cnc-wiki-git-archive-backup .git` → 위와 동일 |
 | 최악의 경우 | `koreatooling-portal-backup.git` (mirror)에서 재클론 후 push |
 
 ⚠️ **⑤에서 `.git` 을 삭제하지 말고 rename** 하는 이유가 이것입니다. 정상 동작 확인 전까지 `.git-archive-backup` 을 지우지 마세요.
@@ -299,4 +335,4 @@ foreach ($p in @("/", "/wiki/_private/%EC%86%8C%EC%9E%AC-%EB%8B%A8%EA%B0%80-%EC%
 ---
 
 작성: 2026-08-31 (Cowork) / 근거: decisions.md 2026-08-31
-개정: **2026-09-01** — §1-3 실측 반영(예약 작업 6개 표·관리자 권한), §5 미확인 2건 해소(원격 940.1 MB · 작업 목록), §0-A 선결 조치 신설(`.git/info/exclude` 소멸 함정), §5·§6 갱신
+개정: **2026-09-01** — ⑤단계 전면 개정(백업을 작업 트리 밖으로 · 커밋 전 3단 검증), §1-3 실측 반영(예약 작업 6개 표·관리자 권한), §5 미확인 2건 해소(원격 940.1 MB · 작업 목록), §0-A 선결 조치 신설(`.git/info/exclude` 소멸 함정), §5·§6 갱신
