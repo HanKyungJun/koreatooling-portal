@@ -14,6 +14,41 @@
 > 과거 기록을 찾을 때는 `wiki/_handoff/worklog-archive/` 전체를 grep 하세요.
 > 재정리: `python scripts/archive_handoff.py --apply`
 
+## 2026-09-02 (8) — Cowork · 🚨 공개 저장소 평문 자격증명 제거 + ANCA 모니터 중단 (세션 시작 점검 파생)
+
+**한 일**
+
+1. `/cnc-handoff` 세션 시작 점검 — context·decisions·tasks·worklog 4파일 판독, 현황 요약. **모순 없음.**
+2. ✅ **「price_audit.py + wiki/ 커밋」 항목은 이미 해소된 상태였다** — `cbb2201` 까지 커밋·푸시 완료, `origin/main..HEAD` 비어 있음. 3세션째 이월돼 있던 유령 항목.
+3. 미커밋 변경 1건(`scripts/anca-monitor/data/run_log.txt`)의 정체를 확인하다가 **아래 2건을 파생 발견.**
+4. 🚨 **`run_scraper.ps1` 평문 Gmail 앱 비밀번호 제거** — git 추적 파일이었고 포함 커밋은 `eaf8e6f`(D안 초기, Public 저장소). 평문 라인을 걷어내고 `.env` 경유로 전환(`anca_scraper.py` 가 이미 dotenv 로드 → 코드 수정 0줄). **UTF-8 BOM 저장**(PS 5.1 한글 주석 보존). 임시 백업 사본은 비밀번호를 지워 무해화.
+5. 🔴 **ANCA 중고장비 모니터 70일 전량 실패 확인** — `run_log.txt` 938행 전량 집계: 실행 **59회 / 성공 수집 0건**, 다아라 404×59 · 엔씨넷 SSL×59 · 기계뱅크 SSL×59 · SurplusRecord 403×58 · MachineTools 403×58. `hashes.json` = `{}`. **그런데 매번 「신규 매물 없음 → 완료」로 찍혔다.**
+6. `.gitignore` 에 `run_log.txt`·`hashes.json`·`*.bak_*` 등재(`*.log` 는 있었지만 확장자가 `.txt` 라 미적용).
+7. decisions.md **2026-09-02 (8)** ADR 작성, tasks.md 신규 4항목 등재 + **P0 ANCA 항목에 B안 경고 병기**.
+
+**결과 / 산출물**
+
+- `scripts/anca-monitor/run_scraper.ps1` — 평문 제거
+- `.gitignore` — 3줄 추가
+- `wiki/_handoff/decisions.md` — ADR 2026-09-02 (8)
+- `wiki/_handoff/tasks.md` — P0 1건 · P1 1건 · P2 2건 신규, P0 ANCA 항목 경고 병기
+
+**미완 · 블로커**
+
+- 🔴 **한경준님 조치 대기 — Gmail 앱 비밀번호 폐기(revoke) + 새 값 `.env` 등재.** 파일에서 지운 것만으로는 해결되지 않는다 (히스토리 잔존)
+- 🛑 ANCA 모니터 예약 작업 **Disable** (Task Scheduler, 작업 이름 확인 필요)
+- `git rm --cached` + 커밋 (PowerShell)
+- 저장소 Public 여부 **실물 재확인** — 기록 기준으로만 판단했다
+- 🔒 추적 파일 전체 시크릿 스캔 1회 (경로 패턴만으로는 못 잡는다)
+- 기존 이월분: ERP 업로드 · 정가표 2곳 판단 대기 · 금요일 점검 예약 재작성(**4세션째**)
+
+**챗으로 가져갈 질문**
+
+- P0 3건(ANCA 4개 항목 · GX7 로더 착수일 · 대표님 지시 3건)이 3주 이상 P0에 머물러 있다 — 우선순위 정의(「오늘 안」)와 어긋난다. 재분류할지
+- 「자동화의 이상 없음 출력에 성공 카운트를 함께 남긴다」를 CLAUDE.md 원칙으로 등재할지 (모니터·트리거·price_audit 3회 재발)
+
+---
+
 ## 2026-09-02 일일보고서 점검 — Cowork (스케줄 자동 실행, 09:10 KST)
 
 - 점검 범위: 최근 7영업일 (08-25 ~ 09-02)

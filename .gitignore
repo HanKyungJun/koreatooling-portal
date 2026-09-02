@@ -141,3 +141,9 @@ wiki/reports/daily/_구버전_*/
 
 # Claude Code worktree 잔재 (2026-09-01, .git/info/exclude 에서 이관)
 .claude/worktrees/
+
+# --- ANCA 중고장비 모니터 런타임 로그 (2026-09-02 추가) ---
+# 스크래퍼가 매 실행마다 append 하는 런타임 로그. 확장자가 .txt 라 위 `*.log` 패턴에 걸리지 않았다.
+scripts/anca-monitor/data/run_log.txt
+scripts/anca-monitor/data/hashes.json
+scripts/anca-monitor/*.bak_*
