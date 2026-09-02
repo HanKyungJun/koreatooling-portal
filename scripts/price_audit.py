@@ -140,7 +140,7 @@ class PriceList:
             if 1 <= r <= self.ws.max_row and band(self.ws.cell(r, c0).value) \
                and band(self.ws.cell(r, c0).value)[0] == seg[0][0]:
                 hdr_r = r; break
-        rows, cur = {}, None
+        rows, cur, npos = {}, None, [0]
         for r in range(tr + 1, min(tr + 1 + depth, self.ws.max_row + 1)):
             if self._is_title_row(r, tc, c0): break         # 다음 블록 시작
             g = l = None
@@ -155,6 +155,11 @@ class PriceList:
             if sum(1 for _, _, c in seg if isinstance(self.ws.cell(r, c).value, (int, float))) >= 3:
                 key = (cur or '') + ('2' if l == '2날' else '4' if l else '')
                 rows.setdefault(key or 'X', r)
+                # 라벨 없는 블록 대비 — 데이터 행을 위에서부터 순서대로 기록.
+                # 관례상 첫 행 = 2날, 둘째 행 = 4날 (초경 E/M 외경연삭 비코팅 블록의
+                # 명시 라벨 및 값 크기 관계로 확인, 2026-09-02)
+                rows['P%d' % npos[0]] = r
+                npos[0] += 1
         return seg, rows
 
     def gh(self, seg, row, dia):
@@ -186,31 +191,115 @@ class Blocks:
             if p is None: self.missing.append(pat)
             else: self.h[key] = pl.htable(*p)
         # 초경 라핑 — 세로형
-        V(('초경','코너볼','밑날','일반'),     r'초경 라핑 코너/볼.*밑날.*일반')
-        V(('초경','코너볼','밑날','고경도'),   r'초경 라핑 코너/볼.*밑날.*고경도')
-        V(('초경','평','밑날','일반'),         r'초경 라핑 평.*밑날.*일반')
-        V(('초경','평','밑날','고경도'),       r'초경 라핑 평.*밑날.*고경도')
-        V(('초경','코너볼','밑골수리','일반'),   r'초경 라핑 코너/볼.*밑골수리.*일반')
-        V(('초경','코너볼','밑골수리','고경도'), r'초경 라핑 코너/볼.*밑골수리.*고경도')
+        V(('초경','L코너볼','밑날','일반'),     r'초경 라핑 코너/볼.*밑날.*일반')
+        V(('초경','L코너볼','밑날','고경도'),   r'초경 라핑 코너/볼.*밑날.*고경도')
+        V(('초경','L평','밑날','일반'),         r'초경 라핑 평.*밑날.*일반')
+        V(('초경','L평','밑날','고경도'),       r'초경 라핑 평.*밑날.*고경도')
+        V(('초경','L코너볼','밑골수리','일반'),   r'초경 라핑 코너/볼.*밑골수리.*일반')
+        V(('초경','L코너볼','밑골수리','고경도'), r'초경 라핑 코너/볼.*밑골수리.*고경도')
         # ⚠️ 평 밑골수리는 좌·우 제목이 모두 (일반코팅) — 왼쪽=일반, 오른쪽=고경도로 본다
-        V(('초경','평','밑골수리','일반'),     r'초경 라핑 평.*밑골수리', 0)
-        V(('초경','평','밑골수리','고경도'),   r'초경 라핑 평.*밑골수리', 1)
+        V(('초경','L평','밑골수리','일반'),     r'초경 라핑 평.*밑골수리', 0)
+        V(('초경','L평','밑골수리','고경도'),   r'초경 라핑 평.*밑골수리', 1)
         # HSS — 가로형
-        H(('HSS','평','밑날','비코팅'),        r'^HSS 라핑 E/M 외경연삭$')
-        H(('HSS','평','밑날','코팅'),          r'^HSS 라핑 E/M 외경연삭 코팅$')
-        H(('HSS','코너볼','밑날','비코팅'),     r'HSS 코너R.*BALL.*밑날$')
-        H(('HSS','코너볼','밑날','코팅'),       r'HSS 코너R.*BALL.*밑날 코팅$')
-        H(('HSS','평','밑골수리','비코팅'),     r'^라핑 밑골수리 비코팅$')
-        H(('HSS','평','밑골수리','코팅'),       r'^라핑 평 밑골수리 코팅$')
-        H(('HSS','코너볼','밑골수리','비코팅'), r'HSS 라핑 BALL.*밑골수리 비코팅')
-        H(('HSS','코너볼','밑골수리','코팅'),   r'HSS 코너R.*밑골수리 코팅')
+        H(('HSS','L평','밑날','비코팅'),        r'^HSS 라핑 E/M 외경연삭$')
+        H(('HSS','L평','밑날','코팅'),          r'^HSS 라핑 E/M 외경연삭 코팅$')
+        H(('HSS','L코너볼','밑날','비코팅'),     r'HSS 코너R.*BALL.*밑날$')
+        H(('HSS','L코너볼','밑날','코팅'),       r'HSS 코너R.*BALL.*밑날 코팅$')
+        H(('HSS','L평','밑골수리','비코팅'),     r'^라핑 밑골수리 비코팅$')
+        H(('HSS','L평','밑골수리','코팅'),       r'^라핑 평 밑골수리 코팅$')
+        H(('HSS','L코너볼','밑골수리','비코팅'), r'HSS 라핑 BALL.*밑골수리 비코팅')
+        H(('HSS','L코너볼','밑골수리','코팅'),   r'HSS 코너R.*밑골수리 코팅')
+        # 골수리 = 외경연삭 (형상 무관 공통). 2026-09-02 골수리 887건 전수 일치로 확인
+        # ── 비라핑 (일반 품목) ─────────────────────────────
+        # ⚠️ 같은 제목이 c1/c15/c21/c27 에 4번 반복된다. c1 만 「정가」이고
+        #    나머지는 月수량 구간별 할인 적용가다(3행 라벨). nth=0 = 가장 왼쪽 = c1.
+        V(('초경','코너볼','밑날','일반'),   r'초경 BALL E/M, 코너R E/M 밑날 \(일반코팅\)', 0)
+        V(('초경','코너볼','밑날','고경도'), r'BALL, 코너R 밑날 \(고경도\)', 0)
+        V(('초경','평','밑날','일반'),       r'초경 FLAT E/M 밑날 \(일반코팅\)', 0)
+        V(('초경','평','밑날','고경도'),     r'초경 FLAT E/M 밑날 \(고경도\)', 0)
+        V(('초경','평','밑옆날','코팅'),     r'초경 FLAT E/M 밑옆날')
+        V(('초경','코너볼','밑옆날','코팅'), r'초경 BALL E/M, 코너R E/M 밑옆날')
+        # 외경연삭 = 단일 가공(밑날만/옆날만/골수리만) 단가 [사내 확인 2026-09-02]
+        H(('초경','*','외경','비코팅'), r'^초경 E/M 외경연삭$')
+        H(('초경','*','외경','일반'),   r'^초경 E/M 외경연삭_일반코팅$')
+        H(('초경','*','외경','고경도'), r'^초경 E/M 외경연삭_고경도코팅$')
+        H(('HSS','*','외경','비코팅'),  r'^HSS E/M 외경연삭$')
+        H(('HSS','*','외경','코팅'),    r'^HSS E/M 외경연삭 코팅$')
+        H(('HSS','평','밑옆날','비코팅'),   r'^HSS 밑옆날 비코팅$')
+        H(('HSS','평','밑옆날','코팅'),     r'^HSS 밑옆날 코팅$')
+        H(('HSS','코너볼','밑옆날','비코팅'), r'^HSS 코너R E/M, BALL E/M 밑옆날 비코팅$')
+        H(('HSS','코너볼','밑옆날','코팅'),   r'HSS 코너R E/M, BALL E/M,\s+밑옆날 코팅')
+        H(('초경','*','골수리','비코팅'), r'^초경 라핑 E/M 외경연삭$')
+        H(('초경','*','골수리','코팅'),   r'^초경 라핑 E/M 외경연삭 코팅$')
+        H(('HSS','*','골수리','비코팅'),  r'^HSS 라핑 E/M 외경연삭$')
+        H(('HSS','*','골수리','코팅'),    r'^HSS 라핑 E/M 외경연삭 코팅$')
 
     def expect(self, mat, shape, part, coat, blade, dia, **_):
         """기대 정가. 매핑 대상이 아니면 None (= 검사 제외)."""
         n = '2' if blade == 2 else '4'          # ★ 3날 이상은 전부 4날 행
         pt = '밑골수리' if part in ('밑골수리', '밑옆날', '밑골수리날') else part
         lap = shape.startswith('라핑')
-        fam = '코너볼' if shape in ('라핑볼', '라핑코너', '볼', '코너') else '평'
+        fam = 'L코너볼' if shape in ('라핑볼', '라핑코너') else 'L평'
+        # ── 비라핑(일반 품목) ─────────────────────────────
+        if not lap:
+            fam2 = '코너볼' if shape in ('볼', '코너') else '평' if shape == '평' else None
+            if fam2:
+                # 초경 밑날 — 전용 블록
+                if mat == '초경' and pt == '밑날':
+                    k = (mat, fam2, '밑날', '고경도' if coat == '고경도코팅' else '일반')
+                    if k in self.v:
+                        seg, cols = self.v[k]
+                        col = cols.get('비코팅' if coat == '비코팅' else '코팅', {}).get(n)
+                        if col: return self.pl.gv(seg, col, dia)
+                    return None
+                # 초경 밑옆날 — 한 블록에 비코팅/일반/고경도가 모두 있다
+                if mat == '초경' and pt == '밑옆날':
+                    k = (mat, fam2, '밑옆날', '코팅')
+                    if k in self.v:
+                        seg, cols = self.v[k]
+                        g = {'비코팅': '비코팅', '일반코팅': '일반 코팅', '고경도코팅': '고경도 코팅'}.get(coat)
+                        col = cols.get(g, {}).get(n) if g else None
+                        if col: return self.pl.gv(seg, col, dia)
+                    return None
+                # HSS 밑옆날 — 형상별 전용 블록
+                if mat == 'HSS' and pt == '밑옆날':
+                    k = (mat, fam2, '밑옆날', '비코팅' if coat == '비코팅' else '코팅')
+                    if k in self.h and self.h[k][0]:
+                        seg, rows = self.h[k]
+                        r = rows.get(n) if coat == '비코팅' else \
+                            rows.get(('일반' if coat == '일반코팅' else '고경도') + n)
+                        if r: return self.pl.gh(seg, r, dia)
+                    return None
+                # 단일 가공(밑날만/옆날만/골수리만) = 외경연삭 표 [사내 확인 2026-09-02]
+                if pt in ('옆날', '골수리') or (mat == 'HSS' and pt == '밑날' and fam2 == '평'):
+                    if mat == '초경':
+                        g = {'비코팅': '비코팅', '일반코팅': '일반', '고경도코팅': '고경도'}.get(coat)
+                        k = (mat, '*', '외경', g)
+                    else:
+                        k = (mat, '*', '외경', '비코팅' if coat == '비코팅' else '코팅')
+                    if k in self.h and self.h[k][0]:
+                        seg, rows = self.h[k]
+                        if mat == '초경':
+                            r = rows.get(n) or rows.get('P0' if n == '2' else 'P1') or rows.get('X')
+                        else:
+                            r = rows.get(n) if coat == '비코팅' else \
+                                rows.get(('일반' if coat == '일반코팅' else '고경도') + n)
+                        if r: return self.pl.gh(seg, r, dia)
+                    return None
+            return None
+
+        # 골수리 = 외경연삭. 형상 무관 공통이고 날수 구분도 없다.
+        if pt == '골수리' and lap:
+            k = (mat, '*', '골수리', '비코팅' if coat == '비코팅' else '코팅')
+            if k not in self.h: return None
+            seg, rows = self.h[k]
+            if not seg: return None
+            if coat == '비코팅':
+                r = rows.get('X') or rows.get('비코팅') or rows.get('4') or rows.get('2')
+            else:
+                g = '일반' if coat == '일반코팅' else '고경도'
+                r = rows.get(g) or rows.get(g + '4') or rows.get(g + '2')
+            return self.pl.gh(seg, r, dia) if r else None
         if mat == '초경' and lap and pt in ('밑날', '밑골수리'):
             k = (mat, fam, pt, '고경도' if coat == '고경도코팅' else '일반')
             if k not in self.v: return None
