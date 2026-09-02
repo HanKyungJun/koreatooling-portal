@@ -211,6 +211,33 @@ class PriceList:
                 d.setdefault('S', axis_for(c))
         return seg, alias_groups(cols)
 
+    def bigtable(self, tr, tc, depth=12):
+        """블록 안에 딸린 **대구경 소구간 표**.
+        예) 초경 FLAT E/M 밑날 블록의 `30미만`·`31이상` 라벨 + 오른쪽 2열(2날 / 3,4,6날).
+        · 라벨 열은 날수 열들보다 오른쪽에 있다 → 그 조건으로 본표와 구분한다
+        · **코팅 구분이 없다** (비코팅·일반코팅 품목이 같은 값을 쓴다 — 2026-09-02 실측 확인)
+        반환: (구간, {'2': 열, '4': 열}) / 없으면 (None, {})"""
+        # ⚠️ 오른쪽 옆 블록까지 넘어가면 옆 블록(고경도)의 소구간 표를 읽는다 → 경계를 먼저 막는다
+        c_end = tc + 8
+        for c in range(tc + 1, min(tc + 12, self.ws.max_column) + 1):
+            v = self.ws.cell(tr, c).value
+            if isinstance(v, str) and len(v.strip()) > 8:
+                c_end = c - 1; break
+        blade_cols = [c for c in range(tc, c_end + 1)
+                      if isinstance(self.ws.cell(tr + 2, c).value, str)
+                      and BLADE.match(str(self.ws.cell(tr + 2, c).value).strip())]
+        if not blade_cols: return None, {}
+        c_from = max(blade_cols) + 1
+        for c in range(c_from, min(c_end, c_from + 6) + 1):
+            seg = []
+            for r in range(tr + 1, min(tr + 1 + depth, self.ws.max_row + 1)):
+                b = band(self.ws.cell(r, c).value)
+                if b and b[0] <= 300 and isinstance(self.ws.cell(r, c).value, str) \
+                   and isinstance(self.ws.cell(r, c + 1).value, (int, float)):
+                    seg.append((b[0], b[1], r))
+            if len(seg) >= 2: return seg, {'2': c + 1, '4': c + 2}
+        return None, {}
+
     def gvn(self, blk, group, n, dia):
         """세로형 블록에서 그룹·날수·직경으로 값 조회 (그룹 전용 직경 축 사용)."""
         if not blk: return None
@@ -339,6 +366,13 @@ class Blocks:
         H(('HSS','평','밑옆날','코팅'),     r'^HSS 밑옆날 코팅$')
         H(('HSS','코너볼','밑옆날','비코팅'), r'^HSS 코너R E/M, BALL E/M 밑옆날 비코팅$')
         H(('HSS','코너볼','밑옆날','코팅'),   r'HSS 코너R E/M, BALL E/M,\s+밑옆날 코팅')
+        # 리머 — 형상 계열이 따로다 (평·코너볼 어디에도 안 들어간다)
+        V(('초경','리머','밑날','일반'), r'^초경 리머 E/M 밑날( \(일반코팅\))?$')
+        H(('HSS','리머','밑날','비코팅'), r'^HSS 리머 E/M 밑날 비코팅$')
+        H(('HSS','리머','밑날','코팅'),   r'^HSS 리머 E/M 밑날 코팅$')
+        # 초경 평 밑날 블록에 딸린 대구경 소구간 표 (30미만/31이상 × 2날/3,4,6날)
+        pos = pl.find(r'^초경 FLAT E/M 밑날( \(일반코팅\))?$', 0)
+        if pos: self.v[('초경','평','밑날','대구경')] = pl.bigtable(*pos); self.at[('초경','평','밑날','대구경')] = pos
         H(('초경','*','골수리','비코팅'), r'^초경 라핑 E/M 외경연삭$')
         H(('초경','*','골수리','코팅'),   r'^초경 라핑 E/M 외경연삭 코팅$')
         H(('HSS','*','골수리','비코팅'),  r'^HSS 라핑 E/M 외경연삭$')
@@ -357,13 +391,31 @@ class Blocks:
         fam = 'L코너볼' if shape in ('라핑볼', '라핑코너') else 'L평'
         # ── 비라핑(일반 품목) ─────────────────────────────
         if not lap:
+            # 리머 — 전용 블록. 초경은 세로형(비코팅/코팅), HSS는 가로형(비코팅/코팅 블록 분리)
+            if shape == '리머' and pt == '밑날':
+                if mat == '초경':
+                    g = '비코팅' if coat == '비코팅' else '코팅'
+                    return self.pl.gvn(self.v.get((mat, '리머', '밑날', '일반')), g, n, dia)
+                k = (mat, '리머', '밑날', '비코팅' if coat == '비코팅' else '코팅')
+                if k in self.h and self.h[k][0]:
+                    seg, rows = self.h[k]
+                    r = rows.get(n) or rows.get('P0' if n == '2' else 'P1')
+                    if r: return self.pl.gh(seg, r, dia)
+                return None
             fam2 = '코너볼' if shape in ('볼', '코너') else '평' if shape == '평' else None
             if fam2:
                 # 초경 밑날 — 전용 블록
                 if mat == '초경' and pt == '밑날':
                     k = (mat, fam2, '밑날', '고경도' if coat == '고경도코팅' else '일반')
                     g = '비코팅' if coat == '비코팅' else '코팅'
-                    return self.pl.gvn(self.v.get(k), g, n, dia)
+                    e = self.pl.gvn(self.v.get(k), g, n, dia)
+                    if e is not None: return e
+                    # 본표 최대 구간(25이하)을 넘는 평 품목은 대구경 소구간 표를 쓴다
+                    big = self.v.get((mat, '평', '밑날', '대구경'))
+                    if fam2 == '평' and big and big[0]:
+                        seg, cols = big
+                        return self.pl.gv(seg, cols[n], dia)
+                    return None
                 # 초경 밑옆날 — 한 블록에 비코팅/일반/고경도가 모두 있다
                 if mat == '초경' and pt == '밑옆날':
                     k = (mat, fam2, '밑옆날', '코팅')
@@ -376,6 +428,20 @@ class Blocks:
                         seg, rows = self.h[k]
                         r = rows.get(n) if coat == '비코팅' else \
                             rows.get(('일반' if coat == '일반코팅' else '고경도') + n)
+                        if r: return self.pl.gh(seg, r, dia)
+                    return None
+                # HSS 코너·볼 밑날 — 라핑과 같은 블록을 쓴다.
+                # 블록 제목이 「HSS 코너R E/M, BALL E/M, 라핑 BALL E/M 밑날」로
+                # 비라핑·라핑을 함께 담고 있다 [한경준님 확인, 2026-09-02].
+                if mat == 'HSS' and pt == '밑날' and fam2 == '코너볼':
+                    k = (mat, 'L코너볼', '밑날', '비코팅' if coat == '비코팅' else '코팅')
+                    if k in self.h and self.h[k][0]:
+                        seg, rows = self.h[k]
+                        if coat == '비코팅':
+                            r = rows.get(n) or rows.get('비코팅' + n) or rows.get('P0' if n == '2' else 'P1')
+                        else:
+                            g = '일반' if coat == '일반코팅' else '고경도'
+                            r = rows.get(g + n) or rows.get(g)
                         if r: return self.pl.gh(seg, r, dia)
                     return None
                 # 단일 가공(밑날만/옆날만/골수리만) = 외경연삭 표 [사내 확인 2026-09-02]
@@ -397,7 +463,8 @@ class Blocks:
             return None
 
         # 골수리 = 외경연삭. 형상 무관 공통이고 날수 구분도 없다.
-        if pt == '골수리' and lap:
+        # 옆날도 외경연삭 표를 쓴다 — 주석 "밑날가격 = 옆날가격" 과 같은 계열
+        if lap and pt in ('골수리', '옆날'):
             k = (mat, '*', '골수리', '비코팅' if coat == '비코팅' else '코팅')
             if k not in self.h: return None
             seg, rows = self.h[k]
@@ -474,6 +541,11 @@ def audit(rows, blocks):
             if abs(int(cm.group(3)) / 10 - p['dia']) > 1e-6 and p['dia_txt'] not in CODE_DIA_TOLERATED:
                 add('A7 코드↔품목명 직경 불일치', x)
             if int(cm.group(1)) != p['blade']: add('A8 코드↔품목명 날수 불일치', x)
+        # 재질·코팅 표기 이상 — 표기가 틀리면 블록 조회가 조용히 실패해 검사에서 빠진다
+        if p['mat'] not in ('초경', 'HSS'):
+            add('A9 재질 표기 이상', x)
+        if p['coat'] not in ('비코팅', '일반코팅', '고경도코팅'):
+            add('A10 코팅 표기 이상', x)
         e = blocks.expect(**p)
         if e is None:
             uncovered[(p['mat'], p['shape'], p['part'])] += 1
