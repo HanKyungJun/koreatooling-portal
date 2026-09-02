@@ -45,6 +45,72 @@ COL_CODE, COL_NAME, COL_PRICE, ROW_START = 2, 3, 28, 3
 BAND = re.compile(r'^(\d+(?:\.\d+)?)\s*(이하|미만|이상)?$')
 BLADE = re.compile(r'^(2날|3날|4날|6날|3,4,6날)$')
 
+# 🔴 「月 수량 …」 수량 할인표 사본 구역. 정가 블록과 제목이 글자 그대로 같아서
+#    잘못 잡히면 기대값 전체가 조용히 틀린다 (2026-09-02, 거짓 불일치 1,726건 발생).
+#    정가 블록은 이 구역 밖(왼쪽 c1~c14 또는 r26 이하)에 있다.
+DISCOUNT_ZONE_ROWS = (1, 25)
+DISCOUNT_ZONE_COLS = (15, 32)
+
+def in_discount_zone(r, c):
+    return (DISCOUNT_ZONE_ROWS[0] <= r <= DISCOUNT_ZONE_ROWS[1]
+            and DISCOUNT_ZONE_COLS[0] <= c <= DISCOUNT_ZONE_COLS[1])
+
+# ── 코팅 그룹 라벨 정규화 ──────────────────────────────────
+# 정가표 개정마다 같은 그룹의 라벨이 `코팅` ↔ `일반 코팅` ↔ `고경도 코팅` 으로 바뀐다.
+# (2026-09-02 저장에서 `코팅` → `고경도 코팅` 으로 바뀌어 조회가 전부 실패했다.)
+# 그래서 읽을 때 한 그룹을 가능한 모든 표기로 등록해 둔다.
+COAT_ALIASES = {
+    '비코팅': ('비코팅',),
+    '일반':   ('일반', '일반코팅', '일반 코팅'),
+    '고경도': ('고경도', '고경도코팅', '고경도 코팅'),
+    '코팅':   ('코팅',),
+}
+
+def canon_coat(g):
+    """그룹 라벨 → 표준 키(비코팅/일반/고경도/코팅). 코팅 라벨이 아니면 None."""
+    t = re.sub(r'\s+', '', str(g or ''))
+    if t == '비코팅': return '비코팅'
+    if t.startswith('고경도'): return '고경도'
+    if t.startswith('일반'): return '일반'
+    if t == '코팅': return '코팅'
+    return None
+
+def alias_groups(cols):
+    """vtable 의 그룹 dict 에 라벨 별칭을 추가한다 (기존 키는 건드리지 않는다)."""
+    out = dict(cols)
+    canon = {}
+    for k in cols:
+        c = canon_coat(k)
+        if c: canon.setdefault(c, k)
+    for c, k in canon.items():
+        for a in COAT_ALIASES.get(c, (c,)):
+            out.setdefault(a, cols[k])
+    # 코팅 그룹이 하나뿐인 블록이면 어느 표기로 물어도 그 그룹을 준다
+    coats = [c for c in canon if c in ('일반', '고경도', '코팅')]
+    if len(coats) == 1:
+        only = cols[canon[coats[0]]]
+        for a in ('코팅', '일반', '일반 코팅', '일반코팅', '고경도', '고경도 코팅', '고경도코팅'):
+            out.setdefault(a, only)
+    return out
+
+def alias_rows(rows):
+    """htable 의 `그룹+날수` 합성 키에 라벨 별칭을 추가한다."""
+    out = dict(rows)
+    groups = set()
+    for k in rows:
+        m = re.match(r'^(.+?)([24])$', k)
+        if m: groups.add(m.group(1))
+    coats = [g for g in groups if g in ('일반', '고경도', '코팅')]
+    for k, v in rows.items():
+        m = re.match(r'^(.+?)([24])$', k)
+        if not m: continue
+        g, n = m.group(1), m.group(2)
+        if g not in ('일반', '고경도', '코팅'): continue
+        for a in ('일반', '고경도', '코팅') if len(coats) == 1 else COAT_ALIASES.get(g, (g,)):
+            out.setdefault(a + n, v)
+    return out
+
+
 def band(v):
     if v is None: return None
     m = BAND.match(str(v).strip())
@@ -75,6 +141,7 @@ class PriceList:
         self.name, self.ws = sheet, wb[sheet]
         self.titles = collections.defaultdict(list)
         self.errors = []
+        self.dropped = []      # 할인표 구역에서 걸러낸 제목 (진단용)
         for r in range(1, self.ws.max_row + 1):
             for c in range(1, self.ws.max_column + 1):
                 v = self.ws.cell(r, c).value
@@ -85,7 +152,11 @@ class PriceList:
     def find(self, pattern, nth=0):
         p = re.compile(pattern)
         hits = sorted((q for t, qs in self.titles.items() if p.search(t) for q in qs))
-        return hits[nth] if len(hits) > nth else None
+        # 수량 할인표 사본은 제목이 같으므로 반드시 걸러낸다 (DISCOUNT_ZONE 주석 참조)
+        kept = [q for q in hits if not in_discount_zone(*q)]
+        if len(kept) != len(hits):
+            self.dropped.append((pattern, len(hits) - len(kept)))
+        return kept[nth] if len(kept) > nth else None
 
     def _is_title_row(self, r, c_from, c_to):
         """해당 행의 지정 열 범위에 '블록 제목'으로 보이는 긴 문자열이 있는가."""
@@ -93,6 +164,19 @@ class PriceList:
             v = self.ws.cell(r, c).value
             if isinstance(v, str) and len(v.strip()) > 8: return True
         return False
+
+    def _axis(self, tr, col, r_max, need_suffix=True):
+        """지정 열이 직경 축인지 보고 축을 돌려준다.
+        · 값 열을 축으로 오인하지 않도록 「이하/미만/이상」 접미가 붙은 칸만 인정한다
+          (금액도 숫자라서 band() 를 그냥 통과한다).
+        · r_max 로 블록 아래 경계를 반드시 막는다. 안 막으면 아래 블록의 축이 섞여 들어와
+          큰 직경이 엉뚱한 행을 읽는다 (2026-09-02 확인)."""
+        s = []
+        for r in range(tr + 3, min(r_max, self.ws.max_row) + 1):
+            if self._is_title_row(r, col, col): break
+            b = band(self.ws.cell(r, col).value)
+            if b and (b[1] or not need_suffix) and b[0] <= 300: s.append((b[0], b[1], r))
+        return s
 
     def vtable(self, tr, tc, depth=12):
         """세로형: 직경이 제목 열, (비코팅/코팅) → (2날/3,4,6날) 2단 헤더."""
@@ -106,13 +190,36 @@ class PriceList:
             v = self.ws.cell(tr, c).value
             if isinstance(v, str) and len(v.strip()) > 8:   # 오른쪽 옆 블록 시작
                 c_end = c - 1; break
+        # 🔴 같은 블록 안에서 그룹마다 직경 구간이 다른 경우가 있다.
+        #    예) 초경 밑옆날 — 비코팅·일반은 6/10/12/16/20/25/32, 고경도는 6/8/10/12/16/20/25.
+        #    블록 대표 축으로 고경도를 읽으면 한 칸씩 밀린다. 그룹 왼쪽의 축 열을 각자 쓴다.
+        r_max = seg[-1][2] if seg else tr + 3 + depth
+        axes = {tc: seg}
+        for c in range(tc + 1, c_end + 1):
+            a = self._axis(tr, c, r_max)
+            if len(a) >= 3: axes[c] = a
+        def axis_for(col):
+            cand = [c for c in axes if c <= col]
+            return axes[max(cand)] if cand else seg
         cols, cur = {}, None
         for c in range(tc, c_end + 1):
             g, l = self.ws.cell(tr + 1, c).value, self.ws.cell(tr + 2, c).value
             if isinstance(g, str) and g.strip(): cur = g.strip()
             if isinstance(l, str) and BLADE.match(l.strip()) and cur:
-                cols.setdefault(cur, {})['2' if l.strip() == '2날' else '4'] = c
-        return seg, cols
+                d = cols.setdefault(cur, {})
+                d['2' if l.strip() == '2날' else '4'] = c
+                d.setdefault('S', axis_for(c))
+        return seg, alias_groups(cols)
+
+    def gvn(self, blk, group, n, dia):
+        """세로형 블록에서 그룹·날수·직경으로 값 조회 (그룹 전용 직경 축 사용)."""
+        if not blk: return None
+        seg, cols = blk
+        grp = cols.get(group)
+        if not grp: return None
+        col = grp.get(n)
+        if not col: return None
+        return self.gv(grp.get('S') or seg, col, dia)
 
     def htable(self, tr, tc, span=14, depth=10):
         """가로형: 직경 헤더 행을 아래→위로 탐색(공유 헤더 대응), 라벨은 데이터 열 왼쪽."""
@@ -149,7 +256,7 @@ class PriceList:
                 v = self.ws.cell(r, c).value
                 if isinstance(v, str) and v.strip():
                     if BLADE.match(v.strip()): l = v.strip()
-                    elif v.strip() in ('일반', '고경도', '비코팅', '코팅'): g = v.strip()
+                    elif canon_coat(v.strip()): g = canon_coat(v.strip())
             if g: cur = g
             if r == hdr_r: continue
             if sum(1 for _, _, c in seg if isinstance(self.ws.cell(r, c).value, (int, float))) >= 3:
@@ -160,7 +267,7 @@ class PriceList:
                 # 명시 라벨 및 값 크기 관계로 확인, 2026-09-02)
                 rows['P%d' % npos[0]] = r
                 npos[0] += 1
-        return seg, rows
+        return seg, alias_rows(rows)
 
     def gh(self, seg, row, dia):
         for v, k, c in seg:
@@ -182,14 +289,15 @@ class Blocks:
 
     def __init__(self, pl):
         self.pl, self.missing, self.v, self.h = pl, [], {}, {}
+        self.at = {}           # key → 정가표에서 실제로 잡힌 (행, 열). --blocks 로 확인
         def V(key, pat, nth=0):
             p = pl.find(pat, nth)
             if p is None: self.missing.append(pat)
-            else: self.v[key] = pl.vtable(*p)
+            else: self.v[key] = pl.vtable(*p); self.at[key] = p
         def H(key, pat, nth=0):
             p = pl.find(pat, nth)
             if p is None: self.missing.append(pat)
-            else: self.h[key] = pl.htable(*p)
+            else: self.h[key] = pl.htable(*p); self.at[key] = p
         # 초경 라핑 — 세로형
         V(('초경','L코너볼','밑날','일반'),     r'초경 라핑 코너/볼.*밑날.*일반')
         V(('초경','L코너볼','밑날','고경도'),   r'초경 라핑 코너/볼.*밑날.*고경도')
@@ -213,10 +321,12 @@ class Blocks:
         # ── 비라핑 (일반 품목) ─────────────────────────────
         # ⚠️ 같은 제목이 c1/c15/c21/c27 에 4번 반복된다. c1 만 「정가」이고
         #    나머지는 月수량 구간별 할인 적용가다(3행 라벨). nth=0 = 가장 왼쪽 = c1.
-        V(('초경','코너볼','밑날','일반'),   r'초경 BALL E/M, 코너R E/M 밑날 \(일반코팅\)', 0)
-        V(('초경','코너볼','밑날','고경도'), r'BALL, 코너R 밑날 \(고경도\)', 0)
-        V(('초경','평','밑날','일반'),       r'초경 FLAT E/M 밑날 \(일반코팅\)', 0)
-        V(('초경','평','밑날','고경도'),     r'초경 FLAT E/M 밑날 \(고경도\)', 0)
+        # ⚠️ 제목 뒤 `(일반코팅)` 표기는 개정마다 붙었다 떨어진다 → 선택 항목으로 둔다.
+        #    할인표 사본과 제목이 같으므로 find() 의 DISCOUNT_ZONE 배제가 함께 있어야 안전하다.
+        V(('초경','코너볼','밑날','일반'),   r'^초경 BALL E/M, 코너R E/M 밑날( \(일반코팅\))?$', 0)
+        V(('초경','코너볼','밑날','고경도'), r'^BALL, 코너R 밑날 \(고경도', 0)
+        V(('초경','평','밑날','일반'),       r'^초경 FLAT E/M 밑날( \(일반코팅\))?$', 0)
+        V(('초경','평','밑날','고경도'),     r'^초경 FLAT E/M 밑날 \(고경도', 0)
         V(('초경','평','밑옆날','코팅'),     r'초경 FLAT E/M 밑옆날')
         V(('초경','코너볼','밑옆날','코팅'), r'초경 BALL E/M, 코너R E/M 밑옆날')
         # 외경연삭 = 단일 가공(밑날만/옆날만/골수리만) 단가 [사내 확인 2026-09-02]
@@ -237,7 +347,12 @@ class Blocks:
     def expect(self, mat, shape, part, coat, blade, dia, **_):
         """기대 정가. 매핑 대상이 아니면 None (= 검사 제외)."""
         n = '2' if blade == 2 else '4'          # ★ 3날 이상은 전부 4날 행
-        pt = '밑골수리' if part in ('밑골수리', '밑옆날', '밑골수리날') else part
+        # 🔴 「밑옆날 = 밑골수리 = 밑외경」 은 같은 가공이지만, 정가표 블록 제목은
+        #    라핑만 「밑골수리」로 개명됐고 비라핑은 여전히 「밑옆날」이다 (2026-09-01 개정).
+        #    라핑 기준으로 전부 밑골수리로 바꾸면 비라핑 밑옆날 블록을 못 찾는다.
+        pt = part
+        if part in ('밑골수리', '밑옆날', '밑골수리날'):
+            pt = '밑골수리' if shape.startswith('라핑') else '밑옆날'
         lap = shape.startswith('라핑')
         fam = 'L코너볼' if shape in ('라핑볼', '라핑코너') else 'L평'
         # ── 비라핑(일반 품목) ─────────────────────────────
@@ -247,20 +362,13 @@ class Blocks:
                 # 초경 밑날 — 전용 블록
                 if mat == '초경' and pt == '밑날':
                     k = (mat, fam2, '밑날', '고경도' if coat == '고경도코팅' else '일반')
-                    if k in self.v:
-                        seg, cols = self.v[k]
-                        col = cols.get('비코팅' if coat == '비코팅' else '코팅', {}).get(n)
-                        if col: return self.pl.gv(seg, col, dia)
-                    return None
+                    g = '비코팅' if coat == '비코팅' else '코팅'
+                    return self.pl.gvn(self.v.get(k), g, n, dia)
                 # 초경 밑옆날 — 한 블록에 비코팅/일반/고경도가 모두 있다
                 if mat == '초경' and pt == '밑옆날':
                     k = (mat, fam2, '밑옆날', '코팅')
-                    if k in self.v:
-                        seg, cols = self.v[k]
-                        g = {'비코팅': '비코팅', '일반코팅': '일반 코팅', '고경도코팅': '고경도 코팅'}.get(coat)
-                        col = cols.get(g, {}).get(n) if g else None
-                        if col: return self.pl.gv(seg, col, dia)
-                    return None
+                    g = {'비코팅': '비코팅', '일반코팅': '일반', '고경도코팅': '고경도'}.get(coat)
+                    return self.pl.gvn(self.v.get(k), g, n, dia) if g else None
                 # HSS 밑옆날 — 형상별 전용 블록
                 if mat == 'HSS' and pt == '밑옆날':
                     k = (mat, fam2, '밑옆날', '비코팅' if coat == '비코팅' else '코팅')
@@ -302,10 +410,8 @@ class Blocks:
             return self.pl.gh(seg, r, dia) if r else None
         if mat == '초경' and lap and pt in ('밑날', '밑골수리'):
             k = (mat, fam, pt, '고경도' if coat == '고경도코팅' else '일반')
-            if k not in self.v: return None
-            seg, cols = self.v[k]
-            col = cols.get('비코팅' if coat == '비코팅' else '코팅', {}).get(n)
-            return self.pl.gv(seg, col, dia) if col else None
+            g = '비코팅' if coat == '비코팅' else '코팅'
+            return self.pl.gvn(self.v.get(k), g, n, dia)
         # HSS 라핑 밑날은 전용 블록이 없다 — 주석 "밑날가격 = 옆날가격" 에 따라 외경연삭 블록 사용
         if mat == 'HSS' and (lap or (shape in ('코너', '볼') and pt == '밑날' and coat == '비코팅')):
             k = (mat, fam, pt, '비코팅' if coat == '비코팅' else '코팅')
@@ -450,6 +556,8 @@ def main():
     ap.add_argument('--pattern', default=r'검수표시\.xlsx$', help='품목 파일 파일명 정규식')
     ap.add_argument('--json', default=None, help='결과 JSON 저장 경로')
     ap.add_argument('--xlsx', action='store_true', help='결과를 xlsx로도 저장')
+    ap.add_argument('--blocks', action='store_true',
+                    help='등록된 블록이 정가표에서 실제로 어디에 잡혔는지 출력 (오참조 점검)')
     a = ap.parse_args()
 
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -470,6 +578,13 @@ def main():
     if blocks.missing:
         print(f'  ⚠️ 못 찾은 블록 {len(blocks.missing)}개 — 제목이 바뀌었을 수 있습니다')
         for m in blocks.missing: print(f'       {m}')
+    if pl.dropped:
+        print(f'  ℹ️ 할인표 구역에서 걸러낸 제목 {len(pl.dropped)}건 (정상 동작)')
+    if a.blocks:
+        print('  ── 등록된 블록 위치 ──')
+        for k in sorted(blocks.at, key=lambda x: blocks.at[x]):
+            r, c = blocks.at[k]
+            print(f'       {get_column_letter(c)}{r:<5} {"·".join(k)}')
     if pl.errors:
         print('  🔴 정가표 오류값 %d곳: %s' % (len(pl.errors),
               ', '.join(f'{get_column_letter(c)}{r}' for r, c, _ in pl.errors)))
