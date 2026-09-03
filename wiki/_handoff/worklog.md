@@ -58,7 +58,7 @@
 - ✅ **초경툴-코고툴 종결** — 한경준님 확인 「이제 거래 안 한다」. **거래 종료 확정** → 월 수주 기준선 약 **−230개(11.1%)** 영구 하향. decisions.md 2026-09-03 (5)
 - ✅ **대일정공 종결** — 방침: 9월 유입 보고 판단. 10-01 월초 마감 회차에서 재판단
 - ⏳ **9월 마감 후 ② 최종 확정** — 잔량 797개 + 9월 신규 수주로 회복 폭 판정. 10-01 「월간 출하현황 마감」 예약 작업 연동
-- 🛑 **ANCA 모니터 Disable — 위치 확정, 조치만 남음.** 「컴퓨터2 작업」 추정은 **아니었다**: `data/run_log.txt` 에 **오늘 09-03 13:00 기록**이 있고 `run_scraper.ps1` 이 이 PC 경로를 하드코딩한다. **매일 13:00 KST 트리거**, 60회 실행 / 수집 0건. `Get-ScheduledTask` 로 이름 확인 후 `Disable-ScheduledTask`
+- ✅ **ANCA 모니터 Disable 완료** (`ANCA_Scraper_Daily`, State=Disabled). 🔴 **`LastTaskResult : 0` — 전량 실패인데 종료코드 성공. 「조용한 성공」 물증.** `NextRunTime` 이 09-04 13:00 으로 남는 건 정상(판정은 `State`). 익일 `run_log.txt` 115,926 byte 고정 확인 필요. 위치 확정 경위: 「컴퓨터2 작업」 추정은 **아니었다**: `data/run_log.txt` 에 **오늘 09-03 13:00 기록**이 있고 `run_scraper.ps1` 이 이 PC 경로를 하드코딩한다. **매일 13:00 KST 트리거**, 60회 실행 / 수집 0건. `Get-ScheduledTask` 로 이름 확인 후 `Disable-ScheduledTask`
 - `.gitignore` + `git rm --cached` 커밋
 - 🔒 공개 저장소 시크릿 스캔 전수(내용 3층)
 - ⏳ **금요일 점검 프롬프트 v2 승인 대기** — Claude Desktop(Windows) 서명 승인 또는 Cowork 예약작업 UI에서 직접 붙여넣기. 정본: `wiki/_handoff/trigger-prompts/금요일-마무리-점검.md`. **내일 16:10 은 v1 으로 도니 락이 또 남을 수 있다**(복구법은 위와 동일)

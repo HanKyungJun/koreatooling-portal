@@ -40,14 +40,30 @@
   - **결론(2026-09-03)**: `erp/daily_dlv_alert.py` 독스트링에 *"v2.0: SMTP 제거, Gmail API 사용"* 이라 명시돼 있어 **이미 대체된 v1** 이었다. 납기 알림 메일은 v2.0 이 매일 정상 발송 중(`outputs/dlv_alerts/` 08-25~09-03 연속). → `scripts/_deprecated/` 로 이동, 폐기 배너 삽입. **삭제 안 함.**
   - 관련: decisions.md **2026-09-03 (2)**
 
-- [ ] **🛑 ANCA 중고장비 모니터 예약 실행 중단** (P1, 2026-09-02 등재, **2026-09-03 위치 확정**)
+- [x] **✅ ANCA 중고장비 모니터 예약 실행 중단 — Disable 완료** (P1, 2026-09-02 등재, **2026-09-03 완료**)
   - 담당: 한경준 (Task Scheduler)
   - 메모: 실행 **60회 · 성공 수집 0건** · 5개 소스 전량 실패(404 / SSL 2 / 403 2)인데 매번 「신규 매물 없음 → 완료」로 찍혔다. `hashes.json` = `{}`. **수리는 나중에 판단, 중고 매물은 수동 확인**(한경준님, 2026-09-02).
   - ✅ **2026-09-03 — 이 PC(desktop-35ose6p / TOOLKOREA 계정)에서 매일 13:00 KST 실행 중임을 확정** [실측 검증]. 「컴퓨터2 작업 아닌가」 추정은 **아니다**:
     - `scripts/anca-monitor/data/run_log.txt` **115,926 byte**, **오늘 09-03 13:00:08~13:00:35 기록 존재**(마지막 실행). 09-02도 13:00
     - `run_scraper.ps1` 이 이 PC 경로를 하드코딩: `Set-Location "C:\Users\TOOLKOREA\Desktop\cnc-wiki\scripts\anca-monitor"` + `C:\Users\TOOLKOREA\AppData\Local\Python\pythoncore-3.14-64\python.exe`
     - 로그·상태파일이 이 저장소 `scripts/anca-monitor/data/` 에 있다(추적은 해제됨)
-  - **조치**: 아래로 작업 이름 찾아 Disable (13:00 트리거로 검색)
+  - ✅ **2026-09-03 작업 이름 확정: `ANCA_Scraper_Daily`** (TaskPath `\`, State `Ready`) [실측 검증 — `Get-ScheduledTask`]. 이름 검색과 「13:00 트리거」 검색 결과가 **동일한 1개**라 13:00 트리거도 확증됐다. **중복 등록 아님.**
+    ```powershell
+    Disable-ScheduledTask -TaskName "ANCA_Scraper_Daily" -TaskPath "\"
+    Get-ScheduledTask -TaskName "ANCA_Scraper_Daily" | Select-Object TaskName, State
+    Get-ScheduledTaskInfo -TaskName "ANCA_Scraper_Daily" | Select-Object LastRunTime, LastTaskResult, NextRunTime
+    ```
+  - ✅ **2026-09-03 Disable 완료** [실측 검증 — 한경준님 실행]:
+    ```
+    TaskName : ANCA_Scraper_Daily      State : Disabled
+    LastRunTime    : 2026-09-03 오후 1:00:00
+    LastTaskResult : 0
+    NextRunTime    : 2026-09-04 오후 1:00:00
+    ```
+  - 🔴 **★ 「조용한 성공」 물증 확보 — `LastTaskResult : 0`.** 5개 소스가 **전량 실패**(다아라 404 · 엔씨넷 SSL · 기계뱅크 SSL 호스트명 불일치 · SurplusRecord 403 · MachineTools 403)했는데 **종료코드는 성공(0)** 이다. Task Scheduler 이력만 보면 60회 전부 정상으로 보인다. → **예약 작업 건강 판정에 `LastTaskResult` 를 쓰면 안 된다. 산출물(여기서는 `hashes.json`)을 봐야 한다.**
+  - ⚠️ **`NextRunTime` 이 2026-09-04 13:00 으로 남아 있는 것은 정상이다** — Task Scheduler는 비활성 작업의 예정 시각을 그대로 표시한다. **판정 기준은 `State` 다.** (클라우드 예약작업의 `next_run_at` 과 동일한 함정)
+  - **최종 검증(익일)**: 2026-09-04 13:00 이후 `scripts/anca-monitor/data/run_log.txt` 가 **115,926 byte 에서 고정**되어 있으면 확정. 다음 세션에서 확인.
+  - ~~**조치**: 아래로 작업 이름 찾아 Disable (13:00 트리거로 검색)~~ (탐색 완료 — 위 이름 사용)
     ```powershell
     Get-ScheduledTask | Where-Object { $_.TaskName -match 'ANCA|anca|scraper|중고' } |
       Select-Object TaskName, State, TaskPath
