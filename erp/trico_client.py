@@ -250,13 +250,36 @@ class TricoClient:
         파라미터 (캡처된 순서 그대로 — 순서를 바꾸지 말 것):
           @fr_dt     조회 시작일 'YYYY-MM-DD' (화면 기본값 = 당월 1일)
           @to_dt     조회 종료일. 빈 문자열이면 제한 없음
-          @so_no     수주번호       (미지정 시 DBNull)
+          @so_no     접수번호       (미지정 시 DBNull)
           @cust_cd   거래처 코드     (미지정 시 DBNull)
           @stat_bc   진행상태 코드   (미지정 시 DBNull)
-          @order_man 발주 담당자     (미지정 시 DBNull)
-          @opt_show  표시 옵션. 화면이 보낸 값은 "2"
-                     ⚠️ 각 값의 의미는 확인 필요 — 추측하지 않는다.
-                     화면에서 옵션을 바꿔가며 다시 캡처하면 확정된다.
+          @order_man 주문자         (미지정 시 DBNull)
+          @opt_show  화면의 [처리/미처리/전체] 라디오버튼
+                     "1" = 처리    (stat_bc SD200100)
+                     "2" = 미처리  (stat_bc SD200000)  ← 화면 기본값·이 함수 기본값
+                     "3" = 전체    (둘 다)   ※ "" 도 전체와 동일 결과
+                     "0" = 0건
+                     [신뢰도: 실측 검증] 2026-09-04 값별 조회 비교로 확정.
+
+        ⚠️ 기본값이 "2"(미처리)다. 전체를 보려면 opt_show="3" 을 넘길 것.
+           2026년 실측: 전체 71건 중 미처리 70건 / 처리 1건.
+
+        컬럼 ↔ 화면 이름 [실측 검증 — 2026-09-04 ERP 화면 대조]:
+          so_no 접수번호 · so_dt 접수일자 · cust_nm 거래처명 · order_nm 주문자
+          stat_bc 진행상태 · rmks 비고 · rtn_bc 반송방법(화물사) · jae_qty 날수
+          jae_shape 형상 · jae_shank 샹크경 · jae_angle R · jae_material 재질
+          jae_side 공정 · jae_coating 코팅 · qty 수량 · jae_rmks 상세비고
+
+          🔴 rtn_bc 는 「A/S 사유」가 아니라 「반송방법」이다(2026-09-04 정정).
+             이 화면에는 A/S 사유 필드가 없다. 원인은 rmks/jae_rmks 자유텍스트.
+
+        확인된 코드값 (일부, 화면 대조):
+          stat_bc  SD200000 요청(미처리) · SD200100 처리
+          rtn_bc   CS510200 경동화물 (나머지 4종 확인 필요)
+          jae_qty  JA1002 2날          jae_shape    JA110DR 드릴
+          jae_shank JA1206 6이하 · JA1208 8이하 · JA12010 10이하
+          jae_material JA1401 초경     jae_side     JA1701 밑날
+          jae_coating  JA15001 일반
 
         ⚠️ 단가·금액 컬럼은 block_price=True 로 자동 차단된다 (CLAUDE.md §4).
         """
