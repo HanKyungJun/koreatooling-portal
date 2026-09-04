@@ -2,7 +2,7 @@ import sys, io, os, json, hashlib, subprocess, time
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 import openpyxl, xlrd, requests
-from datetime import datetime
+from datetime import datetime, date, timedelta
 
 # 2026-07-07: 16:00 정기 실행만 30분+ 소요되는 병목 조사용 타임스탬프 로깅.
 # run.log에 단계별 시각(HH:MM:SS)과 시작 시점부터의 누적 경과(+Ns)를 남겨
@@ -635,11 +635,62 @@ def build_supplies_html():
 
 
 # ── 현황판 ─────────────────────────────────────────────────────────────────────
-def build_dashboard_html(shippings, daily, worklog_date, generated_at):
+def build_dashboard_html(shippings, daily, worklog_date, generated_at, todo=None):
     shipping_js = ',\n'.join(
         f'  [{y}, {json.dumps(d, ensure_ascii=False)}]' for y, d in shippings
     )
     daily_json = json.dumps(daily, ensure_ascii=False)
+
+    # ── 「오늘 할 일」 블록 (2026-09-04 신설) ─────────────────────────────────
+    #   현 화면은 이미 끝난 숫자만 보여준다. 앞을 보는 숫자를 맨 위에 둔다.
+    #   ERP 조회 실패 시 todo=None → 블록 자체를 그리지 않는다(빈 값 표시 안 함).
+    if todo:
+        rows = ''
+        for it in todo['detail']:
+            tag = ('<span style="color:#e53935;font-weight:700">지연</span>'
+                   if it['late'] else
+                   '<span style="color:#f57c00;font-weight:700">임박</span>')
+            rows += (f"<tr><td>{tag}</td><td>{it['dlv']}</td>"
+                     f"<td>{it['cust']}</td><td>{it['itm']}</td>"
+                     f"<td style=\"text-align:right\">{it['rest']:,}</td></tr>")
+        if not rows:
+            rows = ('<tr><td colspan="5" style="text-align:center;color:#999;padding:14px">'
+                    '납기 임박·지연 건 없음</td></tr>')
+
+        todo_html = f'''
+  <div class="section-title-row">
+    <span class="section-title">오늘 할 일</span>
+    <span class="section-date">ERP 수주 기준 · {todo['since']} 이후</span>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card" style="border-left:4px solid #e53935">
+      <div class="kpi-label">🔴 납기 지연 — 미출하</div>
+      <div class="kpi-value">{todo['late_cases']}<span class="kpi-unit">건</span></div>
+      <div class="kpi-sub">{todo['late_qty']:,}개</div>
+    </div>
+    <div class="kpi-card" style="border-left:4px solid #f57c00">
+      <div class="kpi-label">🟡 납기 임박 (D-3 이내)</div>
+      <div class="kpi-value">{todo['near_cases']}<span class="kpi-unit">건</span></div>
+      <div class="kpi-sub">{todo['near_qty']:,}개</div>
+    </div>
+    <div class="kpi-card" style="border-left:4px solid #1A3A6B">
+      <div class="kpi-label">📦 미출하 잔량 전체</div>
+      <div class="kpi-value">{todo['open_qty']:,}<span class="kpi-unit">개</span></div>
+      <div class="kpi-sub">{todo['open_cases']}건</div>
+    </div>
+  </div>
+  <div class="section-card">
+    <div class="chart-title">납기 임박·지연 상세 <span style="font-size:0.78rem;color:#aaa;font-weight:400">(납기 빠른 순, 최대 12건)</span></div>
+    <div style="overflow-x:auto">
+      <table class="form-table">
+        <thead><tr><th>구분</th><th>납기</th><th>거래처</th><th>품목</th><th style="text-align:right">잔량</th></tr></thead>
+        <tbody>{rows}</tbody>
+      </table>
+    </div>
+  </div>
+'''
+    else:
+        todo_html = ''
 
     return f"""<!DOCTYPE html>
 <html lang="ko">
@@ -666,6 +717,7 @@ def build_dashboard_html(shippings, daily, worklog_date, generated_at):
 </header>
 
 <main>
+{todo_html}
   <div class="section-title-row">
     <span class="section-title">오늘 실적</span>
     <span class="section-date">📅 {worklog_date}</span>
@@ -700,6 +752,87 @@ var daily = {daily_json};
 <script src="dashboard.js"></script>
 </body>
 </html>"""
+
+
+# ── ERP 「오늘 할 일」 데이터 (2026-09-04 신설) ────────────────────────────────
+def fetch_erp_todo(lookback_days: int = 120):
+    """재연마 수주에서 미출하 잔량·납기 임박을 계산한다.
+
+    사내 현황판 전용. 현재 화면은 「이미 끝난 숫자」만 보여주므로
+    「앞으로 할 일」을 더한다.
+
+    [신뢰도: 실측 검증] 2026-09-04 ERP(sdb100_jae_g10) 값을 엑셀 export 와 대조:
+      엑셀 08-05~09-02  68행 / 1,164개   ERP 08-01~09-04  69행 / 1,174개
+      차이 10개 = 09-03~09-04 신규 수주분과 정확히 일치. 소스 신뢰 가능.
+      @f_so_bs 필터도 '01'(61건) + '10'(8건) = 69건 = 전체라 무해함을 확인.
+
+    잔량 = so_qty - out_qty(미출하면 NaN → 0). 부분출하도 반영된다.
+
+    ★ ERP 에 닿지 않아도(사무실 밖·서버 점검) 예외를 던지지 않는다.
+      현황판 나머지와 GitHub 업로드는 그대로 진행되어야 한다.
+    반환: dict 또는 None(조회 실패)
+    """
+    try:
+        sys.path.insert(0, os.path.join(BASE_DIR, 'erp'))
+        from trico_client import TricoClient
+        import pandas as pd
+    except Exception as e:
+        _log(f'  ⚠️ ERP 모듈 로드 실패 — 「오늘 할 일」 생략: {type(e).__name__}: {e}')
+        return None
+
+    try:
+        fr = (date.today() - timedelta(days=lookback_days)).strftime('%Y-%m-%d')
+        df = TricoClient().수주(fr_dt=fr)
+    except Exception as e:
+        _log(f'  ⚠️ ERP 수주 조회 실패 — 「오늘 할 일」 생략: {str(e)[:120]}')
+        _log('     (사무실 네트워크가 아니거나 ERP 점검 중일 수 있습니다)')
+        return None
+
+    if len(df) == 0:
+        _log('  ⚠️ ERP 수주 0행 — 「오늘 할 일」 생략 (파라미터 확인 필요)')
+        return None
+
+    try:
+        d = df.copy()
+        d['so_q']  = pd.to_numeric(d['so_qty'],  errors='coerce').fillna(0)
+        d['out_q'] = pd.to_numeric(d['out_qty'], errors='coerce').fillna(0)
+        d['rest']  = (d['so_q'] - d['out_q']).clip(lower=0)
+        d['dlv']   = pd.to_datetime(d['dlv_dt'], errors='coerce', utc=True) \
+                       .dt.tz_convert('Asia/Seoul').dt.date
+
+        open_rows = d[d['rest'] > 0]
+        today     = date.today()
+        d3        = today + timedelta(days=3)
+
+        late  = open_rows[open_rows['dlv'].notna() & (open_rows['dlv'] <  today)]
+        near  = open_rows[open_rows['dlv'].notna() &
+                          (open_rows['dlv'] >= today) & (open_rows['dlv'] <= d3)]
+
+        # 임박·지연 상세 (납기 빠른 순 12건)
+        detail = []
+        for _, r in open_rows[open_rows['dlv'].notna() &
+                              (open_rows['dlv'] <= d3)].sort_values('dlv').head(12).iterrows():
+            detail.append({
+                'dlv':   str(r['dlv']),
+                'cust':  str(r.get('cust_nm', '')),
+                'itm':   str(r.get('itm_nm', ''))[:38],
+                'rest':  int(r['rest']),
+                'late':  bool(r['dlv'] < today),
+            })
+
+        return {
+            'open_cases': int(open_rows['so_no'].nunique()),
+            'open_qty':   int(open_rows['rest'].sum()),
+            'late_cases': int(late['so_no'].nunique()),
+            'late_qty':   int(late['rest'].sum()),
+            'near_cases': int(near['so_no'].nunique()),
+            'near_qty':   int(near['rest'].sum()),
+            'detail':     detail,
+            'since':      fr,
+        }
+    except Exception as e:
+        _log(f'  ⚠️ 「오늘 할 일」 집계 실패: {type(e).__name__}: {e}')
+        return None
 
 
 # ── 사내 공유폴더 배포 ─────────────────────────────────────────────────────────
@@ -917,6 +1050,18 @@ if __name__ == '__main__':
     daily, worklog_file = parse_worklog()
     _log(f'  → {worklog_file or "파일 없음"} ({time.time()-_t:.1f}s)')
 
+    # 2-B) ERP 「오늘 할 일」 (2026-09-04 신설) — 사내 현황판 전용
+    #      실패해도 None 을 받아 블록만 빠진다. 나머지는 정상 진행.
+    _t = time.time()
+    _log('ERP 「오늘 할 일」 조회 중...')
+    todo = fetch_erp_todo()
+    if todo:
+        _log(f'  → 미출하 {todo["open_cases"]}건 / {todo["open_qty"]:,}개 · '
+             f'지연 {todo["late_cases"]}건 · 임박 {todo["near_cases"]}건 '
+             f'({time.time()-_t:.1f}s)')
+    else:
+        _log(f'  → 생략 (블록 미표시) ({time.time()-_t:.1f}s)')
+
     worklog_date = daily['date'] if daily else '-'
     generated_at = datetime.now().strftime('%Y-%m-%d %H:%M')
 
@@ -938,7 +1083,7 @@ if __name__ == '__main__':
         'request.html':   public_pages['request.html'],
         'defect.html':    public_pages['defect.html'],
         'inquiry.html':   public_pages['inquiry.html'],
-        'dashboard.html': build_dashboard_html(shippings, daily, worklog_date, generated_at),
+        'dashboard.html': build_dashboard_html(shippings, daily, worklog_date, generated_at, todo),
     }
     pages = public_pages   # 이하 공개 배포 경로는 기존 로직 그대로
     _log(f'페이지 생성 완료 — 공개 {len(public_pages)}개 / 사내 {len(internal_pages)}개 '

@@ -83,7 +83,8 @@
     ```
   - 🔴 **★ 「조용한 성공」 물증 확보 — `LastTaskResult : 0`.** 5개 소스가 **전량 실패**(다아라 404 · 엔씨넷 SSL · 기계뱅크 SSL 호스트명 불일치 · SurplusRecord 403 · MachineTools 403)했는데 **종료코드는 성공(0)** 이다. Task Scheduler 이력만 보면 60회 전부 정상으로 보인다. → **예약 작업 건강 판정에 `LastTaskResult` 를 쓰면 안 된다. 산출물(여기서는 `hashes.json`)을 봐야 한다.**
   - ⚠️ **`NextRunTime` 이 2026-09-04 13:00 으로 남아 있는 것은 정상이다** — Task Scheduler는 비활성 작업의 예정 시각을 그대로 표시한다. **판정 기준은 `State` 다.** (클라우드 예약작업의 `next_run_at` 과 동일한 함정)
-  - **최종 검증(익일)**: 2026-09-04 13:00 이후 `scripts/anca-monitor/data/run_log.txt` 가 **115,926 byte 에서 고정**되어 있으면 확정. 다음 세션에서 확인.
+  - ✅ **최종 검증 완료 (2026-09-04 13:37 KST)** [실측 검증]: 13:00 을 지난 시점에 `run_log.txt` **115,926 byte 그대로**, 최종 기록 **2026-09-03 13:00:35 KST** — 오늘 실행되지 않았다. `hashes.json` 도 `{}` 로 동일 시각. **중단 확정 · 항목 종결.**
+    - ★ **여기서도 판정 근거는 `NextRunTime` 이 아니라 산출물이었다.** Task Scheduler 는 비활성 작업의 예정 시각(09-04 13:00)을 그대로 표시했지만 실제로는 돌지 않았다.
   - ~~**조치**: 아래로 작업 이름 찾아 Disable (13:00 트리거로 검색)~~ (탐색 완료 — 위 이름 사용)
     ```powershell
     Get-ScheduledTask | Where-Object { $_.TaskName -match 'ANCA|anca|scraper|중고' } |
