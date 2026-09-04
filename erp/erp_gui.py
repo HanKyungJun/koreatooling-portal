@@ -10,6 +10,7 @@ Trico ERP 뷰어 GUI  v2.0
 패치:
   2026-07-02: 영업팀 "출하등록(거래명세서)" 탭에 거래처(코드/명) 검색 필터 추가.
               메모(memo) 컬럼 표시 폭 확대 (내용이 잘리지 않도록).
+  2026-09-04: 생산팀 "재연마 A/S 현황" 탭 추가 (SDB117_g10).
   2026-07-16: 생산팀 "재연마 출하 거래명세서" 탭에도 단가0(확인 필요) 행 맨 위 정렬 적용
               (기존엔 영업팀 탭에만 적용돼 있었음 — 강조 표시는 있었으나 정렬은 안 됐던 불일치 수정).
               모든 탭 앱 시작 시 백그라운드 자동 조회(prefetch) 추가 — 서버 응답 자체는
@@ -899,6 +900,7 @@ class App(tk.Tk):
                 ("재연마수주 등록",       client.수주,      DataTab,     False),
                 ("재연마 출하등록",       client.출하,      DataTab,     False),
                 ("재연마 출하 거래명세서", client.출하_명세,  ShipmentTab, True),
+                ("재연마 A/S 현황",       client.재연마AS,   DataTab,     False),
             ]
             for name, fn, TabClass, sort_zero in screens:
                 tab = TabClass(inner_nb, name=name, fetch_fn=fn,

@@ -1,16 +1,18 @@
 """
 Trico ERP WCF 클라이언트  v2.0
 ────────────────────────────────
-확정된 화면 3개:
-  - 생산실적 등록  (PPC120_g00)
-  - 재연마수주 등록 (sdb100_jae_g10)
-  - 재연마 출하등록 (lem120_jae_g00)
+확정된 화면 4개:
+  - 생산실적 등록   (PPC120_g00)
+  - 재연마수주 등록  (sdb100_jae_g10)
+  - 재연마 출하등록  (lem120_jae_g00)
+  - 재연마 A/S 현황  (SDB117_g10)   ← 2026-09-04 추가
 
 사용 예:
     client = TricoClient()
     df = client.생산실적(fr_dt="2026-06-01", to_dt="2026-06-11")
     df = client.수주(fr_dt="2026-05-01")
     df = client.출하(fr_dt="2026-06-01")
+    df = client.재연마AS(fr_dt="2026-09-01")
 """
 
 import gzip, re, requests
@@ -182,8 +184,17 @@ class TricoClient:
     # ── 화면별 편의 메서드 ────────────────────────────────────────────────
 
     def 생산실적(self, fr_dt: str = None, to_dt: str = None,
-                fac_cd: str = "01") -> pd.DataFrame:
-        """생산실적 등록 (PPC120_g00)"""
+                fac_cd: str = "01", stat_bc: str = "") -> pd.DataFrame:
+        """생산실적 등록 (PPC120_g00)
+
+        2026-09-04 수정 — `@stat_bc` 기본값을 "" 로 바꿨다.
+          종전 값: "'PP250100','PP250300'" (상태 2개 고정)  ← 삭제하지 않고 여기 보존
+          변경 사유: Fiddler 로 ERP 화면의 실제 요청을 캡처한 결과
+                     파라미터 15개 중 14개가 일치하고 @stat_bc 만 달랐다.
+                     화면은 "" (빈 문자열 = 전체)를 보낸다 [실측 검증].
+                     고정 필터가 결과를 전부 걸러내 0건이 반환되고 있었다.
+          되돌리려면: 생산실적(stat_bc="'PP250100','PP250300'")
+        """
         today = date.today().strftime("%Y-%m-%d")
         first = date.today().replace(day=1).strftime("%Y-%m-%d")
         return self.query("PPC120_g00", {
@@ -195,7 +206,7 @@ class TricoClient:
             "@grp1_cd":  None,
             "@grp2_cd":  None,
             "@model_cd": None,
-            "@stat_bc":  "'PP250100','PP250300'",
+            "@stat_bc":  stat_bc,
             "@plan_bc":  None,
             "@prc_cd":   "",
             "@wo_no":    None,
@@ -223,6 +234,41 @@ class TricoClient:
             "@f_order_nm": None,
             "@f_rmks":     None,
             "@f_cust_nm":  None,
+        })
+
+    def 재연마AS(self, fr_dt: str = None, to_dt: str = "",
+                so_no: str = None, cust_cd: str = None,
+                stat_bc: str = None, order_man: str = None,
+                opt_show: str = "2") -> pd.DataFrame:
+        """재연마 A/S 현황 (SDB117_g10)
+
+        메뉴: 생산 > 생산관리 > 재연마A/S 현황
+
+        [신뢰도: 실측 검증] 2026-09-04 Fiddler 로 ERP 클라이언트 실제 요청을
+        캡처해 workSet_CD 와 파라미터 7종을 확인했다. 추정이 아니다.
+
+        파라미터 (캡처된 순서 그대로 — 순서를 바꾸지 말 것):
+          @fr_dt     조회 시작일 'YYYY-MM-DD' (화면 기본값 = 당월 1일)
+          @to_dt     조회 종료일. 빈 문자열이면 제한 없음
+          @so_no     수주번호       (미지정 시 DBNull)
+          @cust_cd   거래처 코드     (미지정 시 DBNull)
+          @stat_bc   진행상태 코드   (미지정 시 DBNull)
+          @order_man 발주 담당자     (미지정 시 DBNull)
+          @opt_show  표시 옵션. 화면이 보낸 값은 "2"
+                     ⚠️ 각 값의 의미는 확인 필요 — 추측하지 않는다.
+                     화면에서 옵션을 바꿔가며 다시 캡처하면 확정된다.
+
+        ⚠️ 단가·금액 컬럼은 block_price=True 로 자동 차단된다 (CLAUDE.md §4).
+        """
+        first = date.today().replace(day=1).strftime("%Y-%m-%d")
+        return self.query("SDB117_g10", {
+            "@fr_dt":     fr_dt or first,
+            "@to_dt":     to_dt,
+            "@so_no":     so_no,
+            "@cust_cd":   cust_cd,
+            "@stat_bc":   stat_bc,
+            "@order_man": order_man,
+            "@opt_show":  opt_show,
         })
 
     def 출하(self, fr_dt: str = None, to_dt: str = "",
@@ -385,6 +431,14 @@ def _parse_dataset(xml_str: str) -> pd.DataFrame:
             row = {el.tag.split("}")[-1]: el.text for el in row_el}
             if row:
                 rows.append(row)
+
+    # 2026-09-04 수정 — 조용한 실패 차단.
+    #   응답에 데이터셋(diffgram)이 없으면 위에서 diffgram 이 root(SOAP Envelope)로
+    #   대체되고, 그 결과 봉투 자체가 {"FillDataSetExResult": ...} 1행으로 잡혔다.
+    #   생산실적 탭이 「1행 × 1열 / FillDataSetExResult」로 보이던 원인이다.
+    #   -> 결과 0건이면 0건으로 정직하게 돌려준다.
+    rows = [r for r in rows
+            if not (len(r) == 1 and next(iter(r)).endswith("Result"))]
 
     return pd.DataFrame(rows) if rows else pd.DataFrame()
 
