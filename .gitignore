@@ -147,3 +147,23 @@ wiki/reports/daily/_구버전_*/
 scripts/anca-monitor/data/run_log.txt
 scripts/anca-monitor/data/hashes.json
 scripts/anca-monitor/*.bak_*
+
+# ── 사내 전용 (2026-09-04) ────────────────────────────────────────────────────
+#   공개(GitHub Pages) / 사내(LAN 공유폴더) 분리.
+#   현황판에는 거래처명·월별 물량이 박히므로 공개 저장소에 두지 않는다.
+#   ★ 파일을 지운 것이 아니라 추적만 해제한 것이다. 디스크에는 그대로 있다.
+#   사내 배포 경로: \\192.168.0.252\ToolKorea\생산팀\4.AI 자료실\현황판
+/dashboard.html
+/dashboard.css
+/dashboard.js
+/field-record.html
+/field-record.css
+/field-record.js
+/supplies.html
+/dist/dashboard.html
+/dist/dashboard.css
+/dist/dashboard.js
+/dist/field-record.html
+/dist/field-record.css
+/dist/field-record.js
+/dist/supplies.html

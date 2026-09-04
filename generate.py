@@ -46,6 +46,26 @@ COMP_DIR    = os.path.join(BASE_DIR, 'wiki', 'comparisons')
 WORKLOG_DIR = os.path.join(BASE_DIR, 'raw', '출하현황')
 DIST_DIR    = os.path.join(BASE_DIR, 'dist')
 
+# ── 사내 전용 출력 (2026-09-04 신설) ──────────────────────────────────────────
+#   공개(GitHub Pages)와 사내(LAN 공유폴더)를 분리하기 위한 두 번째 출력 경로.
+#   LAN 안에 있다는 것 자체가 접근 통제이므로 별도 인증이 필요 없다.
+#   ⚠️ 서버가 꺼져 있거나 권한이 없어도 전체 파이프라인은 계속 진행해야 한다.
+#      (매일 16:00 자동 실행이 이 한 줄 때문에 멈추면 안 된다)
+INTERNAL_DIR = os.getenv(
+    'INTERNAL_DIR',
+    r'\\192.168.0.252\ToolKorea\생산팀\4.AI 자료실\현황판')
+INTERNAL_ENABLED = os.getenv('INTERNAL_ENABLED', 'True').lower() == 'true'
+
+# 사내 전용 정적 자산(css/js/html). dist/ 에 두지 않는다 = GitHub Pages 로 안 나간다.
+INTERNAL_ASSET_DIR = os.path.join(BASE_DIR, 'internal')
+
+# 사내 전용 파일명. dist/ 나 루트로 내보내지 않는다(= GitHub Pages 로 안 나감).
+INTERNAL_ONLY = {
+    'dashboard.html', 'dashboard.css', 'dashboard.js',
+    'field-record.html', 'field-record.css', 'field-record.js',
+    'supplies.html',          # 2026-09-04 미사용 확인 — 생성 중단
+}
+
 YEARS = [2026, 2025, 2024, 2023, 2022]
 
 
@@ -170,7 +190,14 @@ def _form_page(page_title, form_name, icon, header_title, fields_html, success_m
 
 
 # ── 포털 메인 ──────────────────────────────────────────────────────────────────
-def build_portal_html():
+def build_portal_html(show_staff: bool = None):
+    """포털 index. show_staff=False 면 직원 전용 구역이 통째로 빠진다.
+
+    2026-09-04: 공개(GitHub Pages) / 사내(LAN) 분리를 위해 인자화.
+      공개용 → show_staff=False   사내용 → show_staff=True
+    """
+    if show_staff is None:
+        show_staff = SHOW_STAFF
     staff_section = ("""
   <button class="staff-toggle" onclick="showStaffAuth()">🔒 직원 전용</button>
 
@@ -203,11 +230,6 @@ def build_portal_html():
         <div class="card-title">재연마 현황판</div>
         <div class="card-desc">출하현황 및 일일 생산 실적을 확인합니다.</div>
       </a>
-      <a class="card staff" href="supplies.html">
-        <div class="card-icon">🛒</div>
-        <div class="card-title">소모품 구매 요청</div>
-        <div class="card-desc">소모품 및 물품 구매를 요청합니다.</div>
-      </a>
       <a class="card staff" href="field-record.html">
         <div class="card-icon">📝</div>
         <div class="card-title">현장 기록</div>
@@ -238,7 +260,7 @@ def build_portal_html():
       document.getElementById('staff-pass-input').focus();
     }
   }
-  </script>""") if SHOW_STAFF else ''
+  </script>""") if show_staff else ''
 
     return """<!DOCTYPE html>
 <html lang="ko">
@@ -680,6 +702,77 @@ var daily = {daily_json};
 </html>"""
 
 
+# ── 사내 공유폴더 배포 ─────────────────────────────────────────────────────────
+def publish_internal(pages: dict) -> bool:
+    """생성된 페이지와 정적 파일을 사내 LAN 공유폴더에 한 벌 더 쓴다.
+
+    2026-09-04 신설. 공개(GitHub Pages) / 사내(LAN) 분리의 사내 쪽.
+
+    ★ 실패해도 예외를 밖으로 던지지 않는다.
+      서버가 꺼져 있거나 네트워크가 끊겨도 GitHub 업로드와 일일보고는
+      정상 진행되어야 한다. 실패는 로그로만 남긴다.
+    """
+    if not INTERNAL_ENABLED:
+        _log('사내 배포: 비활성(INTERNAL_ENABLED=False) — 건너뜀')
+        return False
+
+    import shutil, glob
+    try:
+        os.makedirs(INTERNAL_DIR, exist_ok=True)
+    except Exception as e:
+        _log(f'  ⚠️ 사내 배포 실패 — 폴더 접근 불가: {type(e).__name__}: {e}')
+        _log(f'     경로: {INTERNAL_DIR}')
+        _log('     (공개 배포는 정상 진행합니다)')
+        return False
+
+    n_ok, n_fail = 0, 0
+    try:
+        # 생성된 HTML
+        for fname, html in pages.items():
+            try:
+                with open(os.path.join(INTERNAL_DIR, fname), 'w', encoding='utf-8') as f:
+                    f.write(html)
+                n_ok += 1
+            except Exception as e:
+                n_fail += 1
+                _log(f'  ⚠️ {fname} 쓰기 실패: {e}')
+
+        # 정적 파일 — 공용(dist/) + 사내 전용(internal/)
+        search_dirs = [DIST_DIR]
+        if os.path.isdir(INTERNAL_ASSET_DIR):
+            search_dirs.append(INTERNAL_ASSET_DIR)
+        else:
+            _log(f'  ⚠️ internal/ 폴더 없음 — 사내 전용 자산이 빠집니다: {INTERNAL_ASSET_DIR}')
+
+        seen = set()
+        for d in search_dirs:
+          for ext in ('*.html', '*.css', '*.js'):
+            for src in glob.glob(os.path.join(d, ext)):
+                fname = os.path.basename(src)
+                if fname in pages or fname in seen:
+                    continue
+                seen.add(fname)
+                try:
+                    shutil.copy2(src, os.path.join(INTERNAL_DIR, fname))
+                    n_ok += 1
+                except Exception as e:
+                    n_fail += 1
+                    _log(f'  ⚠️ {fname} 복사 실패: {e}')
+    except Exception as e:
+        _log(f'  ⚠️ 사내 배포 중 예외: {type(e).__name__}: {e}')
+        return False
+
+    # ★ 조용한 성공 방지 — 0건 성공을 정상으로 찍지 않는다.
+    if n_ok == 0:
+        _log(f'  🔴 사내 배포: 성공 0건 / 실패 {n_fail}건 — 실패로 판정')
+        return False
+
+    _log(f'  → 사내 배포 완료: {n_ok}개 파일'
+         + (f' (실패 {n_fail}건)' if n_fail else ''))
+    _log(f'     {INTERNAL_DIR}')
+    return True
+
+
 # ── GitHub Pages 업로드 ────────────────────────────────────────────────────────
 # 2026-06-15: cwd를 DIST_DIR → BASE_DIR 로 변경
 #   이유: 외부 CSS/JS 파일 분리 이후 루트에 portal.css, dashboard.css 등이 추가됨.
@@ -829,23 +922,35 @@ if __name__ == '__main__':
 
     # 3) 페이지 생성
     _t = time.time()
-    pages = {
-        'index.html':     build_portal_html(),
+    # 2026-09-04 — 공개(GitHub Pages) / 사내(LAN 공유폴더) 분리
+    #   공개: 거래처 정보가 없는 고객용 페이지만
+    #   사내: 전부 (현황판은 거래처명·물량이 박히므로 절대 공개로 내보내지 않는다)
+    #   ※ supplies.html 은 미사용 확인(한경준님, 2026-09-04)으로 생성 중단.
+    #      build_supplies_html() 함수는 삭제하지 않고 남겨둔다.
+    public_pages = {
+        'index.html':     build_portal_html(show_staff=False),
         'request.html':   build_request_html(),
         'defect.html':    build_defect_html(),
         'inquiry.html':   build_inquiry_html(),
-        'supplies.html':  build_supplies_html(),
+    }
+    internal_pages = {
+        'index.html':     build_portal_html(show_staff=True),
+        'request.html':   public_pages['request.html'],
+        'defect.html':    public_pages['defect.html'],
+        'inquiry.html':   public_pages['inquiry.html'],
         'dashboard.html': build_dashboard_html(shippings, daily, worklog_date, generated_at),
     }
-    _log(f'페이지 생성 완료 ({time.time()-_t:.1f}s)')
+    pages = public_pages   # 이하 공개 배포 경로는 기존 로직 그대로
+    _log(f'페이지 생성 완료 — 공개 {len(public_pages)}개 / 사내 {len(internal_pages)}개 '
+         f'({time.time()-_t:.1f}s)')
 
     _t = time.time()
-    for fname, html in pages.items():
+    for fname, html in public_pages.items():
         for out_dir in (DIST_DIR, BASE_DIR):
             fpath = os.path.join(out_dir, fname)
             with open(fpath, 'w', encoding='utf-8') as f:
                 f.write(html)
-        _log(f'  → 저장: {fname} (dist/ + 루트)')
+        _log(f'  → 저장(공개): {fname} (dist/ + 루트)')
     _log(f'파일 저장 완료 ({time.time()-_t:.1f}s)')
 
     # 3-B) dist/ 정적 파일 → 루트 동기화 (generate가 생성하지 않는 파일)
@@ -856,11 +961,20 @@ if __name__ == '__main__':
     for ext in ('*.html', '*.css', '*.js'):
         for src in glob.glob(os.path.join(DIST_DIR, ext)):
             fname = os.path.basename(src)
+            if fname in INTERNAL_ONLY:      # 2026-09-04 사내 전용 — 공개로 내보내지 않음
+                continue
             if fname not in generated:
                 dst = os.path.join(BASE_DIR, fname)
                 shutil.copy2(src, dst)
                 _log(f'  → 정적 복사: {fname} (dist/ → 루트)')
     _log(f'정적 파일 동기화 완료 ({time.time()-_t:.1f}s)')
+
+    # 3-C) 사내 공유폴더 배포 (2026-09-04 신설)
+    _t = time.time()
+    _log('사내 공유폴더 배포 중...')
+    internal_ok = publish_internal(internal_pages)
+    _log(f'사내 배포 단계 종료 ({time.time()-_t:.1f}s) — '
+         f'{"성공" if internal_ok else "실패/건너뜀"}')
 
     # 4) GitHub Pages 업로드
     upload_ok = True
