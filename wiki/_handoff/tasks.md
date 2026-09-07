@@ -26,6 +26,32 @@
 
 ## 진행 중
 
+- [ ] 🔴 **사내 공유폴더 배포가 예약 작업에서 실패 — 자동 갱신 안 됨** (P1, 2026-09-04 등재)
+  - 담당: 한경준 (Task Scheduler 설정)
+  - 증상: 16:00 정규 실행에서 `OSError [WinError 1312] 지정한 로그온 세션이 없습니다: '\\192.168.0.252\ToolKorea\'`. **대화형 실행은 성공(17개 파일), 예약 실행만 실패.**
+  - 원인 추정(확인 필요): 예약 작업이 「암호를 저장하지 않음」(S4U)으로 등록돼 네트워크 자격증명이 없다.
+  - **진단 명령** (PowerShell):
+    ```powershell
+    Get-ScheduledTask | Where-Object { $_.TaskName -match 'CNC|Daily|Report|generate' } |
+      Select-Object TaskName, State, @{n='LogonType';e={$_.Principal.LogonType}}, @{n='UserId';e={$_.Principal.UserId}}
+    ```
+    `LogonType` 이 **S4U** 또는 **Password 아님**이면 원인 확정.
+  - **해결 후보**: ⓐ 「사용자가 로그온할 때만 실행」으로 변경(16:00 은 근무시간 — 가장 단순) ⓑ 「로그온 여부 무관」 + 암호 저장 ⓒ 스크립트에서 `net use` 사전 연결 ⓓ 로컬 출력 후 별도 동기화
+  - 🟢 안전장치는 정상 작동 — 파이프라인은 안 죽고 로그에 사유가 남았다. **현황판이 옛 데이터로 조용히 남지는 않는다**(⑤ 금요일 점검이 매주 확인)
+  - ✅ **2026-09-07 진단·조치 완료** [실측 검증]:
+    - `Get-ScheduledTask` 결과 — `CNC_Daily_Report` / `CNC_Daily_Report_OnBoot` / `DailyZeroPriceAlert`
+      3건이 **`LogonType = S4U`**, `ANCA_Scraper_Daily`(Disabled) 등 나머지는 `Interactive`.
+    - ⚠️ **S4U 단독으로는 설명되지 않는다** — `OnBoot` 도 S4U 인데 09-07 07:53 사내 배포에 성공(17개 파일).
+      사내 배포 표본이 각 1회뿐이라 원인은 아직 확정이 아니다.
+    - ✅ 조치: `CNC_Daily_Report` 만 `S4U → Interactive`(RunLevel=Highest 보존, NextRunTime 16:00 유지).
+      `OnBoot` 는 정상 동작 중이라 **변경하지 않았다**(로그온 전 부팅 트리거에서 안 돌 위험).
+    - ⚠️ 부작용: 로그오프 상태면 16:00 실행이 건너뛰어진다. 다음 출근 부팅 때 `OnBoot` 가 커버하고,
+      금요일 점검 v2.1 ⑤항이 주 1회 사내 배포 여부를 읽는다.
+    - ⚠️ `DailyZeroPriceAlert` 도 S4U — UNC/네트워크 드라이브 사용 여부 **확인 필요**.
+    - 🔴 **미검증 — 오늘 16:00 정규 실행 로그(`사내 배포 단계 종료 — 성공` + `LastTaskResult = 0`)로 판정한다.**
+      `--local` 성공은 검증으로 인정하지 않는다(decisions.md 2026-09-04 (8) 교훈).
+  - 관련: decisions.md **2026-09-04 (8) ①**, **2026-09-07**
+
 - [ ] 🅿️ **생산팀 포털 고도화 — Trico 개발사 확인 대기로 보류** (P2, 2026-09-04 등재)
   - 담당: 한경준 (개발사 접촉) → 회신 후 Cowork
   - 배경: 「홈페이지 → 쇼핑몰 → ERP」 지시를 검토해 **ERP 신규 제작을 배제**하고 **생산팀 포털 고도화**로 범위를 좁혔다. 상세 근거는 decisions.md **2026-09-04**.

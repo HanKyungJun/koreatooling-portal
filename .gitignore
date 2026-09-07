@@ -65,6 +65,18 @@ sheets_id.json
 .env.local
 .env.*.local
 
+# --- 출하 보류 대장 (2026-09-07 추가) ---
+# 거래처 신용 정보(입금대기 등)가 들어간다. 저장소가 Public 이므로 반드시 제외.
+erp/hold_orders.json
+
+# --- 작업 백업 파일 (2026-09-07 추가) ---
+# {원본명}.bak_YYYYMMDD 형식의 수정 전 백업. 저장소에 둘 이유가 없다.
+# ⚠️ 이미 추적 중인 파일에는 소급 적용되지 않는다 — 필요하면 git rm --cached 로 별도 해제.
+*.bak_*
+
+# --- Cowork/Claude 로컬 설정 (2026-09-07 추가) ---
+.claude/settings.local.json
+
 # --- 명시적으로 추적하는 항목 (위 패턴에 걸려도 살림) ---
 !.env.example
 # !raw/notes/.gitkeep

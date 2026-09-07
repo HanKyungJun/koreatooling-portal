@@ -657,6 +657,27 @@ def build_dashboard_html(shippings, daily, worklog_date, generated_at, todo=None
             rows = ('<tr><td colspan="5" style="text-align:center;color:#999;padding:14px">'
                     '납기 임박·지연 건 없음</td></tr>')
 
+        # 출하 보류 상세 — 있을 때만 그린다 (2026-09-07)
+        if todo.get('hold_detail'):
+            hrows = ''.join(
+                f"<tr><td>{h['dlv']}</td><td>{h['cust']}</td>"
+                f"<td>{h['reason']}</td>"
+                f"<td style=\"text-align:right\">{h['rest']:,}</td></tr>"
+                for h in todo['hold_detail'])
+            hold_html = f'''
+  <div class="section-card">
+    <div class="chart-title">⏸ 출하 보류 상세 <span style="font-size:0.78rem;color:#aaa;font-weight:400">(사유 해소 전까지 지연으로 세지 않는다)</span></div>
+    <div style="overflow-x:auto">
+      <table class="form-table">
+        <thead><tr><th>납기</th><th>거래처</th><th>사유</th><th style="text-align:right">잔량</th></tr></thead>
+        <tbody>{hrows}</tbody>
+      </table>
+    </div>
+  </div>
+'''
+        else:
+            hold_html = ''
+
         todo_html = f'''
   <div class="section-title-row">
     <span class="section-title">오늘 할 일</span>
@@ -673,6 +694,11 @@ def build_dashboard_html(shippings, daily, worklog_date, generated_at, todo=None
       <div class="kpi-value">{todo['near_cases']}<span class="kpi-unit">건</span></div>
       <div class="kpi-sub">{todo['near_qty']:,}개</div>
     </div>
+    <div class="kpi-card" style="border-left:4px solid #78909c">
+      <div class="kpi-label">⏸ 출하 보류 — 생산팀 소관 밖</div>
+      <div class="kpi-value">{todo['hold_cases']}<span class="kpi-unit">건</span></div>
+      <div class="kpi-sub">{todo['hold_qty']:,}개</div>
+    </div>
     <div class="kpi-card" style="border-left:4px solid #1A3A6B">
       <div class="kpi-label">📦 미출하 잔량 전체</div>
       <div class="kpi-value">{todo['open_qty']:,}<span class="kpi-unit">개</span></div>
@@ -680,7 +706,7 @@ def build_dashboard_html(shippings, daily, worklog_date, generated_at, todo=None
     </div>
   </div>
   <div class="section-card">
-    <div class="chart-title">납기 임박·지연 상세 <span style="font-size:0.78rem;color:#aaa;font-weight:400">(납기 빠른 순, 최대 12건)</span></div>
+    <div class="chart-title">납기 임박·지연 상세 <span style="font-size:0.78rem;color:#aaa;font-weight:400">(납기 빠른 순, 최대 12건 · 출하 보류 {todo['hold_cases']}건과 부분출하 잔여 {todo['minor_cases']}건 제외)</span></div>
     <div style="overflow-x:auto">
       <table class="form-table">
         <thead><tr><th>구분</th><th>납기</th><th>거래처</th><th>품목</th><th style="text-align:right">잔량</th></tr></thead>
@@ -688,6 +714,7 @@ def build_dashboard_html(shippings, daily, worklog_date, generated_at, todo=None
       </table>
     </div>
   </div>
+{hold_html}
 '''
     else:
         todo_html = ''
@@ -755,6 +782,37 @@ var daily = {daily_json};
 
 
 # ── ERP 「오늘 할 일」 데이터 (2026-09-04 신설) ────────────────────────────────
+# ── 출하 보류 대장 ────────────────────────────────────────────────────────────
+HOLD_PATH = os.path.join(BASE_DIR, 'erp', 'hold_orders.json')
+
+
+def load_hold_orders() -> dict:
+    """출하 보류 수주번호 → 사유 매핑을 읽는다.
+
+    2026-09-07 신설. 납기가 지났지만 **생산팀이 조치할 수 없는 건**(입금대기 등)을
+    「지연」에서 분리하기 위한 수동 대장이다.
+
+    ★ 왜 수동인가 [실측 검증, 2026-09-07]
+      미입금 보류 3건의 ERP 상태코드가 SD200100(2건) / SD200000(1건) 으로 갈리고,
+      같은 SD200100 인 다른 2건은 미입금이 아니다. 포함관계도 교집합도 아니므로
+      **상태코드로는 자동 식별이 불가능하다.** 코드 의미가 확인되지 않은 상태에서
+      코드 기반 필터를 넣는 것은 @stat_bc 사고(2026-09-04 (2))의 반복이 된다.
+
+    ★ 파일이 없거나 깨져도 예외를 던지지 않는다 — 보류 0건으로 동작한다.
+    ⚠️ 거래처 신용 정보가 들어가므로 .gitignore 제외 대상이다.
+    """
+    try:
+        with open(HOLD_PATH, encoding='utf-8') as f:
+            data = json.load(f)
+        return {str(h['so_no']): str(h.get('reason', '보류'))
+                for h in data.get('holds', []) if h.get('so_no')}
+    except FileNotFoundError:
+        return {}
+    except Exception as e:
+        _log(f'  ⚠️ 보류 대장 읽기 실패 — 보류 0건으로 진행: {type(e).__name__}: {e}')
+        return {}
+
+
 def fetch_erp_todo(lookback_days: int = 120):
     """재연마 수주에서 미출하 잔량·납기 임박을 계산한다.
 
@@ -804,14 +862,29 @@ def fetch_erp_todo(lookback_days: int = 120):
         today     = date.today()
         d3        = today + timedelta(days=3)
 
-        late  = open_rows[open_rows['dlv'].notna() & (open_rows['dlv'] <  today)]
-        near  = open_rows[open_rows['dlv'].notna() &
-                          (open_rows['dlv'] >= today) & (open_rows['dlv'] <= d3)]
+        # 출하 보류 — 생산팀이 조치할 수 없는 건. 지연에서 뺀다 (2026-09-07)
+        holds = load_hold_orders()
+        open_rows = open_rows.copy()
+        open_rows['hold_rs'] = open_rows['so_no'].astype(str).map(holds)
+        is_hold = open_rows['hold_rs'].notna()
+
+        # 부분출하 자투리 — 거의 다 나가고 꼬리만 남은 건. 지연에서 뺀다 (2026-09-07)
+        #   조건: 출하 이력이 있고 잔량이 수주량의 10% 미만.
+        #   [실측 검증] 2026-09-07 이 조건에 걸린 3건은 경과 44~90일 · 잔량 2~3개였다.
+        is_minor = (open_rows['out_q'] > 0) & (open_rows['rest'] < open_rows['so_q'] * 0.1)
+
+        active = open_rows[~is_hold & ~is_minor]
+        hold_rows  = open_rows[is_hold]
+        minor_rows = open_rows[~is_hold & is_minor]
+
+        late  = active[active['dlv'].notna() & (active['dlv'] <  today)]
+        near  = active[active['dlv'].notna() &
+                       (active['dlv'] >= today) & (active['dlv'] <= d3)]
 
         # 임박·지연 상세 (납기 빠른 순 12건)
         detail = []
-        for _, r in open_rows[open_rows['dlv'].notna() &
-                              (open_rows['dlv'] <= d3)].sort_values('dlv').head(12).iterrows():
+        for _, r in active[active['dlv'].notna() &
+                           (active['dlv'] <= d3)].sort_values('dlv').head(12).iterrows():
             detail.append({
                 'dlv':   str(r['dlv']),
                 'cust':  str(r.get('cust_nm', '')),
@@ -828,6 +901,15 @@ def fetch_erp_todo(lookback_days: int = 120):
             'near_cases': int(near['so_no'].nunique()),
             'near_qty':   int(near['rest'].sum()),
             'detail':     detail,
+            'hold_cases': int(hold_rows['so_no'].nunique()),
+            'hold_qty':   int(hold_rows['rest'].sum()),
+            'hold_detail': [
+                {'cust': str(r.get('cust_nm', '')), 'rest': int(r['rest']),
+                 'dlv': str(r['dlv']), 'reason': str(r['hold_rs'])}
+                for _, r in hold_rows.sort_values('dlv').iterrows()
+            ],
+            'minor_cases': int(minor_rows['so_no'].nunique()),
+            'minor_qty':   int(minor_rows['rest'].sum()),
             'since':      fr,
         }
     except Exception as e:
@@ -968,6 +1050,10 @@ def upload_to_github():
     _add_fail = []
     for _pattern in ('*.html', '*.css', '*.js'):
         for _f in _glob.glob(os.path.join(BASE_DIR, _pattern)):
+            # 2026-09-04: 사내 전용 파일은 .gitignore 대상이라 add 하면 실패한다.
+            #   (당일 16:00 실행에서 「git add 실패 7건」의 원인)
+            if os.path.basename(_f) in INTERNAL_ONLY:
+                continue
             _c, _o, _e = run([git, 'add', _f])
             if _c != 0:
                 _add_fail.append(_e)
@@ -1057,7 +1143,9 @@ if __name__ == '__main__':
     todo = fetch_erp_todo()
     if todo:
         _log(f'  → 미출하 {todo["open_cases"]}건 / {todo["open_qty"]:,}개 · '
-             f'지연 {todo["late_cases"]}건 · 임박 {todo["near_cases"]}건 '
+             f'지연 {todo["late_cases"]}건 · 임박 {todo["near_cases"]}건 · '
+             f'보류 {todo["hold_cases"]}건 / {todo["hold_qty"]:,}개 · '
+             f'자투리 {todo["minor_cases"]}건 '
              f'({time.time()-_t:.1f}s)')
     else:
         _log(f'  → 생략 (블록 미표시) ({time.time()-_t:.1f}s)')
