@@ -3,6 +3,48 @@
 > 무엇을(What), 왜(Why), 출처(Where)를 **시간 역순(최신이 맨 위)** 으로 기록합니다.
 > 챗에서 결정된 내용도 반드시 여기로 옮겨야 Code/Cowork가 따라옵니다.
 
+## 2026-09-07 (4): ✅ 16:00 정규 실행 검증 완료 — 사내배포 Interactive 전환 효과 확인, 「출하 보류」 KPI 기대값 실측 일치
+
+- 결정: 2026-09-07 오전 조치(`CNC_Daily_Report` LogonType S4U→Interactive)를 **효과 확인 완료로 종결**한다.
+  2026-09-07 (2)의 「출하 보류」 KPI도 **검증 완료**로 종결한다.
+- 근거 [실측 검증 — `wiki/reports/daily/generate.log`, 09-07 16:00:30~16:00:36 블록]:
+  - `사내 배포 단계 종료 (0.1s) — 성공` — 09-04 16:00에 `WinError 1312`로 실패했던 것과 달리
+    **오늘 16:00 정규 실행(트리거 시각과 정확히 일치)에서 정상 완료**됐다.
+  - `git add 단계 완료: 11개 대상` — 실패 0건. 09-04 (8)의 `.gitignore` 충돌로 인한 add 7건 실패도
+    재발하지 않았다(해당 수정이 이미 반영돼 있었음).
+  - ERP 「오늘 할 일」 수치: `지연 6건 · 보류 3건/370개 · 자투리 3건` — 2026-09-07 (2)에 적어둔
+    **기대값과 정확히 일치** ✅. 「출하 보류」 KPI 로직이 정규 실행에서도 올바르게 작동함을 확인.
+- ⚠️ 한계: device_bash(Linux VM)는 Windows Task Scheduler에 접근할 수 없어 `LastTaskResult` 수치
+  자체는 로그로 대체 확인했다. 로그상 오류 없이 정상 완료됐으므로 사실상 `0`으로 추정되나,
+  **엄밀한 확인은 한경준님이 PowerShell `Get-ScheduledTaskInfo -TaskName "CNC_Daily_Report"`로
+  가능** (추정값 — 실측 필요 시 위 명령 실행 권장).
+- 출처: Cowork 실측(`generate.log` 09-07 16:00 블록 판독), 2026-09-07
+- 영향: tasks.md 「사내 공유폴더 배포 예약 작업 실패」 항목 종결. decisions.md **2026-09-07 (2)** 「미검증」 태그 해제.
+
+## 2026-09-07 (3): 🔴 「EOL 허수 21건」은 착시였다 — `.gitattributes` 도입 불필요, 항목 종결
+
+- 결정: `.gitattributes` 를 **도입하지 않는다.** tasks.md P3 「EOL 허수 변경 21건」 항목을 **종결**한다.
+- 근거 [실측 검증, 2026-09-07]:
+  - PowerShell `git status --short` → **출력 없음.** 작업트리가 완전히 깨끗하다.
+  - `git config --show-origin --get core.autocrlf` → `file:C:/Program Files/Git/etc/gitconfig  true`.
+    Windows Git 설치본의 **시스템 레벨** 설정이라 이 PC 의 모든 저장소에 적용된다. CRLF↔LF 자동 흡수.
+  - device 브리지의 git 은 **Linux VM 의 별도 설치본**이며 `autocrlf` 미설정이다.
+    CRLF 작업트리 vs LF blob 을 그대로 비교해 21파일 / 15,441줄을 변경으로 본다.
+  - 2026-09-03 에 등재한 「실질 피해 2가지」는 둘 다 성립하지 않는다:
+    ① 완료 작업이 미완으로 보인 것은 EOL 이 아니라 **판정 도구를 잘못 쓴 것**이다.
+    ② `generate.py` 의 `git add` 는 Windows git 이 수행하므로 허수가 들어가지 않는다.
+       「add 18개 대상 → commit code=1 → 변경 없음」은 **매일 같은 내용을 재생성해 실제로
+       커밋할 것이 없는 정상 동작**이다. 결론(실패 아님)은 같지만 원인 설명이 틀렸다.
+- ★ **이번 세션에서 같은 실수를 반복했다.** 2026-09-02 에 「PowerShell 1건 vs device_bash 25건」을
+  이미 관측해 두고도, device_bash `git diff --numstat` 수치를 그대로 「EOL 허수 15,441줄」로 보고했다.
+  → **`git status`/`diff` 수치를 인용하기 전에 어느 git 으로 봤는지 먼저 밝히고, PowerShell 값으로 대조한다.**
+- 🟢 커밋 자체는 영향 없었다 — 실제 변경 파일만 경로로 지정해 add 했기 때문에
+  `9a8f7b1` 에는 노이즈가 들어가지 않았다(10파일 +421 −10).
+- ⚠️ 남는 사실: blob 은 LF, 작업트리는 CRLF. `autocrlf` 가 없는 환경(CI·다른 PC)에서는 다시 드러난다.
+  **현 환경에서는 무해**하므로 `tools/230116_2DR060.tom` 손상 위험을 감수할 이유가 없다.
+- 출처: Cowork 실측(PowerShell `git status --short` · `git config --show-origin`) + device_bash 대조, 2026-09-07
+- 영향: tasks.md P3 항목 종결. `.gitattributes` 계획 폐기.
+
 ## 2026-09-07 (2): 「출하 보류」 KPI 신설 — 상태코드로는 식별 불가, 수동 대장으로 확정
 
 - 결정: 납기가 지났지만 **생산팀이 조치할 수 없는 건**을 지연에서 분리해 4번째 KPI 「⏸ 출하 보류」로 둔다.

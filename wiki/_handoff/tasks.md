@@ -26,7 +26,7 @@
 
 ## 진행 중
 
-- [ ] 🔴 **사내 공유폴더 배포가 예약 작업에서 실패 — 자동 갱신 안 됨** (P1, 2026-09-04 등재)
+- [x] ✅ **사내 공유폴더 배포가 예약 작업에서 실패 — 자동 갱신 안 됨** (P1, 2026-09-04 등재, **2026-09-07 16:00 정규 실행으로 검증 완료**)
   - 담당: 한경준 (Task Scheduler 설정)
   - 증상: 16:00 정규 실행에서 `OSError [WinError 1312] 지정한 로그온 세션이 없습니다: '\\192.168.0.252\ToolKorea\'`. **대화형 실행은 성공(17개 파일), 예약 실행만 실패.**
   - 원인 추정(확인 필요): 예약 작업이 「암호를 저장하지 않음」(S4U)으로 등록돼 네트워크 자격증명이 없다.
@@ -51,6 +51,13 @@
     - 🔴 **미검증 — 오늘 16:00 정규 실행 로그(`사내 배포 단계 종료 — 성공` + `LastTaskResult = 0`)로 판정한다.**
       `--local` 성공은 검증으로 인정하지 않는다(decisions.md 2026-09-04 (8) 교훈).
   - 관련: decisions.md **2026-09-04 (8) ①**, **2026-09-07**
+  - ✅ **2026-09-07 16:00 정규 실행 검증 완료** [실측 검증 — `generate.log`]: `사내 배포 단계 종료 (0.1s) — 성공`,
+    `git add` 실패 0건. 09-04 16:00 `WinError 1312` 실패가 재발하지 않음 — Interactive 전환 조치 효과 확인.
+    ERP 「오늘 할 일」 수치(지연 6건·보류 3건/370개·자투리 3건)도 기대값과 일치. 항목 종결.
+  - ⚠️ `LastTaskResult` 자체는 device_bash로 조회 불가(Windows Task Scheduler는 Linux VM에서 접근 불가) —
+    로그상 오류 없음으로 사실상 0 추정(추정값). 엄밀 확인 원하면 PowerShell
+    `Get-ScheduledTaskInfo -TaskName "CNC_Daily_Report"` 실행 권장.
+  - 관련: decisions.md **2026-09-07 (4)**
 
 - [ ] 🅿️ **생산팀 포털 고도화 — Trico 개발사 확인 대기로 보류** (P2, 2026-09-04 등재)
   - 담당: 한경준 (개발사 접촉) → 회신 후 Cowork
@@ -132,7 +139,7 @@
   - ★ **교훈(2026-09-03 2회째): 「커밋만 남았다」로 이월된 항목은 먼저 `git show HEAD:<경로>` 로 실물을 확인한다.** 오늘 「금요일 점검 재작성」도 같은 유형(이미 존재, 비활성일 뿐)이었다. **`git status` 의 `M` 표시는 내용 변경의 증거가 아니다.**
   - 관련: decisions.md **2026-09-02 (8) ③**
 
-- [ ] **🧹 EOL 허수 변경 21건 — `.gitattributes` 부재 (P3, 2026-09-03 등재)**
+- [x] **✅ ~~🧹 EOL 허수 변경 21건 — `.gitattributes` 부재~~ (P3, 2026-09-03 등재, **2026-09-07 종결 — 근거가 착시였다**)**
   - 담당: 한경준 / Codex (신중히)
   - 메모: `git status` 의 modified **21건 전부가 CRLF/LF 차이뿐**이고 **내용 변경은 0건**이다 [실측 검증 — `git diff --ignore-cr-at-eol` 결과 전 파일 차이 0]. `core.autocrlf` **미설정** + `.gitattributes` **부재**가 원인.
     - 대상: `.gitignore` · `dashboard/defect/index/inquiry/request/supplies.html`(+`dist/` 6개) · `erp/TricoERP.spec` · `erp/dist/config.json` · `scripts/anca-monitor/run_scraper.ps1` · `scripts/daily_and_upload.bat` · `scripts/run_daily_report.bat` · `tools/230116_2DR060.tom` · `wiki/overview.md` · `wiki/measurements/2026-06-10_SKH51_(HSS)_D125xT10xH32.md`
@@ -140,7 +147,22 @@
     - ① **완료된 작업이 미완으로 보인다** — 위 `.gitignore` 항목이 3세션 이월된 원인이다
     - ② **17:00 자동화 로그가 매일 오해를 유발한다** — `generate.log` 의 「[git] add 단계 완료: 18개 대상」 → 「commit code=1」 → 「변경 없음 — 업로드 생략」 이 이것이다. 실패가 아니라 **허수를 add 하고 커밋할 게 없어 정상 종료**한 것
   - ⚠️ **처리 시 주의 — 지금 손대지 않는다**: `.gitattributes` 에 `* text=auto eol=lf` 를 넣고 `git add --renormalize .` 로 1회 커밋하면 해소되지만, **`tools/230116_2DR060.tom`(ANCA 툴 파일)은 `-text`(바이너리)로 지정해야 한다** — 그냥 renormalize 하면 손상 위험. `.bat`·`.ps1` 은 Windows 실행이라 `eol=crlf` 유지를 검토한다. **21개 파일을 한 번에 건드리는 커밋이라 반드시 백업 후 진행.**
-  - 관련: 2026-09-03 커밋 `e2220cf` 작업 중 발견
+  - 🔴 **2026-09-07 종결 — 위 진단은 `device_bash`(Linux git) 기준 착시였다** [실측 검증]:
+    - PowerShell `git status --short` → **출력 없음. 작업트리가 완전히 깨끗하다.**
+    - Windows Git 은 **시스템 레벨 `core.autocrlf = true`** 다
+      (`file:C:/Program Files/Git/etc/gitconfig true`). CRLF↔LF 를 자동 흡수하므로 `M` 이 뜨지 않는다.
+    - device 브리지의 git 은 **Linux VM 의 별도 설치본**이고 `autocrlf` 미설정이라
+      CRLF 작업트리 vs LF blob 을 그대로 비교해 **파일 전체를 변경으로 본다**(21건 / 15,441줄).
+      2026-09-02 에 이미 「PowerShell 1건 vs device_bash 25건」으로 관측된 현상과 같다.
+    - → **위 「실질 피해 2가지」는 둘 다 성립하지 않는다**:
+      ① 미완으로 보인 것은 EOL 이 아니라 **판정 도구를 잘못 쓴 것**이다.
+      ② `generate.py` 의 add 는 Windows git 이 수행하므로 허수가 들어가지 않는다.
+         「add 18개 대상 → code=1 → 변경 없음」은 **매일 같은 내용을 재생성해 실제로 커밋할 게 없는 것**이다.
+    - ✅ **`.gitattributes` 도입 불필요.** `tools/*.tom` 손상 위험을 감수할 이유가 사라졌다.
+    - ⚠️ 남는 사실: blob 은 LF, 작업트리는 CRLF 다. `autocrlf` 가 없는 환경(CI·다른 PC)에서는
+      다시 드러날 수 있다. **현 환경에서는 무해.**
+  - ★ 교훈: **`git status` 결과를 인용하기 전에 어느 git 으로 봤는지 먼저 밝힌다.**
+  - 관련: 2026-09-03 커밋 `e2220cf` 작업 중 발견, decisions.md **2026-09-07 (3)**
 
 - [x] **✅ 「금요일 마무리 점검」 예약 작업 다시 켬 — 재작성 아님** (P1, 2026-09-02 정정, **2026-09-03 13:18 KST 완료**)
   - 담당: 한경준 (직접 활성화)
