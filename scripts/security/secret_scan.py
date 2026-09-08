@@ -123,6 +123,11 @@ def main():
 
     files = tracked_files()
     hits, text_n, bin_files, unreadable = [], 0, [], []
+    # 2026-09-08: 스캐너 자신은 제외한다 — --selftest 대조군(가짜 시크릿 22종)이
+    #   매 스캔마다 적출돼 진짜 적출을 가린다. 제외 사실은 아래에 반드시 출력한다
+    #   (조용한 제외 금지 — 무엇을 검사하지 않았는지 항상 밝힌다).
+    self_excluded = [f for f in files if f.startswith('scripts/security/')]
+    files = [f for f in files if not f.startswith('scripts/security/')]
     for rel in files:
         full = os.path.join(REPO, rel)
         if not os.path.exists(full):
@@ -144,6 +149,11 @@ def main():
     print('추적 파일 %d건 / 텍스트 검사 %d건 / 바이너리 제외 %d건 / 읽기실패 %d건'
           % (len(files), text_n, len(bin_files), len(unreadable)))
     print('=' * 70)
+    if self_excluded:
+        print('⚠️ 검사 제외: 스캐너 자신 %d건 (--selftest 대조군 포함) — %s'
+              % (len(self_excluded), ', '.join(self_excluded)))
+        print('   대조군 검증은 `python secret_scan.py --selftest` 로 별도 수행한다.')
+        print('=' * 70)
     print('■ 내용 계층 적출 %d건' % len(hits))
     for label, ln, name, snippet in hits:
         print('  🔴 [%s] %s:%d' % (name, label, ln))

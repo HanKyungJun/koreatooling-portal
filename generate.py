@@ -69,6 +69,7 @@ INTERNAL_ONLY = {
     'field-record.html', 'field-record.css', 'field-record.js',
     'supplies.html',          # 2026-09-04 미사용 확인 — 생성 중단
     'portal-auth.js',         # 2026-09-08 신설 — 직원 게이트. 사내 전용, 공개 배포 금지
+    'field-record-config.js', # 2026-09-08 신설 — 현장기록 GAS URL·토큰. 사내 전용
 }
 
 YEARS = [2026, 2025, 2024, 2023, 2022]
@@ -980,6 +981,39 @@ function checkPass() {
         return False
 
 
+def write_internal_field_config() -> bool:
+    """현장기록 화면용 설정 JS(`field-record-config.js`)를 internal/ 에 생성한다. (2026-09-08 신설)
+
+    GAS 배포 URL 과 공유 토큰을 `.env` 에서만 받아 사내 전용 자산으로 굽는다.
+    저장소에는 값이 남지 않는다(`portal-auth.js` 와 동일 패턴).
+
+    ★ 값이 없으면 파일을 만들지 않는다 — 클라이언트는 기존 하드코딩 URL 로 폴백해
+      현재 동작을 유지한다(점진 적용).
+    """
+    url   = os.getenv('FIELD_RECORD_GAS_URL', '')
+    token = os.getenv('FIELD_RECORD_TOKEN', '')
+    if not url and not token:
+        return False
+    js = (
+        '/* field-record-config.js — 현장기록 엔드포인트 설정 '
+        '(generate.py 자동 생성, 사내 전용)\n'
+        '   손으로 고치지 마세요. 값은 .env 의 '
+        'FIELD_RECORD_GAS_URL / FIELD_RECORD_TOKEN 입니다. */\n'
+        'window.FIELD_RECORD_GAS_URL = ' + json.dumps(url) + ';\n'
+        'window.FIELD_RECORD_TOKEN   = ' + json.dumps(token) + ';\n'
+    )
+    try:
+        os.makedirs(INTERNAL_ASSET_DIR, exist_ok=True)
+        with open(os.path.join(INTERNAL_ASSET_DIR, 'field-record-config.js'), 'w',
+                  encoding='utf-8') as f:
+            f.write(js)
+        _log('  → 현장기록 설정 생성: internal/field-record-config.js (사내 전용)')
+        return True
+    except Exception as e:
+        _log(f'  ⚠️ field-record-config.js 생성 실패: {type(e).__name__}: {e}')
+        return False
+
+
 def publish_internal(pages: dict) -> bool:
     """생성된 페이지와 정적 파일을 사내 LAN 공유폴더에 한 벌 더 쓴다.
 
@@ -1278,7 +1312,8 @@ if __name__ == '__main__':
     # 3-C) 사내 공유폴더 배포 (2026-09-04 신설)
     _t = time.time()
     _log('사내 공유폴더 배포 중...')
-    write_internal_auth_js()      # 2026-09-08 — 게이트 JS 를 사내 자산으로 먼저 생성
+    write_internal_auth_js()          # 2026-09-08 — 게이트 JS 를 사내 자산으로 먼저 생성
+    write_internal_field_config()     # 2026-09-08 — 현장기록 GAS URL·토큰 주입
     internal_ok = publish_internal(internal_pages)
     _log(f'사내 배포 단계 종료 ({time.time()-_t:.1f}s) — '
          f'{"성공" if internal_ok else "실패/건너뜀"}')

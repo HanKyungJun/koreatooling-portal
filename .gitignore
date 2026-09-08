@@ -188,6 +188,9 @@ scripts/anca-monitor/*.bak_*
 /internal/
 /portal-auth.js
 /dist/portal-auth.js
+#   ② 현장기록 엔드포인트·토큰도 사내 전용이다(2026-09-08).
+/field-record-config.js
+/dist/field-record-config.js
 #   ② 옛 포털 UI 백업 — 인라인 게이트에 비밀번호가 남아 있었다.
 /wiki/_backup/portal-ui-20260615/
 #   ③ 대외비 수치(설비 투자 금액·원가·거래처 실명 물량)가 든 문서.
