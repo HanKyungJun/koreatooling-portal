@@ -29,7 +29,11 @@ except ImportError:
 GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
 GITHUB_USER  = os.getenv('GITHUB_USER', 'HanKyungJun')
 GITHUB_REPO  = os.getenv('GITHUB_REPO', 'koreatooling-portal')
-STAFF_PASS   = os.getenv('STAFF_PASS', '1234')  # 화면 보호용 임시 비밀번호 — 실제 인증·권한 아님
+STAFF_PASS   = os.getenv('STAFF_PASS', '')
+# 2026-09-08: 하드코딩 기본값을 제거했다. 이 파일은 공개 저장소에 있으므로
+#   기본값을 두면 그것이 곧 공개된 비밀번호가 된다. .env 의 STAFF_PASS 로만 주입한다.
+#   미설정 시 게이트 블록 자체를 생성하지 않는다(가짜 보안을 남기지 않기 위함).
+#   ⚠️ 클라이언트 사이드 게이트는 실제 인증·권한이 아니다 — 사내 LAN 화면 보호용.
 SHOW_STAFF   = os.getenv('SHOW_STAFF', 'True').lower() == 'true'
 
 # 필수 환경변수 체크 (--local 모드가 아닐 때만 GitHub 토큰 필요)
@@ -64,6 +68,7 @@ INTERNAL_ONLY = {
     'dashboard.html', 'dashboard.css', 'dashboard.js',
     'field-record.html', 'field-record.css', 'field-record.js',
     'supplies.html',          # 2026-09-04 미사용 확인 — 생성 중단
+    'portal-auth.js',         # 2026-09-08 신설 — 직원 게이트. 사내 전용, 공개 배포 금지
 }
 
 YEARS = [2026, 2025, 2024, 2023, 2022]
@@ -186,7 +191,8 @@ def _form_page(page_title, form_name, icon, header_title, fields_html, success_m
             '<footer>© 2026 코리아툴링 | Korea Tooling Co., Ltd.</footer>\n'
             '<iframe name="hidden-target" style="display:none;"></iframe>\n'
             '<script src="portal.js"></script>\n'
-            '</body>\n</html>')
+            + ('<script src="portal-auth.js"></script>\n' if protected else '')
+            + ('</body>\n</html>'))
 
 
 # ── 포털 메인 ──────────────────────────────────────────────────────────────────
@@ -260,7 +266,7 @@ def build_portal_html(show_staff: bool = None):
       document.getElementById('staff-pass-input').focus();
     }
   }
-  </script>""") if show_staff else ''
+  </script>""") if (show_staff and STAFF_PASS) else ''
 
     return """<!DOCTYPE html>
 <html lang="ko">
@@ -769,6 +775,7 @@ def build_dashboard_html(shippings, daily, worklog_date, generated_at, todo=None
 </main>
 
 <script src="portal.js"></script>
+<script src="portal-auth.js"></script>
 <script>
 // ── 동적 데이터 (generate.py 주입) ───────────────────
 var SHIPPINGS = [
@@ -918,6 +925,61 @@ def fetch_erp_todo(lookback_days: int = 120):
 
 
 # ── 사내 공유폴더 배포 ─────────────────────────────────────────────────────────
+def write_internal_auth_js() -> bool:
+    """직원 게이트 JS(`portal-auth.js`)를 internal/ 에 생성한다. (2026-09-08 신설)
+
+    ★ 이 파일은 공개 배포 경로(dist/·루트·GitHub)에 절대 두지 않는다.
+      publish_internal() 이 internal/ 을 사내 공유폴더로 복사하므로 사내에만 배포된다.
+      비밀번호는 .env 의 STAFF_PASS 에서만 온다 — 저장소에는 값이 남지 않는다.
+    """
+    if not STAFF_PASS:
+        _log('  ⚠️ STAFF_PASS 미설정 — 직원 게이트를 생성하지 않습니다(.env 에 등재하세요)')
+        return False
+    js = """/* portal-auth.js — 직원 게이트 (generate.py 자동 생성, 사내 전용)
+   ⚠️ 손으로 고치지 마세요. 비밀번호는 .env 의 STAFF_PASS 로 관리합니다.
+   ⚠️ 클라이언트 사이드 확인이므로 실제 인증이 아닙니다 — 사내 LAN 화면 보호용. */
+(function initAuth() {
+  var overlay = document.getElementById('auth-overlay');
+  if (!overlay) return;
+  if (sessionStorage.getItem('kt_auth') === '1') {
+    overlay.style.display = 'none';
+    return;
+  }
+  var inp = document.getElementById('pass-input');
+  if (inp) {
+    inp.focus();
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') window.checkPass();
+    });
+  }
+})();
+
+function checkPass() {
+  var inp = document.getElementById('pass-input');
+  if (!inp) return;
+  if (inp.value === '__STAFF_PASS__') {
+    sessionStorage.setItem('kt_auth', '1');
+    document.getElementById('auth-overlay').style.display = 'none';
+  } else {
+    var err = document.getElementById('pass-err');
+    if (err) err.textContent = '비밀번호가 틀렸습니다.';
+    inp.value = '';
+    inp.focus();
+  }
+}
+""".replace('__STAFF_PASS__', STAFF_PASS)
+    try:
+        os.makedirs(INTERNAL_ASSET_DIR, exist_ok=True)
+        with open(os.path.join(INTERNAL_ASSET_DIR, 'portal-auth.js'), 'w',
+                  encoding='utf-8') as f:
+            f.write(js)
+        _log('  → 직원 게이트 생성: internal/portal-auth.js (사내 전용)')
+        return True
+    except Exception as e:
+        _log(f'  ⚠️ portal-auth.js 생성 실패: {type(e).__name__}: {e}')
+        return False
+
+
 def publish_internal(pages: dict) -> bool:
     """생성된 페이지와 정적 파일을 사내 LAN 공유폴더에 한 벌 더 쓴다.
 
@@ -1205,6 +1267,7 @@ if __name__ == '__main__':
     # 3-C) 사내 공유폴더 배포 (2026-09-04 신설)
     _t = time.time()
     _log('사내 공유폴더 배포 중...')
+    write_internal_auth_js()      # 2026-09-08 — 게이트 JS 를 사내 자산으로 먼저 생성
     internal_ok = publish_internal(internal_pages)
     _log(f'사내 배포 단계 종료 ({time.time()-_t:.1f}s) — '
          f'{"성공" if internal_ok else "실패/건너뜀"}')

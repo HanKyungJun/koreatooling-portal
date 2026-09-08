@@ -179,3 +179,21 @@ scripts/anca-monitor/*.bak_*
 /dist/field-record.css
 /dist/field-record.js
 /dist/supplies.html
+
+# ── 2026-09-08 보안 조치 ──────────────────────────────────────────────────────
+#   근거: decisions.md 2026-09-08 (1) — 공개 저장소 전수 스캔 결과
+#   ① 직원 게이트: 비밀번호가 공개 저장소에 평문으로 있었다.
+#      게이트 JS 는 generate.py 가 .env 의 STAFF_PASS 로 빌드 시 생성하며
+#      사내 전용이므로 추적하지 않는다.
+/internal/
+/portal-auth.js
+/dist/portal-auth.js
+#   ② 옛 포털 UI 백업 — 인라인 게이트에 비밀번호가 남아 있었다.
+/wiki/_backup/portal-ui-20260615/
+#   ③ 대외비 수치(설비 투자 금액·원가·거래처 실명 물량)가 든 문서.
+#      파일은 로컬에 그대로 두고 저장소 추적만 해제한다.
+/wiki/reports/09_업무일정/ANCA_장비_현안_정리_보고_20260812.docx
+/wiki/reports/09_업무일정/ANCA_장비_현안_정리_보고_20260820_개정판.docx
+/wiki/reports/07_KPI/2026년_2분기_판매수량비교_영업팀출하현황기준.docx
+/회의록/260617_회의록.docx
+/scripts/ANCA_중고_시장_보고서_20260623.docx

@@ -31,38 +31,13 @@ var GAS_FORM_URL = 'https://script.google.com/macros/s/AKfycbzjgm7IhynT5CCQzX1f9
 })();
 
 /* ── 직원 인증 오버레이 ──────────────────────────────
-   조건: #auth-overlay 가 존재하는 페이지에서만 동작
-   비밀번호: 1234  (sessionStorage 'kt_auth' 로 세션 유지)
+   2026-09-08 보안 조치 — 게이트 로직을 이 파일에서 제거했다.
+   이유: portal.js 는 공개 저장소·GitHub Pages 로 그대로 나가므로
+         비밀번호를 여기 두면 소스 보기로 즉시 노출된다.
+   현재: 게이트는 사내 전용 `portal-auth.js` 가 담당한다.
+         이 파일은 generate.py 가 .env 의 STAFF_PASS 로 빌드 시 생성하며
+         사내 공유폴더에만 배포된다(공개 배포 경로에 존재하지 않음).
    ───────────────────────────────────────────────── */
-(function initAuth() {
-  var overlay = document.getElementById('auth-overlay');
-  if (!overlay) return;
-  if (sessionStorage.getItem('kt_auth') === '1') {
-    overlay.style.display = 'none';
-    return;
-  }
-  var inp = document.getElementById('pass-input');
-  if (inp) {
-    inp.focus();
-    inp.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') window.checkPass();
-    });
-  }
-})();
-
-function checkPass() {
-  var inp = document.getElementById('pass-input');
-  if (!inp) return;
-  if (inp.value === '1234') {
-    sessionStorage.setItem('kt_auth', '1');
-    document.getElementById('auth-overlay').style.display = 'none';
-  } else {
-    var err = document.getElementById('pass-err');
-    if (err) err.textContent = '비밀번호가 틀렸습니다.';
-    inp.value = '';
-    inp.focus();
-  }
-}
 
 /* ── 퀵 네비 렌더링 ──────────────────────────────────
    사용법: <nav class="quick-nav" id="quick-nav"></nav> 추가 후 자동 렌더링
