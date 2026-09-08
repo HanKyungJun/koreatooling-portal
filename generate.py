@@ -1120,6 +1120,17 @@ def upload_to_github():
             if _c != 0:
                 _add_fail.append(_e)
             n_added += 1
+    # 2026-09-08: 위키 산출물이 어떤 자동화에도 add 되지 않아 저장소에 안 올라가고 있었다.
+    #   [실측] 09-07 일일보고 xlsx 미추적(디스크 107건 vs 추적 106건). 08-24~09-04 분이
+    #   올라가 있던 것은 사람이 세션에서 함께 커밋했기 때문이며 자동 경로가 아니었다.
+    #   ★ 폴더 통째로 add 하지 않고 xlsx 패턴으로 한정한다(pathspec 은 git 이 직접 해석).
+    #     로그(run.log·generate.log)와 `_구버전_*` 는 .gitignore 대상임을 확인했다.
+    for _wiki_spec in ('wiki/reports/daily/*.xlsx', 'wiki/overview.md'):
+        _c, _o, _e = run([git, 'add', '--', _wiki_spec])
+        if _c != 0:
+            _add_fail.append(_e)
+        n_added += 1
+
     _dist = os.path.join(BASE_DIR, 'dist')
     if os.path.isdir(_dist):
         _c, _o, _e = run([git, 'add', _dist])

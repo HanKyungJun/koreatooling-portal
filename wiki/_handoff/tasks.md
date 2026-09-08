@@ -210,6 +210,28 @@
     → **최종 판정은 16:00 정규 실행 로그**(2026-09-04 (8) 교훈).
   - 관련: decisions.md **2026-09-08 (1)**, **(2)**
 
+- [x] ✅ **`.git/index.lock` 제거 — Cowork 가 남김** (P0, 2026-09-08 등재·**당일 완료**)
+  - 담당: **한경준 (PowerShell, 즉시)**
+  - 증상: 0바이트 `.git\index.lock` 잔존. 방치하면 **16:00 실행이 add 단계에서 즉시 중단**된다.
+  - 조치: `Remove-Item C:\Users\TOOLKOREA\Desktop\cnc-wiki\.git\index.lock`
+  - 원인: Cowork 가 device_bash 에서 `git add --dry-run` 실행. **dry-run 도 인덱스 락을 잡고**,
+    이 마운트에서는 락 파일 삭제 권한이 없다.
+  - ★ 재발 방지: device_bash 의 git 은 **읽기 전용 명령으로 한정**(`log`·`status`·`diff`·`ls-files`·
+    `check-ignore`·`rev-parse`). `add`·`rm`·`commit`·`fetch` 는 **dry-run 이라도 PowerShell 에서만.**
+  - ✅ **2026-09-08 제거 완료**(한경준님 PowerShell). 이후 `git status` 정상, 13:07 정규 실행도 정상 완료.
+  - 관련: decisions.md **2026-09-08 (4) ②**
+
+- [x] ✅ **위키 산출물 자동 커밋 — 검증 완료** (P1, 2026-09-08 등재·**당일 완료**)
+  - 담당: Cowork (검증)
+  - 배경: 일일보고 xlsx·`overview.md` 가 **자동 커밋 경로가 없어** 09-07 분이 저장소에 없었다.
+    과거분은 사람이 세션에서 함께 커밋한 것이었다. `generate.py` add 단계에 pathspec 2개 추가.
+  - 기대값: `add 단계 완료: 13개 대상`(기존 11 + 2) · `git add 실패 0건` · 커밋에 일일보고 xlsx 포함.
+  - ⚠️ `--local` 은 업로드 단계를 건너뛰므로 검증에 쓸 수 없다 → `python generate.py` 1회로 판정했다.
+  - ✅ **2026-09-08 13:07 검증 완료** [실측]: `add 13개 대상` · 실패 0건 · `commit/push code=0`.
+    자동 커밋 `7ad8ee0` = `overview.md` + `2026-09-07_일일보고.xlsx` **2파일만**.
+    추적 107건 = 디스크 107건, `_구버전` 오유입 0건.
+  - 관련: decisions.md **2026-09-08 (4) ①**
+
 - [ ] 🔴 **현장기록 GAS 엔드포인트 재배포 — 공개 이력에 노출됨** (P1, 2026-09-08 등재)
   - 담당: **한경준 (Apps Script 콘솔)**
   - 증상: 현장기록 시트 쓰기 통로(`AKfycbzO00KK…`)가 `internal/field-record.js` 로 공개 저장소에 있었다.

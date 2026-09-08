@@ -3,6 +3,49 @@
 > 무엇을(What), 왜(Why), 출처(Where)를 **시간 역순(최신이 맨 위)** 으로 기록합니다.
 > 챗에서 결정된 내용도 반드시 여기로 옮겨야 Code/Cowork가 따라옵니다.
 
+## 2026-09-08 (4): 🔴 **위키 산출물이 자동으로 커밋되지 않고 있었다** — add 대상에 추가. 그리고 index.lock 사고 1건
+
+### ① 발견 — 일일보고 xlsx·overview.md 는 어떤 자동화도 커밋하지 않는다
+
+- 증상 [실측 검증]: `wiki/reports/daily/` 에 일일보고 xlsx **디스크 107건 vs 추적 106건**.
+  빠진 것은 `2026-09-07_일일보고.xlsx` 이며 `.gitignore` 대상도 아니다(단순 미추가).
+  `wiki/overview.md` 도 매일 갱신되는데 계속 미스테이징(` M`)으로 남아 있었다.
+- 원인: `upload_to_github()` 의 add 대상이 **루트 `*.html`·`*.css`·`*.js` + `dist/` 뿐**이다.
+  일일 배치(`scripts/daily_and_upload.bat`) 4단계 중 git 을 만지는 것은 `generate.py` 하나이고,
+  `daily_report.py`·`update_overview.py` 는 파일만 쓰고 끝난다.
+- ★ **08-24~09-04 분이 저장소에 있는 것은 자동화의 성과가 아니다** — 사람이 세션에서
+  `git add .` 로 우연히 함께 커밋했기 때문이다. **자동 경로는 처음부터 없었다.**
+  → 「매일 올라가고 있다」는 인식은 **사람이 메운 구멍을 자동화의 실적으로 오인한 것**이다.
+- ✅ 조치: add 단계에 pathspec 2개 추가 — `wiki/reports/daily/*.xlsx` · `wiki/overview.md`.
+  - **폴더 통째로 add 하지 않았다** — `wiki/reports/daily/` 안의 `_구버전_20260831`(18건)까지
+    새로 추적될 수 있기 때문이다. (확인 결과 `_구버전_*` 와 로그 3종은 `.gitignore` 대상이었으나,
+    의존하지 않고 xlsx 패턴으로 한정했다.)
+  - pathspec 동작 검증 [실측 — `git add --dry-run`]: `2026-09-07_일일보고.xlsx` **정확히 1건 매치**.
+- 🟢 대외비 판정: 일일보고 xlsx 는 **수량 데이터**이며 금액값이 없다(2026-09-08 (1) 3단 판정에서 🟢).
+  공개 저장소 게시에 규칙상 문제 없다.
+- ✅ **2026-09-08 13:07 검증 완료** [실측 검증 — 업로드 포함 정규 경로 실행]:
+  `add 단계 완료: 13개 대상`(기존 11 + 2, 기대값 일치) · **add 실패 0건** ·
+  `commit code=0` · `push code=0`. 자동 커밋 `7ad8ee0` 내용은 **정확히 2파일** —
+  `wiki/overview.md` + `wiki/reports/daily/2026-09-07_일일보고.xlsx`(신규).
+  추적 **107건 = 디스크 107건** 으로 갭 해소, `_구버전_20260831` 오유입 **0건**.
+  같은 실행에서 `사내 배포 18개 파일 — 성공` · `직원 게이트 생성` 도 함께 확인됐다.
+
+### ② 사고 — Cowork 가 device_bash 에서 `git add --dry-run` 을 돌려 `.git/index.lock` 을 남겼다
+
+- 🔴 **`--dry-run` 도 인덱스 락을 잡는다.** 그리고 device 브리지 마운트에서는 **락 파일을 지울 권한이
+  없다**(`rm: Operation not permitted`) — git 스스로도 `unable to unlink index.lock` 으로 실패했다.
+  → **0바이트 `.git/index.lock` 이 남았고, 방치하면 16:00 실행이 add 단계에서 즉시 중단된다**
+  (`upload_to_github()` 은 `index.lock` 감지 시 중단하도록 2026-08-28 에 만들어 둔 경로다).
+- ★ **위키에 이미 있던 규칙을 어겼다** — 「device_bash 읽기는 `--no-optional-locks`, **쓰기는 PowerShell**」.
+  `--no-optional-locks` 는 `status`·`diff` 같은 읽기에서 optional lock 을 피하는 것이고,
+  **`add` 는 dry-run 이어도 읽기가 아니다.**
+  → **앞으로 device_bash 에서 실행할 git 은 `log`·`status`·`diff`·`ls-files`·`check-ignore`·`rev-parse`
+    로 한정한다. `add`·`rm`·`commit`·`fetch` 는 dry-run 이라도 PowerShell 에서만 실행한다.**
+- 조치: 한경준님께 `Remove-Item .git\index.lock` 안내(2026-09-08).
+
+- 출처: Cowork 실측(추적/디스크 건수 대조 + `daily_and_upload.bat` 판독 + `git add --dry-run`), 2026-09-08
+- 영향: `generate.py` add 단계 pathspec 2개 추가. **검증 완료(2026-09-08 13:07), 커밋 대기.**
+
 ## 2026-09-08 (3): 🔴 스캐너 패턴 6종 보강 → **GAS 엔드포인트 8건 적출.** 현장기록 통로는 재배포 필요
 
 - 결정: 시크릿 스캐너에 패턴 6종을 추가하고, 새로 드러난 GAS 엔드포인트 노출을 **엔드포인트 2개로 나눠**
