@@ -153,6 +153,14 @@
 - **[STD-FEPA61]** FEPA Standard 61 (2014 ed.) — *Grading of Superabrasives*. Federation of European Producers of Abrasives. — D-band / B-band 입도 정의 + ISO 6106 보완. 메시 환산표.
 - **[STD-ISO6168]** ISO 6168 / FEPA — *Standard Shape Codes for Superabrasive Wheels*. — 1A1, 11V9, 12V9, 3A1, 14A1, 1V1, 3V1, 14V1, 11V5, 4B1, 6A2, 12A2 등 12종 형상 코드 정의. [[catalog/홍익다이아-형상-분류]] 1차 출처.
 - **[STD-ISO12413]** ISO 12413:2019 — *Bonded abrasive products — Safety requirements*. International Organization for Standardization, Geneva. https://www.iso.org/standard/74698.html — §6.6 휠 측면 Vmax (최대 허용 원주속도) 표시 의무화. [[휠RPM-정책-검증-노트]] Tier 1 강제 규정.
+  - 🔴 **2026-09-09 정정 — 이 ID 를 보유 휠(레진 다이아 = 초지립)의 근거로 쓰면 안 된다.**
+    ① **적용 제외**: 동 표준(EN 12413:2019 기준)의 적용범위는 *"does not apply to **super abrasive products** and coated abrasive products"* 로 **초지립 제품을 명시적으로 제외**한다 [실측 검증 — BSI 제품 페이지]. 보유 휠 5종은 전부 레진 본드 **다이아몬드**이므로 대상이 아니다.
+    ② **번호 확인 필요**: 위 iso.org 링크는 **404** 이고 검색으로도 ISO 판이 확인되지 않는다. 실재가 확인되는 것은 **EN 12413:2019(CEN)** 다. ISO 판 존재 여부는 **확인 필요** — 「없다」고 단정하지 않는다.
+    → 초지립 휠의 Vmax 근거는 **[STD-EN13236]** 을 쓴다. 기존 인용은 삭제하지 않고 이 주석으로 성격을 한정한다.
+- **[STD-EN13236]** EN 13236:2019 — *Safety requirements for superabrasive products*. CEN. https://standards.iteh.ai/catalog/standards/cen/6a19df87-7a7c-4cbf-a4f3-283754950c60/en-13236-2019 — **초지립(다이아몬드·CBN) 제품 안전 요건.** 보유 휠에 적용되는 표준. oSa 표기 요건이 이 표준을 근거로 **최대사용주속도(m/s) 제품 표기**를 요구한다. ⚠️ 본문 유료 — 속도 클래스 실수치 미확보(2026-09-09).
+- **[STD-EN12413]** EN 12413:2019 — *Safety requirements for bonded abrasive products*. CEN. https://knowledge.bsigroup.com/products/safety-requirements-for-bonded-abrasive-products — **보통(결합) 연삭재 전용.** 적용범위가 초지립·코티드 제품을 **제외**한다. 위 [STD-ISO12413] 정정의 근거.
+- **[STD-OSA-SUPER-MARK]** oSa (Organisation for the Safety of Abrasives) — *Product marking requirements for superabrasives*. https://www.osa-abrasives.org/wp-content/uploads/oSa-Product-Marking-Requirements-%E2%80%93-Superabrasives.pdf — EN 13236:2019 기준 표기 요건. **최대사용주속도를 m/s 단위로 제품에 표기**하도록 요구하며 **다이아몬드 와이어만 예외**다 [실측 검증, 2026-09-09].
+- **[STD-JISR6241]** JIS R 6241:2018 — *といし－研削といしの最高使用周速度* (연삭숫돌의 최고사용주속도). https://kikakurui.com/r6/R6241-2018-01.html — 🔴 **적용범위가 보통 연삭숫돌 전용이며 다이아몬드·CBN 을 다루지 않는다** [실측 검증, 2026-09-09 본문 직접 판독]. 수치는 비트리파이드·오르가닉만(오르가닉 1호 평형 45 m/s / 중연삭 40 m/s). 색帯 표기(청 ≤45 / 황 45~60 / 적 >60 m/s)도 보통 숫돌용. **국내·일본 규격 계열에 초지립 Vmax 표기 의무가 없는 근거.**
 - **[STD-ISO16089]** ISO 16089:2015 — *Machine tools — Safety — Stationary grinding machines*. ISO. — 고정 연삭기 안전 운전 기준, RPM 한계 규정.
 
 ### 학술 핸드북·교재 (6건)
