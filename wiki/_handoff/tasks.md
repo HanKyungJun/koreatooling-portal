@@ -257,9 +257,13 @@
     토큰은 `.env` → 사내 전용 `field-record-config.js` 주입(게이트 JS 와 동일 패턴).
     URL 이 또 새더라도 토큰 없이는 쓸 수 없다. **새 URL·토큰 확정 후 한 번에 적용**한다
     (중간 상태면 `submitData` 가 `catch` 에서 로컬 저장만 하고 성공으로 표시해 **조용히 실패**한다).
-  - ⚠️ **확인 필요 — 스프레드시트 공유 설정**: `SHEET_ID` 가 공개 저장소에 평문으로 있다
+  - ~~⚠️ **확인 필요 — 스프레드시트 공유 설정**: `SHEET_ID` 가 공개 저장소에 평문으로 있다
     (`netlify_to_sheets.gs`·`scripts/field_record_gas.gs`). ID 자체는 권한이 아니지만
-    공유가 「링크가 있는 모든 사용자」면 ID 만으로 읽힌다 → 드라이브에서 확인 필요.
+    공유가 「링크가 있는 모든 사용자」면 ID 만으로 읽힌다 → 드라이브에서 확인 필요.~~
+  - ✅ **2026-09-09 종결 — 조치 불필요** [실측 검증 — Drive `permissions.list`]:
+    권한 항목 **1건뿐**(`hzn2001@toolkorea.co.kr` / `owner` / `user`), **`type: anyone` 없음.**
+    → ID 만으로는 열리지 않는다. ⚠️ 단 이는 **읽기** 판정이며 **쓰기 통로는 여전히 열려 있다**
+    (토큰은 스크립트 속성 등록 전까지 꺼짐). 상세: decisions.md **2026-09-09 (1) ①**
   - ✅ **2026-09-08 코드 준비 완료(Cowork)** — 콘솔 작업만 남았다. 순서:
     ① Apps Script 에 `scripts/field_record_gas.v2.gs` 내용 붙여넣기
     ② 프로젝트 설정 > 스크립트 속성에 `SHARED_TOKEN` 등록 (값 = `.env` 의 `FIELD_RECORD_TOKEN`)
