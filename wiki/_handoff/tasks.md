@@ -189,15 +189,12 @@
       OnBoot 이 `AtLogOn` 이 되면서 **시작프로그램과 같은 시점**에 발사된다. 둘 다 generate.py 를 돌리므로
       git `index.lock` 을 다툴 수 있다(2026-09-08 락 사고 계열). 오늘은 07:54:20 / 07:55:05 로
       **45초 차이로 비껴갔을 뿐**이다.
-      🟢 **권장 보정 — OnBoot 에 3분 지연** (최소 변경, 두 기능 모두 보존). 관리자 권한 PowerShell:
-      ```powershell
-      $t = Get-ScheduledTask -TaskName "CNC_Daily_Report_OnBoot"
-      $t.Triggers[0].Delay = 'PT3M'
-      Set-ScheduledTask -TaskName "CNC_Daily_Report_OnBoot" -Trigger $t.Triggers
-      (Get-ScheduledTask "CNC_Daily_Report_OnBoot").Triggers[0].Delay   # PT3M 확인
-      ```
-      대안: 시작프로그램 bat 의 `python generate.py` 줄을 제거(Flask·watcher 상주만 남김) — 중복 자체를
-      없애지만, 같은 날 재로그온 시 포털 갱신이 16:00·watcher 에만 의존하게 된다. **미실행 — 판단 필요.**
+      ✅ **2026-09-10 보정 완료** [실측 검증 — 관리자 권한 PowerShell]:
+      `$t.Triggers[0].Delay = 'PT3M'` → `Set-ScheduledTask` → 조회값 **`PT3M`** 확인.
+      ⇒ 로그온 시 **시작프로그램 generate.py 가 먼저 끝난 뒤 3분 후 OnBoot 배치**가 시작된다.
+      오늘 관측된 45초 간격(겹칠 뻔한 구간)보다 여유가 크다. **동시 발사 리스크 해소.**
+      (대안이었던 「시작프로그램 bat 의 `python generate.py` 줄 제거」는 **채택하지 않았다** —
+      같은 날 재로그온 시 포털 갱신이 16:00·watcher 에만 의존하게 되므로.)
     - 🟡 **`LastTaskResult = 1` 가설 [추정값 — 검증 안 됨]**: OnBoot 배치(07:53:53, **부팅 S4U 세션**)의
       5단계 generate.py 가 `generate.log` 에 **아무 것도 남기지 않았다**(mtime 07:54:44, run.log 는 07:55:19 까지).
       **로그온 시점에 S4U 부팅 세션이 정리되며 배치가 중도 종료**된 것으로 보인다 — 타임라인이 부합한다
@@ -210,6 +207,18 @@
         StartTime=(Get-Date '2026-09-10 07:50'); EndTime=(Get-Date '2026-09-10 08:05') } |
         Where-Object { $_.Message -match 'OnBoot' } | Select TimeCreated, Id, Message | Format-List
       ```
+    - ⚠️ **정리 필요 — `C:\Windows\system32\generate.log` 쓰레기 파일** (2026-09-10, Cowork 실수):
+      Cowork 가 안내한 코드블록에 **한글 주석(`← 1회 동기 실행` 등)을 그대로 넣어** 한경준님이
+      관리자 PowerShell(`cwd = C:\Windows\system32`)에 붙여넣었다. PowerShell 이 `>>` 를 리다이렉션으로
+      해석해 **시스템 폴더에 `generate.log` 가 생성**됐을 가능성이 높다(python 오류 출력이 화면에
+      안 보인 것이 그 근거 — 리다이렉트됐다). 저장소에는 영향 없음(`dae3962` = decisions/tasks 2파일뿐).
+      확인·삭제 (관리자 권한):
+      ```powershell
+      Get-Item C:\Windows\System32\generate.log -ErrorAction SilentlyContinue |
+        Select-Object FullName, Length, LastWriteTime
+      Remove-Item C:\Windows\System32\generate.log -ErrorAction SilentlyContinue
+      ```
+      ★ **재발 방지: 코드블록에는 실행 가능한 것만 넣는다.** 설명은 블록 밖에 쓴다.
   - 관련: decisions.md **2026-09-10 (1)**
 
 - [ ] 🔴 **ERP 코드 마스터 확보 — 코드↔한글명 매핑** (P1, 2026-09-09 등재)
