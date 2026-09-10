@@ -56,13 +56,96 @@ Interactive 전환으로 **세션은 생겼지만 그 세션에 서버용 SMB �
 
 ★ **교훈 (자기정정)**: 이 ADR 초안은 `generate.log` 만 보고 ⓐ「실패는 16:00 정규만」 ⓑ「worklog 에 오기 2건」이라고 **단정**했다가, `run.log` 확인 후 둘 다 철회했다. **로그가 두 개인 파이프라인에서 한 개만 보고 패턴을 선언하지 않는다.** → [[feedback-claim-before-verify]] 계열 4번째 사례.
 
-### ⑤ 다음 조치 — 진단이 먼저, 조치는 그 다음
+### ⑤ 🔴 진단 완료 (같은 날) — 자격증명은 있다. 없는 것은 「그것을 쓸 수 있는 세션」이다
 
-선결 진단(한경준님 PowerShell): `cmdkey /list | Select-String "192.168.0.252"` · `Get-ScheduledTaskInfo -TaskName "CNC_Daily_Report"` · `Get-ScheduledTask ... LogonType`.
-`cmdkey` 결과가 비어 있으면 **ⓐ `cmdkey /add:192.168.0.252` 영구 자격증명 등재**가 곧바로 해결책이다. ⓑ `net use` 사전 연결은 **일일 자동화 파일 수정**이라 승인 후 적용한다.
+[실측 검증 — 한경준님 PowerShell, 2026-09-10]
+
+| 확인 항목 | 결과 |
+|---|---|
+| `cmdkey /list` | **`대상: Domain:target=192.168.0.252` 존재** — 등재돼 있다 |
+| `CNC_Daily_Report` | `LogonType = Interactive` / `UserId = TOOLKOREA` |
+| `CNC_Daily_Report_OnBoot` | **`LogonType = S4U`** / `UserId = TOOLKOREA` |
+| `Get-ScheduledTaskInfo`(정규) | `LastRunTime 2026-09-09 16:00` · **`LastTaskResult = 0`** |
+
+- ⓐ「자격증명 미등재」 가설은 **폐기**한다. 등재돼 있는데도 실패한다.
+- 🔴 **해석(근거 강함)**: Credential Manager 의 `Domain:target=` 자격증명은 **대화형 로그온 세션에서만** 쓰인다. `WinError 1312` 의 정체가 `ERROR_NO_SUCH_LOGON_SESSION` 이다.
+
+| 오류 | 의미 | 관측 회차 | 설명 |
+|---|---|---|---|
+| `1312` | 로그온 세션 없음 | 09-04 16:00(당시 S4U) · 09-10 07:55(OnBoot=S4U) | **S4U 라 저장된 자격증명을 못 쓴다** |
+| `1326` | 자격증명 불일치 | 09-09 16:00(Interactive) | 세션은 있으나 저장 암호가 서버와 어긋남 [추정값 — 단발 1건] |
+| 성공 | — | 09-07·09-08 정규 + 아침 회차 | 대화형 세션에서 실행 |
+
+★ **④의 45초 역전이 이것으로 설명된다** — 07:54:20 은 대화형 세션의 단독 실행, 07:55:05 는 S4U OnBoot. **랜덤이 아니라 서로 다른 두 세션이었다.**
+
+### ⑥ 🔴 파생 확정 — `LastTaskResult = 0` 으로 현황판 최신성을 판정할 수 없다
+
+09-09 16:00 회차는 `LastTaskResult = 0`(성공)인데 **사내 배포는 `1326` 으로 실패**했다. `publish_internal()` 이 예외를 밖으로 던지지 않는 설계(의도된 안전장치) 때문에 배치는 정상 종료한다.
+⇒ **예약 작업 상태·`LastTaskResult` 는 사내 배포 판정 근거가 아니다.** 로그의 `사내 배포 단계 종료 — 성공/실패` 줄을 본다. → [[feedback-silent-success-cnc-wiki]] 계열 신규 사례.
+
+### ⑦ ✅ 확정 — OnBoot(S4U) 가 `1312` 의 주범이다. 조치 대상은 OnBoot 다
+
+[실측 검증 — PowerShell + 로그 대조, 2026-09-10] `CNC_Daily_Report_OnBoot` → `LastRunTime = 07:53:53` · **`LastTaskResult = 1`**. 이 배치의 1단계 `daily_report.py` 내부 generate.py 가 **07:55:05 에 `1312`** 로 실패했다(run.log). ⇒ ⑤의 해석이 확정됐다.
+
+- 🟢 **조치: `CNC_Daily_Report_OnBoot` 을 AtStartup → AtLogOn + Interactive.** 아침 회차의 목적이 「PC 켰을 때 캐치업」이므로 로그온 시점이 오히려 정확하고, 대화형 세션이 확보되어 `1312` 이 구조적으로 사라진다. 로그온 전 부팅 구간은 커버되지 않지만 **현행도 그 구간은 실패 중**이라 손실이 없다. 미실행 — 한경준님 PowerShell 몫.
+- `1326`(09-09 16:00, Interactive)은 **별개 원인**이며 단발 1건이다. `cmdkey` 재등재는 **관찰 후** 판단한다. 여기서 또 성공 1회로 종결하지 않는다.
+
+### ⑧ ✅ 아침 성공 회차의 정체 — 예약 작업이 아니라 「시작프로그램」이었다
+
+[실측 검증 — `Get-CimInstance Win32_StartupCommand`, 2026-09-10] 시작프로그램에 **`cnc-wiki-generate` → `cnc-wiki-generate.bat`** 가 등록돼 있다. 로그온 시 **대화형 세션**에서 돌기 때문에 자격증명을 쓸 수 있고, 그래서 아침 `generate.log` 블록은 **항상 성공**한다. (`watcher.py` 는 `--local`+출력 캡처로 generate.log 에 쓰지 않아 제외됐다)
+
+🔴 **[[automation-schedule-cnc-wiki]] 의 「예약은 16:00 정규 + 부팅 캐치업 2개뿐 · 아침 07~08시 실행은 부팅 캐치업」 기술이 불완전했다.** 아침 회차의 실제 주체는 시작프로그램이다. 프로젝트 메모리 정정 완료.
+
+예약 작업 전수 조회(generate 계열)는 2개뿐임이 확인됐다:
+
+| 작업 | 액션 |
+|---|---|
+| `CNC_Daily_Report` | `cmd /c daily_and_upload.bat` |
+| `CNC_Daily_Report_OnBoot` | `powershell -NonInteractive -Command "오늘자 xlsx 없으면 daily_and_upload.bat"` |
+
+★ **「오늘자 xlsx 없을 때만」 조건은 트리거·조건 탭이 아니라 액션 문자열 안에 있다.** ⇒ 트리거만 바꿔도 조건은 보존된다. 직전 안내의 「조건 탭 유실 우려」는 **근거 없는 걱정이었고 정정한다.**
+
+### ⑨ ✅ ⓑ 조치 완료 — OnBoot: S4U/AtStartup → Interactive/AtLogOn
+
+1차 시도는 `액세스가 거부되었습니다 (0x80070005)` 로 실패(`RunLevel=Highest` 작업 → 관리자 권한 필요). **관리자 권한 PowerShell**에서 재실행해 성공했다 [실측 검증].
+
+| 항목 | 전 | 후 |
+|---|---|---|
+| LogonType | `S4U` | **`Interactive`** |
+| Trigger | `MSFT_TaskBootTrigger` | **`MSFT_TaskLogonTrigger`** |
+| 액션(오늘자 xlsx 조건) | — | **보존 확인** |
+
+⚠️ 이미 로그온 상태여서 **다음 로그온까지 발사되지 않는다.** 검증은 다음 출근 부팅 후 `run.log` 아침 블록으로 하고, **성공 1회로 종결하지 않는다**(최소 3회 관찰).
+
+### ⑩ ✅ 시작프로그램 정체 확정 + 🟢 `--local` 도 사내 배포를 한다
+
+`%APPDATA%\…\Startup\cnc-wiki-generate.bat` 판독 [실측]:
+
+```bat
+cd /d C:\Users\TOOLKOREA\Desktop\cnc-wiki
+python generate.py >> wiki\reports\daily\generate.log 2>&1
+start "cnc-wiki Flask"   python app.py     >> ... 2>&1
+start "cnc-wiki Watcher" python watcher.py >> ... 2>&1
+```
+
+로그온 시 ①generate.py 1회 동기 실행 ②Flask 상주 ③watcher 상주.
+
+🟢 **`generate.py` 의 사내 배포(3-C)는 `if args.local:` 분기 앞에 있다** [실측 — 소스 판독]. `--local` 은 **GitHub 업로드만** 건너뛴다. ⇒ `watcher.py` 가 파일 변경 시 돌리는 `generate.py --local` 도 **현황판을 사내 공유폴더에 갱신하며, 대화형 세션이라 항상 성공한다.** 이것이 지금까지 현황판이 크게 밀리지 않은 **숨은 안전망**이었을 수 있다(추정값).
+
+### ⑪ 🔴 이번 조치가 만든 새 리스크 — 로그온 시 동시 발사 (미결)
+
+OnBoot 이 `AtLogOn` 이 되면서 **시작프로그램과 같은 시점**에 발사된다. 둘 다 generate.py 를 돌리므로 git `index.lock` 을 다툴 수 있다(2026-09-08 락 사고 계열). 오늘은 07:54:20 / 07:55:05 로 **45초 차로 비껴갔을 뿐**이다.
+
+- 🟢 **권장: OnBoot 트리거에 지연 3분(`Delay = 'PT3M'`)** — 최소 변경, 두 기능 보존.
+- 대안: 시작프로그램 bat 의 `python generate.py` 줄 제거(Flask·watcher 상주만) — 중복 제거 대신 같은 날 재로그온 시 포털 갱신이 16:00·watcher 에만 의존.
+- **미실행 — 한경준님 판단 대기.** ★ 조치가 새 리스크를 만들었으면 그것도 같은 ADR 에 적는다.
+
+### ⑫ 🟡 `LastTaskResult = 1` 가설 [추정값 — 검증 안 됨]
+
+OnBoot 배치(07:53:53, **부팅 S4U 세션**)의 5단계 generate.py 가 `generate.log` 에 아무것도 남기지 않았다(mtime 07:54:44 vs run.log 07:55:19). **로그온 시점에 S4U 부팅 세션이 정리되며 배치가 중도 종료**된 것으로 보인다 — 타임라인 부합. 사실이라면 `AtLogOn` 전환으로 함께 해소된다. Task Scheduler Operational 이력은 업데이트 이벤트 1건만 잡혀(MaxEvents 소진) 실행 이벤트 미확인.
 
 - 출처: Cowork 실측 판독 (`generate.log` · `generate.py`), 2026-09-10
-- 영향: `tasks.md`(항목 재개 + 실측 표), `worklog.md`(09-10 블록 정정 주석), 향후 로그 판독 방법(데이터일자 기준 블록 식별)
+- 영향: `tasks.md`(항목 재개 + 실측 표 + 조치 후보 재작성), `worklog.md`(09-10 블록 보강 주석), 향후 로그 판독 방법(데이터일자 기준 블록 식별 · 두 로그 병합 · `LastTaskResult` 불신)
 
 ## 2026-09-09 (3): 🔴 **휠 Vmax — 위키가 인용한 표준이 제품군을 잘못 짚었다.** 그리고 Vmax 는 카탈로그 항목이 아니다
 

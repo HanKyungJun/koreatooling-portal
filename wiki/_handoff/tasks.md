@@ -105,19 +105,111 @@
       **09-10 데이터 19개 파일**을 썼다. **현황판은 09-10 자료로 최신이다.**
       ★ 자기정정: 이 항목의 초안은 `generate.log` 만 보고 「worklog 오기」로 단정했다가,
       `run.log` 확인 후 철회했다. **로그 한 개로 단정하지 않는다.**
-    - **다음 조치 후보(전부 미실행 — 한경준님 판단 필요)**:
-      ⓐ `cmdkey /add:192.168.0.252` 영구 자격증명 등재 — 가장 단순, 세션 만료에 강함
-      ⓑ `publish_internal()` 앞에 `net use` 사전 연결 추가 — ⚠️ 일일 자동화 파일 수정이라 승인 후
-      ⓒ 예약 작업을 「로그온 여부 무관 + 암호 저장」으로 재등록
-      ⓓ 로컬 출력 후 별도 동기화(현행 구조 변경 폭이 가장 큼)
-    - 🔴 **선결 진단(한경준님 PowerShell)** — 아래 3개를 실행해 결과를 알려주시면 원인이 확정됩니다:
-      ```powershell
-      cmdkey /list | Select-String "192.168.0.252"
-      Get-ScheduledTaskInfo -TaskName "CNC_Daily_Report" | Select-Object LastRunTime, LastTaskResult, NextRunTime
-      Get-ScheduledTask -TaskName "CNC_Daily_Report","CNC_Daily_Report_OnBoot" |
-        Select-Object TaskName, @{n='LogonType';e={$_.Principal.LogonType}}, @{n='UserId';e={$_.Principal.UserId}}
+    - ✅ **2026-09-10 진단 완료 — ⓐ(자격증명 미등재)는 폐기** [실측 검증 — 한경준님 PowerShell]:
+
+      | 확인 항목 | 결과 |
+      |---|---|
+      | `cmdkey /list` | **`대상: Domain:target=192.168.0.252` 존재** — 자격증명은 이미 등재돼 있다 |
+      | `CNC_Daily_Report` | `LogonType = Interactive` / `UserId = TOOLKOREA` |
+      | `CNC_Daily_Report_OnBoot` | **`LogonType = S4U`** / `UserId = TOOLKOREA` |
+      | `Get-ScheduledTaskInfo` (정규) | `LastRunTime 2026-09-09 16:00` · **`LastTaskResult = 0`** · `NextRunTime 2026-09-10 16:00` |
+
+    - 🔴 **원인 확정 방향 — 자격증명은 있으나 「쓸 수 있는 세션」이 없다** [해석 — 근거 강함]:
+      Credential Manager 의 `Domain:target=` 자격증명은 **대화형 로그온 세션에서만** 사용된다.
+      `WinError 1312` 의 정체가 바로 `ERROR_NO_SUCH_LOGON_SESSION` 이다.
+      | 오류 | 의미 | 관측된 회차 | 설명 |
+      |---|---|---|---|
+      | `1312` | 로그온 세션 없음 | 09-04 16:00(당시 S4U) · 09-10 07:55(**OnBoot = S4U**) | **S4U 실행이라 저장된 자격증명을 못 쓴다** |
+      | `1326` | 자격증명 불일치 | 09-09 16:00(Interactive) | 세션은 있으나 **저장된 암호가 서버와 어긋났다** [추정값 — 단발 1건] |
+      | 성공 | — | 09-07·09-08 정규, 아침 회차 | **대화형 세션에서 실행됨** |
+      ⇒ 09-10 아침 45초 역전도 설명된다: 07:54:20(대화형 세션의 단독 실행) 성공 /
+      07:55:05(**OnBoot = S4U**) 실패. **같은 시점의 두 세션이 서로 달랐던 것이다.**
+    - 🔴 **파생 — `LastTaskResult = 0` 은 사내 배포 실패를 못 잡는다** [실측 교차 대조]:
+      09-09 16:00 회차는 `LastTaskResult = 0`(성공)인데 **사내 배포는 `1326` 으로 실패**했다.
+      `publish_internal()` 이 예외를 밖으로 던지지 않는 설계(의도된 것) 때문이다.
+      ⇒ **예약 작업 상태로는 현황판 최신성을 판정할 수 없다.** 로그의 `사내 배포 단계 종료` 줄을 봐야 한다.
+      → [[feedback-silent-success-cnc-wiki]] 계열 신규 사례.
+    - **다음 조치 후보 (재작성 — 전부 미실행, 한경준님 판단 필요)**:
+      ⓐ ~~`cmdkey /add` 등재~~ → **폐기**(이미 등재돼 있음)
+      ⓑ 🟢 **`CNC_Daily_Report_OnBoot` 트리거를 AtStartup → AtLogOn + Interactive 로 변경** — 권장.
+        아침 회차의 목적은 「PC 켰을 때 캐치업」이므로 로그온 시점이 오히려 정확하고, 대화형 세션이
+        확보되므로 `1312` 이 구조적으로 사라진다. ⚠️ 로그온 전 부팅 구간은 커버되지 않는다(현행도 실패 중이므로 손실 없음).
+      ⓒ `1326` 대비 — `cmdkey` 자격증명을 **현재 암호로 재등재**. 단발 1건이라 원인 미확정 → 관찰 후 판단.
+      ⓓ `publish_internal()` 실패를 눈에 띄게 알림(메일·현황판 배너) — 조용한 실패 보완. ⚠️ 일일 자동화 파일 수정.
+    - ✅ **2026-09-10 확정 — OnBoot(S4U) 가 `1312` 의 주범이다** [실측 검증 — PowerShell + 로그 대조]:
+      `CNC_Daily_Report_OnBoot` → `LastRunTime = 2026-09-10 07:53:53` · **`LastTaskResult = 1`(실패)**.
+      이 배치의 1단계 `daily_report.py` 내부 generate.py 가 **07:55:05 에 `1312` 로 실패**했다(run.log).
+      ⇒ **S4U 실행이 Credential Manager 자격증명을 못 쓴다는 해석이 확정됐다.** ⓑ 가 정답 방향이다.
+    - ✅ **2026-09-10 ① 해소 — 성공 회차의 정체는 「시작프로그램」이다** [실측 검증 — `Win32_StartupCommand`]:
+      시작프로그램에 **`cnc-wiki-generate` → `cnc-wiki-generate.bat`** 가 등록돼 있다.
+      로그온 시 **한경준님 대화형 세션**에서 돌기 때문에 Credential Manager 자격증명을 쓸 수 있고,
+      그래서 아침 07:5x generate.log 블록은 **항상 성공**한다. (`watcher.py` 는 `--local`+출력 캡처라
+      generate.log 에 쓰지 않아 후보에서 제외됐다 — 실측)
+      ⚠️ **`cnc-wiki-generate.bat` 내용은 미확인** — `netlify_upload.bat` 계열인지 확인 필요.
+      🔴 **[[automation-schedule-cnc-wiki]] 의 「예약은 2개뿐 · 아침 회차는 부팅 캐치업」 기술이 불완전했다.**
+      아침 회차의 실제 주체는 **예약 작업이 아니라 시작프로그램**이다. 메모리 정정 완료.
+    - ✅ **2026-09-10 — 예약 작업 전수 조회 결과: generate 계열은 2개뿐 확인** [실측]:
+
+      | 작업 | 상태 | 액션 |
+      |---|---|---|
+      | `CNC_Daily_Report` | Ready | `cmd.exe /c "…\scripts\daily_and_upload.bat"` |
+      | `CNC_Daily_Report_OnBoot` | Ready | `powershell -NonInteractive -Command "오늘자 xlsx 없으면 daily_and_upload.bat 실행"` |
+
+      ★ **중요 — 「오늘자 xlsx 없을 때만」 조건은 트리거·조건 탭이 아니라 액션(PowerShell -Command) 안에 있다.**
+      ⇒ **트리거만 바꿔도 이 조건은 그대로 보존된다.** (직전 세션 안내에서 「조건 탭 유실 우려」라고 했으나
+      **근거 없는 걱정이었다 — 정정**)
+    - ✅ **2026-09-10 ⓑ 조치 완료** [실측 검증 — 관리자 권한 PowerShell]:
+      1차 시도는 `액세스가 거부되었습니다 (0x80070005)` 로 실패했고(`RunLevel=Highest` 작업),
+      **관리자 권한 PowerShell**에서 재실행하여 성공했다.
+
+      | 항목 | 변경 전 | 변경 후 |
+      |---|---|---|
+      | LogonType | `S4U` | **`Interactive`** |
+      | Trigger | `MSFT_TaskBootTrigger` | **`MSFT_TaskLogonTrigger`** |
+      | 액션(xlsx 조건) | — | **보존 확인** (문자열 그대로) |
+
+      ⚠️ 이미 로그온 상태이므로 **다음 로그온까지 발사되지 않는다.** 검증은 다음 출근 부팅 후
+      `run.log` 아침 블록의 `사내 배포 단계 종료 — 성공` 으로 한다. **성공 1회로 종결하지 않는다** —
+      최소 3회(정규·아침 혼합) 관찰 후 종결한다.
+    - ✅ **시작프로그램 정체 확정** [실측 — `%APPDATA%\…\Startup\cnc-wiki-generate.bat` 판독]:
+      ```bat
+      cd /d C:\Users\TOOLKOREA\Desktop\cnc-wiki
+      python generate.py >> wiki\reports\daily\generate.log 2>&1
+      start "cnc-wiki Flask"   python app.py     >> ... 2>&1
+      start "cnc-wiki Watcher" python watcher.py >> ... 2>&1
       ```
-      판정: `cmdkey` 결과가 **비어 있으면 ⓐ가 곧바로 해결책**이다.
+      로그온 시 ①generate.py **1회 동기 실행** ②Flask 상주 ③watcher 상주. `Location = Startup`,
+      `User = DESKTOP-35OSE6P\TOOLKOREA`.
+    - 🟢 **부수 발견 — `--local` 실행도 사내 배포는 한다** [실측 — `generate.py` 소스 판독]:
+      사내 배포(3-C 단계)가 `if args.local:` 분기 **앞**에 있다. `--local` 은 **GitHub 업로드만** 건너뛴다.
+      ⇒ `watcher.py` 가 `raw/출하현황`·`wiki/comparisons` 변경을 감지해 돌리는 `generate.py --local` 도
+      **현황판을 사내 공유폴더에 갱신한다.** 대화형 세션이라 항상 성공 → **숨은 안전망**이다.
+      (그래서 09-09 16:00 이 `1326` 으로 실패했어도 현황판이 오래 멈추지 않았을 수 있다 — 추정값)
+    - 🔴 **이번 조치가 만든 새 리스크 — 로그온 시 동시 발사** (판단 필요):
+      OnBoot 이 `AtLogOn` 이 되면서 **시작프로그램과 같은 시점**에 발사된다. 둘 다 generate.py 를 돌리므로
+      git `index.lock` 을 다툴 수 있다(2026-09-08 락 사고 계열). 오늘은 07:54:20 / 07:55:05 로
+      **45초 차이로 비껴갔을 뿐**이다.
+      🟢 **권장 보정 — OnBoot 에 3분 지연** (최소 변경, 두 기능 모두 보존). 관리자 권한 PowerShell:
+      ```powershell
+      $t = Get-ScheduledTask -TaskName "CNC_Daily_Report_OnBoot"
+      $t.Triggers[0].Delay = 'PT3M'
+      Set-ScheduledTask -TaskName "CNC_Daily_Report_OnBoot" -Trigger $t.Triggers
+      (Get-ScheduledTask "CNC_Daily_Report_OnBoot").Triggers[0].Delay   # PT3M 확인
+      ```
+      대안: 시작프로그램 bat 의 `python generate.py` 줄을 제거(Flask·watcher 상주만 남김) — 중복 자체를
+      없애지만, 같은 날 재로그온 시 포털 갱신이 16:00·watcher 에만 의존하게 된다. **미실행 — 판단 필요.**
+    - 🟡 **`LastTaskResult = 1` 가설 [추정값 — 검증 안 됨]**: OnBoot 배치(07:53:53, **부팅 S4U 세션**)의
+      5단계 generate.py 가 `generate.log` 에 **아무 것도 남기지 않았다**(mtime 07:54:44, run.log 는 07:55:19 까지).
+      **로그온 시점에 S4U 부팅 세션이 정리되며 배치가 중도 종료**된 것으로 보인다 — 타임라인이 부합한다
+      (07:53:53 부팅세션 시작 → 07:54:1x 로그온 → 07:55:19 이후 중단). 사실이라면 **`AtLogOn` 전환으로 함께 해소**된다.
+      ⚠️ Task Scheduler Operational 이력 조회는 **업데이트 이벤트 1건만** 잡혔다(MaxEvents 80 소진) —
+      실행 이벤트 미확인. 필요 시 시간 범위를 지정해 재조회:
+      ```powershell
+      Get-WinEvent -FilterHashtable @{
+        LogName='Microsoft-Windows-TaskScheduler/Operational'
+        StartTime=(Get-Date '2026-09-10 07:50'); EndTime=(Get-Date '2026-09-10 08:05') } |
+        Where-Object { $_.Message -match 'OnBoot' } | Select TimeCreated, Id, Message | Format-List
+      ```
   - 관련: decisions.md **2026-09-10 (1)**
 
 - [ ] 🔴 **ERP 코드 마스터 확보 — 코드↔한글명 매핑** (P1, 2026-09-09 등재)
