@@ -256,7 +256,11 @@ ANCA CNC Tool Grinder에 장착되는 연삭 휠(숫돌)을 카탈로그로 관�
 
 이로써 **가장 빠른 경로였던 ①이 소멸**했고, Vmax 확보는 제조사 서면 회신(②) 또는 회전강도 시험성적서(③)에만 의존하게 됐습니다.
 
-**⚠️ 파생 논점 — ISO 12413:2019 §6.6 표시 요건**: 동 규격은 결합 연삭재 제품에 최고 사용 원주속도 표시를 요구합니다. 라벨 부재는 이 요건을 충족하지 못한 상태로 보이나, 아래 3가지 가능성이 남아 있어 **제조사 확인 전까지는 추정값**으로 둡니다.
+**⚠️ 파생 논점 — 표기 요건**: ~~ISO 12413:2019 §6.6 은 결합 연삭재 제품에 최고 사용 원주속도 표시를 요구합니다. 라벨 부재는 이 요건을 충족하지 못한 상태로 보이나,~~ (2026-08-24 작성)
+
+> 🔴 **2026-09-09 정정 — 「요건 미충족」이라고 볼 근거가 약해졌습니다.** 12413 은 적용범위가 **초지립을 제외**하므로 보유 휠에 적용되지 않습니다 [STD-EN12413]. 초지립의 제품 표기(m/s)를 요구하는 것은 **EN 13236:2019 를 근거로 한 oSa 요건** [STD-EN13236] [STD-OSA-SUPER-MARK] 이고, 이는 **유럽 계열 요건**입니다. **JIS R 6241:2018 은 초지립을 다루지 않으므로** [STD-JISR6241] 국내 제조사에는 동일한 표기 의무가 없습니다. ⇒ **라벨 부재를 「규격 위반」으로 단정하지 않습니다.**
+
+아래 3가지 가능성이 남아 있어 **제조사 확인 전까지는 추정값**으로 둡니다.
 
 1. 출고 시 라벨이 있었으나 취급·세척·쿨런트 노출로 **탈락·마모**된 경우
 2. 개별 휠 라벨 대신 **포장재·납품서·성적서에만 표기**한 경우
@@ -331,7 +335,8 @@ ANCA CNC Tool Grinder에 장착되는 연삭 휠(숫돌)을 카탈로그로 관�
 ## 출처
 
 1. **[Saint-Gobain Norton Winter Tool Grinding Catalog 2023](https://media.saint-gobain.com/Abrasives/Norton/Sweden/2023/NORTON-WINTER-TOOL-GRINDING/)** (162p) — Tool grinding wheel 제조사 1차 자료. ANCA / Walter / Rollomatic / SAACKE 장비에서의 초경 가공 case studies (Vc 17-22 m/s, p.18~34 / p.39~43).
-2. **ISO 12413:2019** — *Bonded abrasive products — Safety requirements*. 휠 측면 Vmax 표시 의무 (§6.6).
+2. **EN 13236:2019** — *Safety requirements for superabrasive products*. **보유 휠(레진 초지립) 적용 표준** [STD-EN13236]. 표기 요건은 oSa [STD-OSA-SUPER-MARK]. ⚠️ 본문 유료 — 속도 클래스 실수치 미확보. (2026-09-09 추가)
+2-b. **ISO 12413:2019** — *Bonded abrasive products — Safety requirements*. 휠 측면 Vmax 표시 의무 (§6.6). ⚠️ **2026-09-09 정정 — 초지립 비적용** [STD-EN12413]. 번호 자체도 확인 필요. (보존)
 3. **ISO 16089:2015** — *Machine tools — Safety — Stationary grinding machines*.
 4. Marinescu, I. D. et al. (2016). *Handbook of Machining with Grinding Wheels* (2nd ed.). CRC Press. Ch.4 — 일반 연삭 권장 속도 범위.
 5. Malkin, S. & Guo, C. (2008). *Grinding Technology* (2nd ed.). Industrial Press. Ch.3.

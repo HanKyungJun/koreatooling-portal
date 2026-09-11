@@ -11,8 +11,9 @@ sources:
   - "[VEN-ANCA-RICHARDSON2022] Simon Richardson — 'A fine balancing act: how to correctly balance grinding wheels on an ANCA machine'. ANCA e-Sharp News, 2022-09"
   - "[VEN-NORTON-WINTER-2023] Saint-Gobain Norton Winter Tool Grinding Catalog 2023 — 진동 안정성 관련"
   - "[ACA-INASAKI2001] Inasaki et al. (2001). Grinding chatter — Origin and suppression. CIRP Annals — 채터·진동 학술 근거"
-  - "[STD-ISO12413] ISO 12413:2019 — Bonded abrasive products safety"
-updated: 2026-05-18
+  - "[STD-EN13236] EN 13236:2019 — 초지립 안전 요건. 보유 휠(레진 초지립) 적용 표준 (2026-09-09 추가)"
+  - "[STD-ISO12413] ISO 12413:2019 — Bonded abrasive products safety ⚠️ 2026-09-09 정정: 초지립 비적용 (기존 인용 보존)"
+updated: 2026-09-11
 status: "ANCA e-Sharp 2022-09 원문 정리 + 본 위키 정합 주석. 한국어 원문 정상 추출"
 ---
 
@@ -113,7 +114,7 @@ iBalance는 그라인딩 휠 팩의 **진동량과 불균형 방향**을 감지�
 
 | 본 자료 미수록 | 보완 출처 |
 |--------------|---------|
-| 정량 진동 한계 (예: 진동 RMS μm/s) | [STD-ISO12413] §6 + [ACA-INASAKI2001] |
+| 정량 진동 한계 (예: 진동 RMS μm/s) | ~~[STD-ISO12413] §6~~ → **[STD-EN13236]**(초지립 적용 표준) + [ACA-INASAKI2001] ⚠️2026-09-09 정정 · **두 표준 모두 본문 미확보라 정량 한계는 여전히 미확보** |
 | 휠 마모 패턴 진단 | [[표면조도-불량]] + Norton Winter Catalog 2023 case study |
 | 채터링 메커니즘 (수학 모델) | [ACA-INASAKI2001] *Grinding chatter — Origin and suppression*, CIRP Annals 50(2), 515-534 |
 
@@ -122,7 +123,7 @@ iBalance는 그라인딩 휠 팩의 **진동량과 불균형 방향**을 감지�
 본 자료는 ANCA의 자사 소프트웨어(iBalance) 홍보 자료이나, **휠 진동 제어 = 표면 품질의 핵심 원리**라는 산업 공통 인식을 명시. 학술적 근거는:
 
 - **Inasaki, I., Karpuschewski, B., & Lee, H.S. (2001).** Grinding chatter — Origin and suppression. *CIRP Annals*, 50(2), 515-534. — 채터 발생·억제 메커니즘 종합 (이미 sources.md [ACA-INASAKI2001] 등재)
-- **ISO 12413:2019** §6 — 휠 균형 안전 기준
+- **ISO 12413:2019** §6 — 휠 균형 안전 기준 ⚠️ **2026-09-09 정정: 초지립 비적용** → 보유 휠은 **EN 13236:2019** [STD-EN13236]
 
 ---
 
@@ -179,7 +180,8 @@ Walter Graf 2011의 준비 단계 체크리스트에 "휠 형상 변화 확인" 
 
 ### 국제 표준
 
-- **ISO 12413:2019** — *Bonded abrasive products — Safety requirements*. 휠 안전 운영 기준.
+- **EN 13236:2019** — *Safety requirements for superabrasive products*. **초지립 적용 표준** — 보유 휠(레진 초지립)은 이쪽이다. (2026-09-09 추가)
+- **ISO 12413:2019** — *Bonded abrasive products — Safety requirements*. 휠 안전 운영 기준. ⚠️ **2026-09-09 정정 — 적용범위가 초지립을 제외한다** [STD-EN12413]. 번호 자체도 확인 필요.
 
 ---
 

@@ -2,12 +2,13 @@
 type: report
 category: "검증 노트 — 운영 정책"
 subject: "Resin Bond Diamond 휠 권장 원주속도(Vc) 정책 검증"
-tags: [검증, RPM, 원주속도, Vc, 레진본드, 다이아몬드, NortonWinter, ISO12413]
+tags: [검증, RPM, 원주속도, Vc, 레진본드, 다이아몬드, NortonWinter, EN13236, ISO12413]
 sources:
   - "휠RPM_권장도표_v3_정밀화.xlsx (사용자 작성, 2026-05-15)"
   - "Saint-Gobain Norton Winter Tool Grinding Catalog 2023 (162p)"
   - "Marinescu et al. 2016 / Malkin & Guo 2008 / Rowe 2014"
-  - "ISO 12413:2019 / ISO 16089:2015"
+  - "[STD-EN13236] EN 13236:2019 — 초지립 안전 요건 (2026-09-09 정정으로 적용 표준 교체)"
+  - "ISO 12413:2019 / ISO 16089:2015 ⚠️ 12413 은 초지립 비적용 (보존)"
 verification_date: 2026-05-18
 conclusion: "위키 정책(Vc 18-25 m/s) 학술적으로 정확. v3 시트(Vc 25-35 m/s, Sweet 30)는 일반 연삭값을 협소 응용에 잘못 적용 — 약 36% 과대."
 updated: 2026-08-28
@@ -231,7 +232,8 @@ Vc (m/s) :   15  17  18  19  20  21  22  23  24  25  26 ... 30 ... 35 ... 40
 
 ### 1차 (Tier 1 — ISO 표준)
 
-2. **ISO 12413:2019** — *Bonded abrasive products: Safety requirements*. §6.6 Vmax 표시 의무.
+2. **EN 13236:2019** — *Safety requirements for superabrasive products*. **보유 휠(레진 초지립) 적용 표준** [STD-EN13236]. 제품 표기(m/s) 요건은 oSa [STD-OSA-SUPER-MARK]. ⚠️ 본문 유료 — 속도 클래스 실수치 미확보. (2026-09-09 추가)
+2-b. **ISO 12413:2019** — *Bonded abrasive products: Safety requirements*. §6.6 Vmax 표시 의무. ⚠️ **2026-09-09 정정 — 적용범위가 초지립을 제외**하므로 보유 휠에는 비적용 [STD-EN12413]. 번호 자체도 확인 필요. (보존)
 3. **ISO 16089:2015** — *Machine tools: Safety: Stationary grinding machines*.
 
 ### 2차 (Tier 2 — 학술 핸드북)

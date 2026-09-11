@@ -13,7 +13,7 @@ sources:
   - "[VEN-ROLLOMATIC] Rollomatic SA 공식 — https://www.rollomatic.ch"
   - "raw/notes/CNC_공구연삭_브랜드_정리.xlsx (사내 작성, 2026-05)"
   - "Nanogrind Technologies — Rollomatic 미국 대리점 자료"
-updated: 2026-05-18
+updated: 2026-09-11
 status: "1차 등재 — 사내 비도입 비교 대상. 공식 사이트 + 사내 정리 자료 기반"
 ---
 
@@ -97,7 +97,7 @@ status: "1차 등재 — 사내 비도입 비교 대상. 공식 사이트 + 사�
 | **치수 반복도** | **< 0.003 mm** |
 | 표면조도 | 향상 |
 
-> 출처: Rollomatic 공식 + Nanogrind 대리점 자료. **본 위키 [[휠RPM-정책-검증-노트]]의 ISO 12413 안전 운영 + [[휠-밸런싱-iBalance]]의 진동 제어 원리를 기계 구조 자체에 내장**한 형태.
+> 출처: Rollomatic 공식 + Nanogrind 대리점 자료. **본 위키 [[휠RPM-정책-검증-노트]]의 휠 안전 운영 기준 + [[휠-밸런싱-iBalance]]의 진동 제어 원리를 기계 구조 자체에 내장**한 형태. (⚠️ 2026-09-09 정정 — 종래 여기 적힌 근거 표준 ~~ISO 12413~~ 은 **초지립 비적용**이다. 초지립 적용 표준은 **EN 13236:2019** [STD-EN13236])
 
 ### 3.2 VirtualGrind Pro
 
