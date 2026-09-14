@@ -768,7 +768,7 @@ def build_dashboard_html(shippings, daily, worklog_date, generated_at, todo=None
   <div class="section-card">
     <div class="chart-title">📋 접수현황 <span style="font-size:0.78rem;color:#aaa;font-weight:400">(최신순)</span></div>
     <div class="refresh-row">
-      <button class="refresh-btn" onclick="loadSubmissions()">🔄 새로고침</button>
+      <button class="refresh-btn" id="refresh-btn" onclick="loadSubmissions()">🔄 새로고침</button>
       <span class="refresh-info" id="refresh-info">—</span>
     </div>
     <div class="sub-tab-bar" id="form-tab-bar"></div>
