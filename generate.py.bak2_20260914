@@ -784,9 +784,6 @@ var SHIPPINGS = [
 {shipping_js}
 ];
 var daily = {daily_json};
-// 2026-09-14 — 화면 자가 진단용. 배포가 실패하면 옛 파일이 그대로 남으므로
-// 화면 스스로 "내 생성 시각이 오늘이 아니다"를 감지해 경고한다.
-var DASHBOARD_GENERATED_AT = "{generated_at}";
 </script>
 <script src="submissions-data.js"></script>
 <script src="dashboard.js"></script>
@@ -1086,76 +1083,6 @@ def write_internal_submissions_js() -> bool:
         return False
 
 
-def _notify_internal_deploy(ok: bool, reason: str) -> None:
-    """사내 배포 성공/실패를 상태 파일에 기록하고, 실패로 '전환'될 때만 메일 1통을 보낸다. (2026-09-14 신설)
-
-    ★ 왜 현황판 배너가 아닌가 — 배포가 실패하면 배너를 쓸 폴더에 접근할 수 없다.
-      실패를 실패한 통로로 알릴 수는 없다. 화면 쪽은 dashboard.js 의 자가 진단이 맡는다.
-
-    ★ 왜 '전환 시에만' 인가 — 2026-09-04~09-14 처럼 실패가 이어지면 매 실행마다
-      메일이 쌓여 결국 아무도 안 읽는다. 성공→실패 전환 1통 + 하루 1통까지로 제한한다.
-
-    ★ 이 함수는 어떤 경우에도 예외를 밖으로 던지지 않는다. 알림 실패가 배포·보고를 막으면 안 된다.
-    """
-    try:
-        state_path = os.path.join(BASE_DIR, 'outputs', '.internal_deploy_state.json')
-        today = datetime.now().strftime('%Y-%m-%d')
-        prev = {}
-        try:
-            with open(state_path, encoding='utf-8') as f:
-                prev = json.load(f)
-        except Exception:
-            prev = {}
-        was_ok = prev.get('ok', True)
-        last_notified = prev.get('notified_on', '')
-
-        try:
-            os.makedirs(os.path.dirname(state_path), exist_ok=True)
-            with open(state_path, 'w', encoding='utf-8') as f:
-                json.dump({'ok': ok, 'reason': reason, 'at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                           'notified_on': (today if (not ok and (was_ok or last_notified != today))
-                                           else last_notified)}, f, ensure_ascii=False)
-        except Exception:
-            pass
-
-        if ok:
-            if not was_ok:
-                _log('  🟢 사내 배포 정상 복귀 (직전 실행은 실패였음)')
-            return
-        if not (was_ok or last_notified != today):
-            _log('  (사내 배포 실패 알림 — 오늘 이미 발송, 생략)')
-            return
-
-        to_addr = os.getenv('ALERT_EMAIL_TO', '')
-        if not to_addr:
-            _log('  ⚠️ ALERT_EMAIL_TO 미설정 — 사내 배포 실패 메일을 보내지 않습니다')
-            return
-        try:
-            import base64
-            from email.mime.text import MIMEText
-            sys.path.insert(0, os.path.join(BASE_DIR, 'erp'))
-            from daily_dlv_alert import get_gmail_service
-            svc = get_gmail_service()
-            body = ('사내 공유폴더 현황판 배포가 실패했습니다.\n\n'
-                    f'시각: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n'
-                    f'경로: {INTERNAL_DIR}\n'
-                    f'사유: {reason}\n\n'
-                    '영향: 사내 현황판만 옛 데이터로 남습니다. 일일보고 생성과 공개 배포는 정상입니다.\n'
-                    '확인: wiki/reports/daily/run.log 와 generate.log 의 "사내 배포 단계 종료" 줄\n'
-                    '참고: 2026-09-14 사례는 접속 계정명 오등재였습니다 (decisions.md 2026-09-14).\n')
-            msg = MIMEText(body, _charset='utf-8')
-            msg['to'] = to_addr
-            msg['subject'] = '[현황판] 사내 공유폴더 배포 실패'
-            svc.users().messages().send(
-                userId='me',
-                body={'raw': base64.urlsafe_b64encode(msg.as_bytes()).decode()}).execute()
-            _log(f'  📧 사내 배포 실패 알림 발송: {to_addr}')
-        except Exception as e:
-            _log(f'  ⚠️ 실패 알림 발송 실패(무시): {type(e).__name__}: {str(e)[:120]}')
-    except Exception as e:
-        _log(f'  ⚠️ 알림 처리 중 예외(무시): {type(e).__name__}: {str(e)[:120]}')
-
-
 def publish_internal(pages: dict) -> bool:
     """생성된 페이지와 정적 파일을 사내 LAN 공유폴더에 한 벌 더 쓴다.
 
@@ -1176,7 +1103,6 @@ def publish_internal(pages: dict) -> bool:
         _log(f'  ⚠️ 사내 배포 실패 — 폴더 접근 불가: {type(e).__name__}: {e}')
         _log(f'     경로: {INTERNAL_DIR}')
         _log('     (공개 배포는 정상 진행합니다)')
-        _notify_internal_deploy(False, f'{type(e).__name__}: {str(e)[:160]}')
         return False
 
     n_ok, n_fail = 0, 0
@@ -1214,18 +1140,15 @@ def publish_internal(pages: dict) -> bool:
                     _log(f'  ⚠️ {fname} 복사 실패: {e}')
     except Exception as e:
         _log(f'  ⚠️ 사내 배포 중 예외: {type(e).__name__}: {e}')
-        _notify_internal_deploy(False, f'{type(e).__name__}: {str(e)[:160]}')
         return False
 
     # ★ 조용한 성공 방지 — 0건 성공을 정상으로 찍지 않는다.
     if n_ok == 0:
         _log(f'  🔴 사내 배포: 성공 0건 / 실패 {n_fail}건 — 실패로 판정')
-        _notify_internal_deploy(False, '성공 0건')
         return False
 
     _log(f'  → 사내 배포 완료: {n_ok}개 파일'
          + (f' (실패 {n_fail}건)' if n_fail else ''))
-    _notify_internal_deploy(True, '')
     _log(f'     {INTERNAL_DIR}')
     return True
 
