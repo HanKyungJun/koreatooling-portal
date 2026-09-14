@@ -70,6 +70,7 @@ INTERNAL_ONLY = {
     'supplies.html',          # 2026-09-04 미사용 확인 — 생성 중단
     'portal-auth.js',         # 2026-09-08 신설 — 직원 게이트. 사내 전용, 공개 배포 금지
     'field-record-config.js', # 2026-09-08 신설 — 현장기록 GAS URL·토큰. 사내 전용
+    'submissions-data.js',    # 2026-09-14 신설 — 접수현황(회사명·담당자·연락처 포함). 사내 전용, 공개 금지
 }
 
 YEARS = [2026, 2025, 2024, 2023, 2022]
@@ -784,6 +785,7 @@ var SHIPPINGS = [
 ];
 var daily = {daily_json};
 </script>
+<script src="submissions-data.js"></script>
 <script src="dashboard.js"></script>
 </body>
 </html>"""
@@ -1011,6 +1013,73 @@ def write_internal_field_config() -> bool:
         return True
     except Exception as e:
         _log(f'  ⚠️ field-record-config.js 생성 실패: {type(e).__name__}: {e}')
+        return False
+
+
+def write_internal_submissions_js() -> bool:
+    """접수현황 데이터를 사내 전용 JS 자산(`submissions-data.js`)으로 굽는다. (2026-09-14 신설)
+
+    ★ 왜 JSON 이 아니라 JS 인가 — 사내 현황판은 공유폴더의 dashboard.html 을 직접 여는
+      방식(file:// · UNC)이라 브라우저가 fetch() 를 차단한다. <script src> 는 그 제약이 없다.
+
+    ★ 왜 사내 전용인가 — 접수 폼은 회사명·담당자·연락처를 받는다.
+      dist/·루트·GitHub Pages 에 절대 두지 않는다 (CLAUDE.md §4 개인정보·거래처 원칙).
+
+    ★ 실패해도 예외를 밖으로 던지지 않는다 — 파일이 없으면 화면은 기존 Flask API 로
+      폴백한다(점진 적용, field-record-config.js 와 같은 패턴).
+    """
+    sheet_id = os.getenv('FORM_SHEET_ID', '')
+    if not sheet_id:
+        _log('  ⚠️ FORM_SHEET_ID 미설정 — 접수현황 스냅샷 생략(.env 확인)')
+        return False
+    try:
+        from google.oauth2.credentials import Credentials
+        from google.auth.transport.requests import Request
+        from googleapiclient.discovery import build as _gbuild
+    except Exception as e:
+        _log(f'  ⚠️ Google 모듈 로드 실패 — 접수현황 생략: {type(e).__name__}: {e}')
+        return False
+
+    token_path = os.path.join(BASE_DIR, 'token_sheets.json')
+    scopes = ['https://www.googleapis.com/auth/spreadsheets']
+    tabs   = ['재연마의뢰', '불량신고', '진행문의', '소모품요청']
+    try:
+        creds = Credentials.from_authorized_user_file(token_path, scopes)
+        if creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+            with open(token_path, 'w', encoding='utf-8') as f:
+                f.write(creds.to_json())
+        svc = _gbuild('sheets', 'v4', credentials=creds)
+        data, n_rows = {}, 0
+        for tab in tabs:
+            res = svc.spreadsheets().values().get(
+                spreadsheetId=sheet_id, range=f'{tab}!A1:Z500').execute()
+            values = res.get('values', [])
+            if len(values) > 1:
+                data[tab] = {'headers': values[0], 'rows': list(reversed(values[1:]))}
+                n_rows += len(values) - 1
+            else:
+                data[tab] = {'headers': values[0] if values else [], 'rows': []}
+    except Exception as e:
+        _log(f'  ⚠️ 접수현황 조회 실패 — 생략: {type(e).__name__}: {str(e)[:120]}')
+        return False
+
+    payload = {'ok': True, 'data': data,
+               'fetched_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+    js = ('/* submissions-data.js — 접수현황 스냅샷 (generate.py 자동 생성, 사내 전용)\n'
+          '   손으로 고치지 마세요. 원본은 Google Sheets 입니다.\n'
+          '   회사명·담당자·연락처가 들어 있습니다 — 공개 배포 금지. */\n'
+          'window.FORM_SUBMISSIONS = ' + json.dumps(payload, ensure_ascii=False) + ';\n')
+    try:
+        os.makedirs(INTERNAL_ASSET_DIR, exist_ok=True)
+        with open(os.path.join(INTERNAL_ASSET_DIR, 'submissions-data.js'), 'w',
+                  encoding='utf-8') as f:
+            f.write(js)
+        _log(f'  → 접수현황 스냅샷 생성: internal/submissions-data.js '
+             f'({len(tabs)}개 탭 / {n_rows}건, 사내 전용)')
+        return True
+    except Exception as e:
+        _log(f'  ⚠️ submissions-data.js 생성 실패: {type(e).__name__}: {e}')
         return False
 
 
@@ -1314,6 +1383,7 @@ if __name__ == '__main__':
     _log('사내 공유폴더 배포 중...')
     write_internal_auth_js()          # 2026-09-08 — 게이트 JS 를 사내 자산으로 먼저 생성
     write_internal_field_config()     # 2026-09-08 — 현장기록 GAS URL·토큰 주입
+    write_internal_submissions_js()   # 2026-09-14 — 접수현황 스냅샷(사내 전용)
     internal_ok = publish_internal(internal_pages)
     _log(f'사내 배포 단계 종료 ({time.time()-_t:.1f}s) — '
          f'{"성공" if internal_ok else "실패/건너뜀"}')
