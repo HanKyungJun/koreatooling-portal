@@ -179,6 +179,9 @@
 - **[ACA-WEBSTERTRICARD2004]** Webster, J. & Tricard, M. (2004). Innovations in Abrasive Products for Precision Grinding. *CIRP Annals — Manufacturing Technology*, 53(2), 597-617. doi:10.1016/S0007-8506(07)60028-1 — 정밀 연삭용 슈퍼아브레시브 신소재. Hybrid 본드 도입 배경. [[catalog/홍익다이아-본드-체계]] 인용.
 - **[ACA-DEVRIES1972]** DeVries, R.C. (1972). *Cubic Boron Nitride: Handbook of Properties*. General Electric Technical Report 72CRD178. — CBN 발명사·특성 1차 자료. 1300°C 철계 안정성 근거.
 
+- **[ACA-BADGER-AGGR2020]** Badger, J. 외 (2020). *On geometry and kinematics of abrasive processes: The theory of aggressiveness*. **International Journal of Machine Tools and Manufacture**. https://www.sciencedirect.com/science/article/pii/S089069552030167X — 연삭 공격성 지수(Aggressiveness number) 이론. **Aggr ≈ (v_w / v_s) × √(a_e / d_e) × 10⁶** (v_w 공작물 속도 · v_s 휠 원주속도 · a_e 절입 · d_e 등가직경). ★ **절입이 줄면 공격성이 떨어지므로, 유지하려면 휠 속도를 낮추거나 공작물 속도를 높여야 한다.** [[공구-직경별-연삭조건]] 본문 출처.
+- **[IND-CTE-AGGR]** *Determining aggressive values*. **Cutting Tool Engineering**. https://ctemag.com/articles/determining-aggressive-values/ — 공격성 지수 실무 적용 사례. CBN·경화강에서 **Aggr 25 전후**를 양호 구간으로 제시. 절입을 **0.125 → 0.025 mm** 로 줄이면서 **휠 속도와 이송을 함께 낮춰 Aggr 26.1 유지**한 실사례. ★ *"휠을 세게 미는지 여부가 재료제거율(mrr)만으로 정해진다는 것은 전혀 사실이 아니다"* — mrr 단독 판단 경계.
+
 ### 실무 1차 출처 (1건)
 
 - **[IND-BADGER-GD]** Badger, J.A. (The Grinding Doc) — *Cutting Tool Engineering Magazine* 칼럼 + *Toolbox v8.2*. https://www.thegrindingdoc.com — Vc 25-35 m/s 실무 Sweet Spot 가이드라인. [[휠RPM-정책-검증-노트]] v3 시트 출처 [7]에서 인용.
@@ -207,6 +210,8 @@
   - **Evaluate 단계 핵심 원칙(2026-07-10 재확인)**: "good engineering is to change only one parameter at a time" — 재현 가능한 비교를 위해 1회 테스트당 변수 1개만 변경. `테스트-보고서-표준양식` §7·`AL엔드밀-호닝-비교` 사례(호닝·코팅·Overhang·절삭속도 동시 변경으로 개별효과 분리 불가)의 근거로 인용.
   - **Record 단계 권장 기록 항목(연삭 전용)**: 휠속도 vc, 드레싱 절입 ad, 이송 vw, 재료제거율 Q'w, 평균 칩두께 hm, 공격성 인자 Fa, 드레싱 비율 qd, Amp 부하(%), 사이클타임 tc. hm·Fa·qd/ad는 현 표준양식 §5에 없음 — 연삭(휠) 테스트 기록 시에만 추가 필요, 절삭공구(엔드밀·드릴) 비교에는 해당 없음.
   - **Preparation 단계 체크리스트**: 노즐 손상 확인, 냉각수 온도 조·석 2회 측정, air grinding 시간 확인(전체 사이클의 70~80%가 공회전인 경우가 흔함 — 사이클타임 단축은 이송 증가보다 공회전 제거가 먼저).
+- **[VEN-ANCA-BADGER2011]** Badger, J. (2011). *「얼마나 깊게」 — 휠의 최적점 찾기 (Finding the sweet spot of your wheel)*. ANCA *e-Sharp News*, September 2011. https://machines.anca.com/e-sharp-news/september-2011/finding-the-sweet-spot-of-your-wheel — **초경 엔드밀 연삭 실사용 사례표**: 작업자 A(소형) 휠 원주속도 **18.5 m/s** · Q'w **6.3 mm³/(mm·s)** / 작업자 B(중형) **16.5 m/s** · **5.6** / **휠 제조사 권장(중형 초경) 33 m/s · 10.0**. ★ 현장 실사용이 제조사 권장의 **약 절반**임을 보여주는 1차 사례. 「작은 공구는 절입을 줄이되 **공격성 지수를 일정하게 유지**하면서 이송과 휠 속도를 조정한다」는 원칙 제시. ⚠️ 두 작업자의 셋업이 서로 달라 **통제된 비교가 아니다** — 공구 직경과 휠 속도의 방향성 근거로 단독 사용 금지. [[공구-직경별-연삭조건]] 본문 출처.
+- **[VEN-ANCA-GRAF2011]** 과 혼동 주의 — GRAF 는 **12월호(연삭 테스트 방법론)**, BADGER 는 **9월호(공격성·최적점)** 로 서로 다른 기사다.
 - **[VEN-WINTERTHUR-2011]** Winterthur Technology Group (2011) — 본 자료 발행 주체. Walter Graf CMO. 스위스 연삭재 제조사 (이후 3M Winterthur로 통합). NaxoForce 본드 브랜드 보유.
 
 ### ANCA 기술 가이드 및 브로슈어 (2026-06-12 등재)
@@ -501,6 +506,7 @@
 |------------|----------------|
 | [[anca-esharp-index]] | [VEN-ANCA-ESHARP-ARCHIVE], [VEN-ANCA-GRAF2011], [VEN-ANCA-RICHARDSON2022], [VEN-ANCA-ZAISER2022], [VEN-OELHELD-LOWERY2022], [VEN-ANCA-MATHEW2022], [VEN-ANCA-MULDER2024] |
 | [[휠-밸런싱-iBalance]] | [VEN-ANCA-RICHARDSON2022], [ACA-INASAKI2001], **[STD-EN13236]**, ~~[STD-ISO12413]~~(초지립 비적용·보존), [VEN-NORTON-WINTER-2023] |
+| [[공구-직경별-연삭조건]] | [VEN-ANCA-BADGER2011], [ACA-BADGER-AGGR2020], [IND-CTE-AGGR], [VEN-NORTON-WINTER-2023], [VEN-ANCA-GRAF2011], [INT-TOOLKOREA-FEEDRATE-2017] |
 | [[MRR-기반-연삭공정-분석]] | [VEN-ANCA-ZAISER2022], [VEN-ANCA-GRAF2011], [ACA-MALKINGUO2008], [ACA-MARINESCU2016], [ACA-ROWE2014], [VEN-NORTON-WINTER-2023] |
 | [[연삭유-성능-가이드]] | [VEN-OELHELD-LOWERY2022], [VEN-OELHELD], [ACA-MARINESCU2016], [ACA-MALKINGUO2008], [ACA-BRINKSMEIER2010] |
 | [[고성능-엔드밀-제작-가이드-part1]] | [VEN-ANCA-MATHEW2022], [ACA-ENGIN2001], [ACA-SMITH2008-CTT], [ACA-INASAKI2001], [ACA-STEPHENSON2016], [ACA-TLUSTY1979] |
