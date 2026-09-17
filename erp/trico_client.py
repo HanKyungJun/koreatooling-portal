@@ -62,6 +62,65 @@ def is_price_col(name: str) -> bool:
     return any(k in name.lower() for k in PRICE_KEYWORDS)
 
 
+# ── 재연마 A/S 현황(SDB117_g10) 코드 → 한글 매핑 ──────────────────────────────
+# 원본: outputs/erp_code_ledger_20260909.csv ("확인됨" 상태인 항목만).
+# 2026-09-17 갱신 — 사내 ERP 클라이언트 화면(재연마A/S 등록현황)과 직접 대조한
+# 값만 담는다. 여기 없는 코드는 미확인 상태이므로 원본 코드 그대로 노출한다
+# (추정값을 확정처럼 보여주지 않는다 — CLAUDE.md 신뢰도 원칙).
+AS_CODE_LABELS = {
+    "stat_bc": {
+        "SD200000": "요청(미처리)",
+        "SD200100": "처리",
+    },
+    "rtn_bc": {
+        "CS510200": "경동화물",
+        "CS510600": "배송 기사편(무료)",
+        "CS510300": "대신화물",
+    },
+    "jae_qty": {
+        "JA1002": "2날",
+    },
+    "jae_shape": {
+        "JA110DR": "드릴",
+        "JA110RF": "라핑 평",
+        "JA110CO": "코너",
+    },
+    "jae_shank": {
+        "JA1206": "6이하",
+        "JA1208": "8이하",
+        "JA12010": "10이하",
+    },
+    "jae_material": {
+        "JA1401": "초경",
+    },
+    "jae_side": {
+        "JA1701": "밑날",
+        "JA1703": "밑+옆날",
+    },
+    "jae_coating": {
+        "JA15000": "비코팅",
+        "JA15001": "일반",
+        "JA15002": "고경도",
+    },
+}
+
+
+def label_as_status(df: "pd.DataFrame") -> "pd.DataFrame":
+    """재연마 A/S 현황 조회 결과의 코드 컬럼을 한글로 바꿔 새 DataFrame을 반환한다.
+
+    확인된 코드만 바꾸고, AS_CODE_LABELS 에 없는(미확인) 코드는 원본 그대로
+    남긴다 — 확인 안 된 값을 추측해서 보여주지 않기 위함(CLAUDE.md 신뢰도 원칙).
+    원본 df는 바꾸지 않는다(copy).
+    """
+    if df is None or df.empty:
+        return df
+    out = df.copy()
+    for col, mapping in AS_CODE_LABELS.items():
+        if col in out.columns:
+            out[col] = out[col].map(lambda v: mapping.get(str(v), v))
+    return out
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 class TricoClient:
 
@@ -273,13 +332,19 @@ class TricoClient:
           🔴 rtn_bc 는 「A/S 사유」가 아니라 「반송방법」이다(2026-09-04 정정).
              이 화면에는 A/S 사유 필드가 없다. 원인은 rmks/jae_rmks 자유텍스트.
 
-        확인된 코드값 (일부, 화면 대조):
+        확인된 코드값 (2026-09-17 갱신 — `outputs/erp_code_ledger_20260909.csv` 가 원본,
+        이 목록은 요약 인용이다. 전체 코드·미확인분·건수는 그 CSV 를 볼 것):
           stat_bc  SD200000 요청(미처리) · SD200100 처리
-          rtn_bc   CS510200 경동화물 (나머지 4종 확인 필요)
-          jae_qty  JA1002 2날          jae_shape    JA110DR 드릴
+          rtn_bc   CS510200 경동화물 · CS510600 배송 기사편(무료) · CS510300 대신화물
+                   (CS510800·CS510100·CS510500 확인 필요)
+          jae_qty  JA1002 2날
+          jae_shape    JA110DR 드릴 · JA110RF 라핑 평 · JA110CO 코너
+                       (JA110FL 평엔드밀(Flat)·JA110BA 볼엔드밀(Ball) 은 추정 — 확인 요청,
+                        JA110CB·JA110TF·JA110RC·JA110BG 확인 필요)
           jae_shank JA1206 6이하 · JA1208 8이하 · JA12010 10이하
-          jae_material JA1401 초경     jae_side     JA1701 밑날
-          jae_coating  JA15001 일반
+          jae_material JA1401 초경     jae_side     JA1701 밑날 · JA1703 밑+옆날
+                                                     (JA1702·JA1705 확인 필요)
+          jae_coating  JA15001 일반 · JA15000 비코팅 · JA15002 고경도
 
         ⚠️ 단가·금액 컬럼은 block_price=True 로 자동 차단된다 (CLAUDE.md §4).
         """

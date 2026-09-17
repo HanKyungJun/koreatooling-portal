@@ -30,7 +30,7 @@ from pathlib import Path
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 
-from trico_client import TricoClient
+from trico_client import TricoClient, label_as_status
 
 # ── 경로 ──────────────────────────────────────────────────────────────────────
 if getattr(sys, 'frozen', False):
@@ -98,6 +98,12 @@ COL_LABELS = {
     "wc_cd":       "작업장코드",  "sch_dt":      "예정일",
     "jae_coating": "코팅",        "jae_angle":   "각도",
     "wo_fr_dt":    "작업시작일",  "last_proc":   "최종공정",
+    # 재연마 A/S 현황 (2026-09-17 추가)
+    "rtn_bc":      "반송방법",    "jae_qty":     "날수",
+    "jae_shape":   "형상",        "jae_shank":   "샹크경",
+    "jae_material":"재질",        "jae_side":    "공정",
+    "jae_rmks":    "상세비고",    "rmks":        "비고",
+    "qty":         "수량",
     # 수주
     "so_dt":       "수주일",      "so_dept":     "수주부서코드",
     "so_dept_nm":  "수주부서",    "so_nm":       "담당자",
@@ -303,6 +309,18 @@ class DataTab(ttk.Frame):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+class AsStatusTab(DataTab):
+    """재연마 A/S 현황 탭 — 코드 컬럼(반송방법·형상·재질·공정·코팅 등)을 한글로 표시.
+
+    2026-09-17 신설. 화면에 보이는 실제 ERP 값(재연마A/S 등록현황)과 대조해 확인된
+    코드만 label_as_status() 로 바꾼다. 미확인 코드는 원래 값 그대로 남는다 —
+    추측으로 보여주지 않는다(CLAUDE.md 신뢰도 원칙, outputs/erp_code_ledger_20260909.csv 참조).
+    """
+
+    def _postprocess_df(self, df):
+        return label_as_status(df)
+
+
 class ShipmentTab(DataTab):
     """출하등록(거래명세서) 탭 — 단가 0 행 강조 + 건수 배지"""
 
@@ -900,7 +918,7 @@ class App(tk.Tk):
                 ("재연마수주 등록",       client.수주,      DataTab,     False),
                 ("재연마 출하등록",       client.출하,      DataTab,     False),
                 ("재연마 출하 거래명세서", client.출하_명세,  ShipmentTab, True),
-                ("재연마 A/S 현황",       client.재연마AS,   DataTab,     False),
+                ("재연마 A/S 현황",       client.재연마AS,   AsStatusTab, False),
             ]
             for name, fn, TabClass, sort_zero in screens:
                 tab = TabClass(inner_nb, name=name, fetch_fn=fn,
