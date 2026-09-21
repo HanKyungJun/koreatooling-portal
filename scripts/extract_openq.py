@@ -73,7 +73,29 @@ def already_closed(line):
         return True                                   # 표기가 전부 취소선 안
     return False
 
-SKIP = ('_handoff/', 'log.md', 'worklog-archive', '_backup', '_private', 'templates/')
+# ── 2026-09-21 추가: 「원문 보존」 섹션 통째 제외 ─────────────────────────────
+#   이 위키는 「기존 값 삭제 금지」가 원칙(CLAUDE.md §2-8)이라, 종결된 항목도 원문을
+#   지우지 않고 보존 블록으로 남긴다. 그 안의 🔴 표기를 계속 집계하면 대장이
+#   **종결분으로 부풀어** 못 쓰는 물건이 된다.
+#   실제 발생: 2026-09-21 SMB 운용 중단으로 A-긴급 2건이 종결됐는데, 원문을
+#   troubleshoot/사내-공유폴더-SMB-자격증명.md §5-1 에 보존하자 추출기가 계속 열린
+#   항목으로 세어 418건·A-긴급 2건이 그대로 남았다(decisions.md 2026-09-21 (3) §⑦).
+#   ⇒ **제목에 「원문 보존」이 든 섹션은 다음 동급·상위 제목까지 통째로 제외**한다.
+#   ⚠️ 반드시 **제목**에 쓴다. 본문 한 줄에 써도 제외되지 않는다 — 어디까지가 보존
+#      범위인지를 사람이 제목으로 명시하게 하려는 것이다.
+#   ⚠️ 취소선(~~…~~)을 쓰지 않은 이유: 취소선은 「철회된 주장」을 뜻하는데 보존
+#      블록의 표기는 철회된 게 아니라 **전제가 사라진 것**이라 의미가 어긋난다.
+PRESERVED = re.compile(r'^#{1,6}\s.*원문\s*보존')
+HEADING = re.compile(r'^(#{1,6})\s')
+
+# ⚠️ 2026-09-21 추가 — 「주간브리핑」 제외 이유 (피드백 루프)
+#   주간 브리핑은 대장 결과를 **설명하면서 미해결 표기를 그대로 인용**한다. 그런데
+#   브리핑 자신이 wiki/ 안의 .md 라, 다음 실행에서 그 인용문이 **새 미해결 항목으로
+#   다시 집계**된다. 2026-09-21 실측: 418 → 420 건으로 부풀었고 A-긴급이 2 → 4 건이
+#   됐는데, 늘어난 2건 전부가 브리핑이 인용한 자기 문장이었다.
+#   생성물은 콘텐츠가 아니라 기록물이므로 _handoff/ 와 같은 이유로 제외한다.
+SKIP = ('_handoff/', 'log.md', 'worklog-archive', '_backup', '_private', 'templates/',
+        'reports/09_업무일정/주간브리핑')
 CAT = {'repairs': '설비·정비', 'machines': '설비', 'tools': '공구·휠', 'materials': '소재',
        'cadcam': 'CAD/CAM', 'gcode': 'G코드', 'comparisons': '비교분석', 'projects': '프로젝트',
        'troubleshoot': '트러블슈팅', 'standards': '표준', 'compliance': '법규',
@@ -111,7 +133,18 @@ def collect():
                 upd = m.group(1)
                 break
         cat = CAT.get(rel.split('/')[0], '기타')
+        skip_depth = 0                                # 2026-09-21: 「원문 보존」 섹션 깊이
         for i, l in enumerate(lines, 1):
+            hm = HEADING.match(l)
+            if hm:
+                depth = len(hm.group(1))
+                if skip_depth and depth <= skip_depth:
+                    skip_depth = 0                    # 동급·상위 제목 = 보존 섹션 끝
+                if PRESERVED.match(l):
+                    skip_depth = depth                # 이 섹션부터 제외 시작
+                    continue
+            if skip_depth:
+                continue                              # 보존 섹션 본문
             if not MARK.search(l):
                 continue
             if already_closed(l):
@@ -244,6 +277,8 @@ def build(rows):
         ('검색어', '「확인 필요」·「확인필요」·「미확정」·「미확인」·「미판독」·「미해결」'),
         ('제외', '_handoff/ · log.md · worklog-archive/ · _backup · _private · templates/ '
                  '— 이력 기록물이라 과거 시점의 표기가 섞여 있음'),
+        ('제외 (섹션 단위)', '2026-09-21 추가 — 제목에 「원문 보존」이 든 섹션은 다음 동급·상위 제목까지 통째로 제외. '
+                        '이 위키는 삭제 금지가 원칙이라 종결분 원문이 계속 쌓이는데, 그것까지 세면 대장이 부풀어 못 쓴다'),
         ('제외 (표기 단위)', '2026-08-28 추가 — ①취소선(~~…~~)으로 지워진 표기 '
                           '②「"확인 필요" … 해소」처럼 종결을 서술한 문장 '
                           '③문서 하단 「작성: … / 갱신(…)」 이력 줄'),
