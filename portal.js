@@ -48,7 +48,9 @@ var GAS_FORM_URL = 'https://script.google.com/macros/s/AKfycbzjgm7IhynT5CCQzX1f9
   if (!nav) return;
   var links = [
     { href: 'index.html',        label: '🏠 메인' },
+    { href: 'about.html',        label: '🏭 회사 소개' },
     { href: 'request.html',      label: '📥 재연마 의뢰' },
+    { href: 'estimate.html',     label: '💰 견적 문의' },
     { href: 'defect.html',       label: '⚠️ 불량 신고' },
     { href: 'inquiry.html',      label: '📋 진행 문의' },
     { href: 'dashboard.html',    label: '📊 현황판' },

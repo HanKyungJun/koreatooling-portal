@@ -17,7 +17,8 @@ function doPost(e) {
       'request-form':  '재연마의뢰',
       'defect-form':   '불량신고',
       'inquiry-form':  '진행문의',
-      'supplies-form': '소모품요청'
+      'supplies-form': '소모품요청',
+      'estimate-form': '견적문의'
     };
 
     var sheetName = sheetMap[form];
@@ -27,7 +28,7 @@ function doPost(e) {
     if (!sheet) return ContentService.createTextOutput('sheet not found: ' + sheetName);
 
     var fileUrl = '';
-    if (form === 'request-form' && d['file-data'] && d['file-data'].indexOf(',') > -1) {
+    if ((form === 'request-form' || form === 'estimate-form') && d['file-data'] && d['file-data'].indexOf(',') > -1) {
       fileUrl = saveFileToDrive(d['file-data'], d['file-name'] || 'attachment', ts);
     }
 
@@ -70,7 +71,8 @@ function sendEmail(form, d, darr, ts, fileUrl) {
       'request-form':  'Regrinding Request',
       'defect-form':   'Defect Report',
       'inquiry-form':  'Progress Inquiry',
-      'supplies-form': 'Supplies Request'
+      'supplies-form': 'Supplies Request',
+      'estimate-form': 'Estimate Inquiry'
     };
     var label   = labels[form] || form;
     var subject = '[KoreaTooling] ' + label + ' (' + ts + ')';
@@ -92,7 +94,8 @@ function buildEmailBody(form, d, darr, ts, fileUrl) {
     'request-form':  'Regrinding Request',
     'defect-form':   'Defect Report',
     'inquiry-form':  'Progress Inquiry',
-    'supplies-form': 'Supplies Request'
+    'supplies-form': 'Supplies Request',
+    'estimate-form': 'Estimate Inquiry'
   };
 
   var body = '================================\n';
@@ -136,6 +139,19 @@ function buildEmailBody(form, d, darr, ts, fileUrl) {
     body += 'Due Date : ' + val('due_date') + '\n';
     body += 'Reason   : ' + val('reason') + '\n';
     body += 'Urgent   : ' + (d['urgent'] === 'Y' ? 'YES' : 'NO') + '\n';
+  } else if (form === 'estimate-form') {
+    body += 'Company  : ' + val('company') + '\n';
+    body += 'Contact  : ' + val('contact') + '\n';
+    body += 'Phone    : ' + val('phone') + '\n';
+    body += 'Email    : ' + val('email') + '\n';
+    body += 'Category : ' + val('category') + '\n';
+    body += 'Material : ' + val('material') + '\n';
+    body += 'Spec     : ' + arr('spec[]') + '\n';
+    body += 'Quantity : ' + arr('quantity[]') + '\n';
+    body += 'Due Date : ' + val('due_date') + '\n';
+    body += 'Monthly Vol: ' + val('monthly_volume') + '\n';
+    body += 'Notes    : ' + val('notes') + '\n';
+    if (fileUrl) { body += 'File     : ' + fileUrl + '\n'; }
   }
 
   body += '\n--------------------------------\n';
@@ -171,6 +187,12 @@ function buildRow(form, d, darr, ts, fileUrl) {
     return [ts, val('requester'), val('department'), val('item_name'),
             val('item_spec'), val('quantity'), val('due_date'), val('reason'),
             val('urgent') === 'Y' ? 'urgent' : 'normal'];
+  }
+  if (form === 'estimate-form') {
+    return [ts, val('company'), val('contact'), val('phone'), val('email'),
+            val('category'), val('material'),
+            arr('spec[]'), arr('quantity[]'), val('due_date'), val('monthly_volume'),
+            val('notes'), fileUrl || ''];
   }
   return [ts, JSON.stringify(d)];
 }
