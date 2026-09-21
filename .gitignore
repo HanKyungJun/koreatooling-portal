@@ -51,6 +51,14 @@ node_modules/
 # outputs/ 폴더: Cowork 세션 임시 작업물, git 추적 불필요
 outputs/
 
+# --- Cowork/Claude 루트 잔여물 (2026-09-21 추가) ---
+# 「Claude outputs/」: Cowork 세션이 루트에 만든 산출물 폴더. 정본은 wiki/reports/ 아래에 둔다.
+#   2026-09-21 커밋 5046e6b 에 기획서 docx 중복본이 딸려 들어간 사례로 추가.
+# 「cleanup_stray_files.py」: 2026-09-17 손상파일 제거용 일회성 스크립트, 역할 종료.
+# ⚠️ 이미 추적 중인 파일에는 소급 적용되지 않는다 — git rm --cached 로 별도 해제 필요.
+Claude outputs/
+cleanup_stray_files.py
+
 # --- 민감 정보 (2026-05-11 추가) ---
 # Google OAuth 클라이언트 시크릿 + 토큰
 client_secret*.json
