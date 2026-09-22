@@ -25,7 +25,11 @@ PC = get_column_letter(COL_PRICE)
 
 EXTRA_CODES = {"3FL2501200"}          # 3날/평/25mm/초경/옆날/비코팅 — 2,660 = 정가의 1/10 (자릿수 누락)
 IGNORE_CODES = {"2FL2201100", "K2FL2201100"}
-SKIP_BLADES = {1, 5, 10}              # 정가표에 없는 날수 — 건드리지 않는다
+SKIP_BLADES = {1, 5, 10}              # 정가표에 없는 날수
+# 🟢 2026-09-22 한경준님 확정: **1날은 2날과 동일 단가**를 적용한다.
+#    (정가표에 1날 행이 없어 2날 행을 받는데, 기존 ERP 는 1날을 더 싸게 두고 있었다)
+#    5날·10날은 그대로 둔다 — 지시 없음.
+APPLY_BLADES = {1}
 PROBE = [round(x * 0.5, 1) for x in range(2, 121)]
 
 def band_values(bl, p):
@@ -84,6 +88,7 @@ def main():
             if exp is None or round(pr) == round(exp): continue
             why = None
             if code in EXTRA_CODES:                       why = "지정 오류"
+            elif p["blade"] in APPLY_BLADES:              why = "1날=2날 적용"
             elif p["blade"] in SKIP_BLADES:               why = None
             elif round(pr) in band_values(bl, p):         why = "구간 밀림"
             if not why: continue
