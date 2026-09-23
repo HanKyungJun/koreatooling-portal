@@ -78,7 +78,7 @@
 
 #### 휠 운영 정책 검증
 
-- [[휠RPM-정책-검증-노트]] — Resin Bond Diamond 휠 권장 Vc 정책 검증. Saint-Gobain Norton Winter Tool Grinding Catalog 2023 (1차 출처, 162p) + **EN 13236**·ISO 16089 (⚠️ 2026-09-09 정정 — 종래 ~~ISO 12413~~ 은 초지립 비적용). **결론**: 위키 정책 Vc 상한 25 m/s ✅ 유효. ⚠️ **2026-08-28 정정** — 「하한 18」은 근거 없음(8건 최빈값일 뿐, 최소는 17). ANCA 한정은 18-22 m/s / `raw/notes/휠RPM_권장도표_v3_정밀화.xlsx`의 Vc 25-35 m/s ❌ 시나리오 부적합 (textbook 일반 연삭값을 협소 응용에 잘못 적용). (2026-05-18 신규)
+- [[휠RPM-정책-검증-노트]] — Resin Bond Diamond 휠 권장 Vc 정책 검증. Saint-Gobain Norton Winter Tool Grinding Catalog 2023 (1차 출처, 162p) + **EN 13236**·ISO 16089 (⚠️ 2026-09-09 정정 — 종래 ~~ISO 12413~~ 은 초지립 비적용). **결론**: 위키 정책 Vc 상한 25 m/s ✅ 유효. ⚠️ **2026-08-28 정정** — 「하한 18」은 근거 없음(8건 최빈값일 뿐, 최소는 17). ANCA 한정은 18-22 m/s / `raw/notes/archive/휠RPM_권장도표_v3_정밀화.xlsx`의 Vc 25-35 m/s ❌ 시나리오 부적합 (textbook 일반 연삭값을 협소 응용에 잘못 적용). (2026-05-18 신규)
 
 ### 외부 공구 카탈로그 인덱스
 

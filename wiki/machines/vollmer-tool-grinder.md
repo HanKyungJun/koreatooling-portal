@@ -7,13 +7,13 @@ model_lines: "VGrind, VPulse, VLaser"
 specialty: "PCD / CBN / CVD-D / MCD 등 초경도 소재 + EDM·레이저 통합"
 target_industries: ["목공", "항공", "자동차", "전자"]
 status_in_factory: "비도입 — 비교 검토 대상"
-related_files: "raw/notes/CNC_공구연삭_브랜드_정리.xlsx (사용자 작성, 2026-05)"
+related_files: "raw/notes/archive/CNC_공구연삭_브랜드_정리.xlsx (사용자 작성, 2026-05)"
 tags: [VOLLMER, ToolGrinder, EDM, Laser, PCD, CBN, 독일, 비교대상]
 sources:
   - "[VEN-VOLLMER] VOLLMER WERKE Maschinenfabrik GmbH 공식 — https://www.vollmer-group.com"
-  - "raw/notes/CNC_공구연삭_브랜드_정리.xlsx (사내 작성, 2026-05)"
+  - "raw/notes/archive/CNC_공구연삭_브랜드_정리.xlsx (사내 작성, 2026-05)"
   - "GrindSurf September 2018 — VGrind 카탈로그"
-updated: 2026-05-18
+updated: 2026-09-23
 status: "1차 등재 — 사내 비도입 비교 대상. 공식 사이트 + 사내 정리 자료 기반"
 ---
 
@@ -23,7 +23,7 @@ status: "1차 등재 — 사내 비도입 비교 대상. 공식 사이트 + 사�
 >
 > **사내 도입 상태**: ❌ **비도입** — 비교 검토 대상. 사내 보유는 [[anca-cnc-tool-grinder]] (호주 ANCA).
 >
-> 원본: `raw/notes/CNC_공구연삭_브랜드_정리.xlsx` (사용자 작성, 2026-05)
+> 원본: `raw/notes/archive/CNC_공구연삭_브랜드_정리.xlsx` (사용자 작성, 2026-05)
 >
 > 공식 사이트: <https://www.vollmer-group.com>
 >
@@ -162,7 +162,7 @@ VOLLMER의 폴리머 콘크리트 베드 = ANCACrete (ANCA 2022-09 자료). **�
 ## 7. 참고 문헌
 
 1. **VOLLMER WERKE Maschinenfabrik GmbH** — 공식 사이트. <https://www.vollmer-group.com>
-2. `raw/notes/CNC_공구연삭_브랜드_정리.xlsx` (사내 작성, 2026-05) — 본 페이지 원본 자료
+2. `raw/notes/archive/CNC_공구연삭_브랜드_정리.xlsx` (사내 작성, 2026-05) — 본 페이지 원본 자료
 3. GrindSurf — *VGrind catalog (September 2018)*. https://grindsurf.com/images/wp-content/uploads/2018/08/GSF-SEPTEMBER.pdf
 
 ---

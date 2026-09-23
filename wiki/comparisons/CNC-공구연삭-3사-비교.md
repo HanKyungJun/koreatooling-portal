@@ -6,14 +6,14 @@ brands_compared:
   - "ANCA Pty Ltd (호주, 사내 보유 ✅)"
   - "VOLLMER WERKE Maschinenfabrik GmbH (독일, 비도입)"
   - "Rollomatic SA (스위스, 비도입)"
-source_file: "raw/notes/CNC_공구연삭_브랜드_정리.xlsx (사내 작성, 2026-05)"
+source_file: "raw/notes/archive/CNC_공구연삭_브랜드_정리.xlsx (사내 작성, 2026-05)"
 tags: [ANCA, VOLLMER, Rollomatic, 비교, ToolGrinder, 도입검토, 글로벌3사]
 sources:
-  - "raw/notes/CNC_공구연삭_브랜드_정리.xlsx (사내 작성, 2026-05)"
+  - "raw/notes/archive/CNC_공구연삭_브랜드_정리.xlsx (사내 작성, 2026-05)"
   - "[VEN-ANCA-ESHARP-ARCHIVE] ANCA e-Sharp News"
   - "[VEN-VOLLMER] vollmer-group.com"
   - "[VEN-ROLLOMATIC] rollomatic.ch"
-updated: 2026-05-18
+updated: 2026-09-23
 status: "1차 비교 — 사내 작성 엑셀 + 공식 사이트 검증. 도입 검토용 의사결정 자료"
 ---
 
@@ -21,7 +21,7 @@ status: "1차 비교 — 사내 작성 엑셀 + 공식 사이트 검증. 도입 
 
 > 본 페이지는 **CNC 공구 연삭 장비 글로벌 3사**(ANCA·VOLLMER·Rollomatic)를 본 위키 사용 시나리오 기준으로 비교한 의사결정 자료입니다.
 >
-> 원본: `raw/notes/CNC_공구연삭_브랜드_정리.xlsx` (사내 작성, 2026-05)
+> 원본: `raw/notes/archive/CNC_공구연삭_브랜드_정리.xlsx` (사내 작성, 2026-05)
 >
 > 신뢰도: **★★★★** (사내 작성 엑셀 + 3사 공식 사이트 검증)
 >
@@ -213,7 +213,7 @@ ANCA의 결정적 차별점.
 
 ## 10. 사내 작성 엑셀 원본 정합
 
-본 페이지는 `raw/notes/CNC_공구연삭_브랜드_정리.xlsx` 원본 데이터를 본 위키 표준 형식으로 정착시킨 결과입니다.
+본 페이지는 `raw/notes/archive/CNC_공구연삭_브랜드_정리.xlsx` 원본 데이터를 본 위키 표준 형식으로 정착시킨 결과입니다.
 
 ### 10.1 원본 엑셀 시트 구조
 
@@ -259,7 +259,7 @@ ANCA의 결정적 차별점.
 ## 12. 참고 문헌
 
 ### 사내 원본
-1. `raw/notes/CNC_공구연삭_브랜드_정리.xlsx` (사내 작성, 2026-05)
+1. `raw/notes/archive/CNC_공구연삭_브랜드_정리.xlsx` (사내 작성, 2026-05)
 
 ### ANCA 1차
 2. [VEN-ANCA-ESHARP-ARCHIVE] ANCA e-Sharp News — [[anca-esharp-index]] 106건

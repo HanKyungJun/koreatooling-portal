@@ -11,8 +11,8 @@ machine: "anca-cnc-tool-grinder"
 stack: "1-2"
 wheel: "휠-45도-Ø125-1-2"
 tags: [연삭, D8, 4날, 코너R, End Face Gash, 초경, 재가동]
-sources: [raw/notes/grinding_record_template.md, "대화 정리 (2026-04-21)"]
-updated: 2026-06-05
+sources: [wiki/reports/05_검증·노트/grinding_record_template.md, "대화 정리 (2026-04-21)"]
+updated: 2026-09-23
 ---
 
 # 연삭 조건 기록 — D8 × 4날 코너R / End Face Gash

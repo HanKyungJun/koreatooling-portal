@@ -63,7 +63,7 @@ updated: 2026-09-23
 
 | 파일 | 상태 | 처리일 | 비고 |
 |------|------|--------|------|
-| `raw/notes/grinding_record_template.md` | ✅ 처리 | 2026-04-23 | → [[연삭-조건-기록]] |
+| `raw/notes/grinding_record_template.md` | ✅ 처리 | 2026-04-23 | → [[연삭-조건-기록]] · ⚠️ 현재 raw 에는 없고 위키 `wiki/reports/05_검증·노트/grinding_record_template.md` 에 있음(2026-09-23 확인 — 절 구성 일치로 같은 양식으로 판단, 이동 시점 미상) |
 | `raw/notes/grinding_academic_reference.docx` | ✅ 처리 | 2026-04-24 | → [[연삭-이론-근거]] |
 | `raw/notes/연삭조건_입력양식.xlsx` | ✅ 처리 | 2026-04-28 | → [[연삭-조건-입력양식]] (308개 품목, 형상별 가공시간 및 확정 조건 3건) · ⚠️ 현재 위치는 `raw/notes/archive/` (2026-09-23 확인, 이동 시점 미상) |
 

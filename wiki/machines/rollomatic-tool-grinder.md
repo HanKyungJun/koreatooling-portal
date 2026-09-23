@@ -7,13 +7,13 @@ model_lines: "GrindSmart, Nano6, LaserSmart"
 specialty: "0.03~2.0mm 마이크로 공구 + Hydrostatic 구조 + PCD/MCD/PCBN 레이저 가공"
 target_industries: ["의료", "PCB", "치과", "반도체"]
 status_in_factory: "비도입 — 비교 검토 대상"
-related_files: "raw/notes/CNC_공구연삭_브랜드_정리.xlsx (사용자 작성, 2026-05)"
+related_files: "raw/notes/archive/CNC_공구연삭_브랜드_정리.xlsx (사용자 작성, 2026-05)"
 tags: [Rollomatic, ToolGrinder, Nano6, Hydrostatic, LaserSmart, 스위스, 마이크로공구, 비교대상]
 sources:
   - "[VEN-ROLLOMATIC] Rollomatic SA 공식 — https://www.rollomatic.ch"
-  - "raw/notes/CNC_공구연삭_브랜드_정리.xlsx (사내 작성, 2026-05)"
+  - "raw/notes/archive/CNC_공구연삭_브랜드_정리.xlsx (사내 작성, 2026-05)"
   - "Nanogrind Technologies — Rollomatic 미국 대리점 자료"
-updated: 2026-09-11
+updated: 2026-09-23
 status: "1차 등재 — 사내 비도입 비교 대상. 공식 사이트 + 사내 정리 자료 기반"
 ---
 
@@ -23,7 +23,7 @@ status: "1차 등재 — 사내 비도입 비교 대상. 공식 사이트 + 사�
 >
 > **사내 도입 상태**: ❌ **비도입** — 비교 검토 대상. 사내 보유는 [[anca-cnc-tool-grinder]] (호주 ANCA).
 >
-> 원본: `raw/notes/CNC_공구연삭_브랜드_정리.xlsx` (사용자 작성, 2026-05)
+> 원본: `raw/notes/archive/CNC_공구연삭_브랜드_정리.xlsx` (사용자 작성, 2026-05)
 >
 > 공식 사이트: <https://www.rollomatic.ch>
 >
@@ -193,7 +193,7 @@ Rollomatic의 [[휠-5도-Ø125-1-2]] D4 평 End Face Gash 가공에 대한 적�
 ## 7. 참고 문헌
 
 1. **Rollomatic SA** — 공식 사이트. <https://www.rollomatic.ch>
-2. `raw/notes/CNC_공구연삭_브랜드_정리.xlsx` (사내 작성, 2026-05)
+2. `raw/notes/archive/CNC_공구연삭_브랜드_정리.xlsx` (사내 작성, 2026-05)
 3. **Nanogrind Technologies** — Rollomatic 미국 대리점, 제품 상세 자료. <https://www.nanogrind.com/product.php>
 4. MedicalExpo — *GrindSmart Nano6 PDF Catalog*. https://pdf.medicalexpo.com/pdf/rollomatic-sa/grindsmart-nano6/102955-211527.html
 

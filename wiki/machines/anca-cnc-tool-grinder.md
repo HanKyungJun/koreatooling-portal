@@ -15,7 +15,7 @@ sources:
   - "[VEN-ANCA-ESHARP-2025-02-TAKEDA]"
   - "[VEN-ANCA-RX7GX7-MANUAL]"
   - "[VEN-ANCA-TOOLROOM2016]"
-  - "raw/notes/CNC_공구연삭_브랜드_정리.xlsx (사내 작성, 2026-05)"
+  - "raw/notes/archive/CNC_공구연삭_브랜드_정리.xlsx (사내 작성, 2026-05)"
 updated: 2026-09-23
 ---
 
@@ -59,7 +59,7 @@ updated: 2026-09-23
 | **MicroX ULTRA** | 초미세 공구 특화 | PCB, 의료, 초소형 공구 |
 | **GX 시리즈** | 중형 범용 — RX7과 공용 플랫폼(스핀들 출력만 차등) | **재연마·공구 연삭** ← 사내 G 장비(GX7) [VEN-ANCA-RX7GX7-MANUAL] |
 
-> 사내 보유 시리즈: **FX 시리즈**(F 장비 FastGrind) + **GX 시리즈**(G 장비 GX7). 기존 기록은 사내 작성 엑셀(`raw/notes/CNC_공구연삭_브랜드_정리.xlsx`, 2026-05) 기준으로 FX만 기재돼 있었으나, GX7 매뉴얼 확인(2026-08-20)으로 **GX 시리즈 항목을 보완**함(기존 기재 삭제 없이 추가).
+> 사내 보유 시리즈: **FX 시리즈**(F 장비 FastGrind) + **GX 시리즈**(G 장비 GX7). 기존 기록은 사내 작성 엑셀(`raw/notes/archive/CNC_공구연삭_브랜드_정리.xlsx`, 2026-05) 기준으로 FX만 기재돼 있었으나, GX7 매뉴얼 확인(2026-08-20)으로 **GX 시리즈 항목을 보완**함(기존 기재 삭제 없이 추가).
 > FX 시리즈 상세: [[fx5-linear]] 참고. FX5 Linear 는 Simple Loader + LaserUltra 자동 보정으로 야간 무인 운전이 가능한 모델 [VEN-ANCA-ESHARP-2025-02-TAKEDA].
 
 ## 소프트웨어 및 자동화 생태계 ★★★
