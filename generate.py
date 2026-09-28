@@ -655,8 +655,83 @@ def build_supplies_html():
         protected=True)
 
 
+# ── 장비별 투입 목록 블록 (2026-09-28 신설 — erp/machine_queue.py) ─────────────
+def build_machine_queue_html(queue, max_rows=30):
+    """FG / GX7 두 칸. queue=None(ERP 실패)이면 빈 문자열 — 블록을 그리지 않는다."""
+    if not queue:
+        return ''
+    import html as _h
+    esc = lambda x: _h.escape(str(x))
+    names = {'FG': 'FG (FAST GRIND)', 'GX7': 'GX7'}
+    cards = ''
+    for m in ('FG', 'GX7'):
+        q = queue[m]
+        rows = ''
+        for it in q['items'][:max_rows]:
+            if it['bucket'] == 0:
+                tag = f'<span style="color:#e53935;font-weight:700">{esc(it["tag"])}</span>'
+            elif it['bucket'] == 1:
+                tag = f'<span style="color:#f57c00;font-weight:700">{esc(it["tag"])}</span>'
+            else:
+                tag = esc(it['tag'])
+            top = 'border-top:3px solid #1A3A6B;' if it['new_setup'] and it['seq'] > 1 else ''
+            edge = ' <span title="Ø8 경계 — FG·GX7 모두 가능" style="color:#8e24aa">◆</span>' if it['edge'] else ''
+            if it.get('partial'):
+                edge += (f' <span title="작업일지 기준 일부 가공됨 ({esc(it.get("wl_equip", ""))})" '
+                         f'style="font-size:0.72rem;background:#e3f2fd;color:#1565c0;border-radius:4px;padding:1px 5px;white-space:nowrap">'
+                         f'가공 {it["worked"]}/{it["worked"] + it["rest"]}</span>')
+            rows += (f'<tr style="{top}"><td style="text-align:right">{it["seq"]}</td>'
+                     f'<td style="white-space:nowrap">{tag}<br><span style="font-size:0.75rem;color:#888">{esc(it["dlv"][5:])}</span></td>'
+                     f'<td style="white-space:normal;max-width:110px;font-size:0.85rem">{esc(it["cust"])}</td>'
+                     f'<td style="white-space:normal;max-width:none">{esc(it["itm"])}{edge}</td>'
+                     f'<td style="text-align:right">{it["rest"]:,}</td></tr>')
+        if not rows:
+            rows = ('<tr><td colspan="5" style="text-align:center;color:#999;padding:14px">'
+                    '투입 대기 품목 없음</td></tr>')
+        more = (f'<div style="font-size:0.78rem;color:#888;margin-top:6px">외 {q["n"] - max_rows}품목 (납기 늦은 순서라 생략)</div>'
+                if q['n'] > max_rows else '')
+        cards += f'''
+    <div class="section-card" style="margin:0">
+      <div class="chart-title">{names[m]} <span style="font-size:0.8rem;color:#666;font-weight:400">
+        {q["n"]}품목 · {q["qty"]:,}개 · 셋업 {q["setups"]}회 · 지연 {q["late"]} · 임박 {q["near"]}</span></div>
+      <div style="overflow-x:auto">
+        <table class="form-table">
+          <thead><tr><th>순서</th><th>납기</th><th>거래처</th><th>품목</th><th style="text-align:right">잔량</th></tr></thead>
+          <tbody>{rows}</tbody>
+        </table>
+      </div>{more}
+    </div>'''
+    etc = queue['etc']; ex = queue['excluded']
+    wlq = queue.get('worklog') or {}
+    st = wlq.get('stats')
+    if st:
+        wl_txt = (f'작업일지 반영: 특이사항 코드 {st["codes"]}개 중 오더 매칭 {st["matched"]}'
+                  f'(모호 {st["ambiguous"]} — 남은 잔량으로 가린 것 {st.get("amb_resolved", 0)}) · 미매칭 {st["unmatched"]} · '
+                  f'가공 끝나 목록에서 뺀 품목 {wlq.get("ground_items", 0)}개({wlq.get("ground_qty", 0):,}개, 출하 전 · '
+                  f'그중 잔량 10% 미만 꼬리 {wlq.get("tail_items", 0)}개 — 연마불가 추정)')
+    else:
+        wl_txt = '⚠️ 작업일지 미반영(읽기 실패) — 수주·출하 기준으로만 계산'
+
+    etc_txt = (f'기타(장비 배정 제외) {etc["n"]}품목 · {etc["qty"]:,}개 ({esc(", ".join(etc["names"]))})'
+               if etc['n'] else '기타(장비 배정 제외) 없음')
+    return f'''
+  <div class="section-title-row">
+    <span class="section-title">장비별 투입 목록</span>
+    <span class="section-date">ERP 수주 품목 − 작업일지 가공분 · {queue['since']} 이후 · 참고용(현장 판단 우선)</span>
+  </div>
+  <div style="font-size:0.8rem;color:#666;margin:-4px 0 10px">
+    배정: 드릴·HSS·라핑·Ø8 초과 → GX7 / Ø8 이하 → FG (2025~2026 작업일지 실측) ·
+    순서: 지연 → 임박(D-3) → 납기일별, 같은 구간 안에서는 형상·직경이 같은 품목끼리 묶음(굵은 선 = 셋업 전환) ·
+    ◆ = Ø8 경계 · 출하 보류 {ex['hold']}건·자투리 {ex['minor']}건 제외 · {etc_txt}<br>
+    잔량 = 수주량 − max(작업일지 가공 수량, 출하 수량) · {wl_txt}
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(460px,1fr));gap:16px;margin-bottom:20px">{cards}
+  </div>
+'''
+
+
 # ── 현황판 ─────────────────────────────────────────────────────────────────────
-def build_dashboard_html(shippings, daily, worklog_date, generated_at, todo=None):
+def build_dashboard_html(shippings, daily, worklog_date, generated_at, todo=None, queue=None):
     shipping_js = ',\n'.join(
         f'  [{y}, {json.dumps(d, ensure_ascii=False)}]' for y, d in shippings
     )
@@ -740,6 +815,8 @@ def build_dashboard_html(shippings, daily, worklog_date, generated_at, todo=None
     else:
         todo_html = ''
 
+    queue_html = build_machine_queue_html(queue)
+
     return f"""<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -766,6 +843,7 @@ def build_dashboard_html(shippings, daily, worklog_date, generated_at, todo=None
 
 <main>
 {todo_html}
+{queue_html}
   <div class="section-title-row">
     <span class="section-title">오늘 실적</span>
     <span class="section-date">📅 {worklog_date}</span>
@@ -1416,6 +1494,24 @@ if __name__ == '__main__':
     else:
         _log(f'  → 생략 (블록 미표시) ({time.time()-_t:.1f}s)')
 
+    # 2-C) 장비별 투입 목록 (2026-09-28 신설) — 사내 현황판 전용, 실패해도 블록만 빠진다
+    _t = time.time()
+    _log('장비별 투입 목록 생성 중...')
+    try:
+        sys.path.insert(0, os.path.join(BASE_DIR, 'erp'))
+        from machine_queue import fetch_machine_queue
+        queue = fetch_machine_queue(load_hold_orders(), log=_log)
+    except Exception as e:
+        _log(f'  ⚠️ 장비별 투입 목록 모듈 오류 — 생략: {type(e).__name__}: {e}')
+        queue = None
+    if queue:
+        _log(f'  → FG {queue["FG"]["n"]}품목/{queue["FG"]["qty"]:,}개 (셋업 {queue["FG"]["setups"]}회) · '
+             f'GX7 {queue["GX7"]["n"]}품목/{queue["GX7"]["qty"]:,}개 (셋업 {queue["GX7"]["setups"]}회) · '
+             f'기타 {queue["etc"]["n"]}품목 · 작업일지 {(queue.get("worklog") or {}).get("stats")} '
+             f'가공완료 제외 {(queue.get("worklog") or {}).get("ground_items", 0)}품목 ({time.time()-_t:.1f}s)')
+    else:
+        _log(f'  → 생략 (블록 미표시) ({time.time()-_t:.1f}s)')
+
     worklog_date = daily['date'] if daily else '-'
     generated_at = datetime.now().strftime('%Y-%m-%d %H:%M')
 
@@ -1437,7 +1533,7 @@ if __name__ == '__main__':
         'request.html':   public_pages['request.html'],
         'defect.html':    public_pages['defect.html'],
         'inquiry.html':   public_pages['inquiry.html'],
-        'dashboard.html': build_dashboard_html(shippings, daily, worklog_date, generated_at, todo),
+        'dashboard.html': build_dashboard_html(shippings, daily, worklog_date, generated_at, todo, queue),
     }
     pages = public_pages   # 이하 공개 배포 경로는 기존 로직 그대로
     _log(f'페이지 생성 완료 — 공개 {len(public_pages)}개 / 사내 {len(internal_pages)}개 '
