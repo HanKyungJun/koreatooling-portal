@@ -163,7 +163,11 @@ def apply_worklog(d, wl):
     for r in wl:
         if not r['codes']:
             st['nocode'] += 1
-            _issue(r, '번호 없음', why='특이사항에 4자리 오더번호가 없다')
+            # 2026-09-29: 「재가공」은 사내 재작업이라 오더가 없는 게 정상 — 확인 대상에서 뺀다(목록 맨 끝에 참고로만)
+            if '재가공' in str(r['note']):
+                _issue(r, '재가공', why='사내 재가공 — 오더번호 없음이 정상')
+            else:
+                _issue(r, '번호 없음', why='특이사항에 4자리 오더번호가 없다')
             continue
         left = r['qty']
         cands_all = []
@@ -198,8 +202,10 @@ def apply_worklog(d, wl):
                 if live and len(live) < len(orders):
                     st['amb_resolved'] = st.get('amb_resolved', 0) + 1
                 pool = live or list(orders)
-                _issue(r, '모호', c, f'같은 끝 4자리 오더 {len(orders)}건: ' + ', '.join(sorted(orders)))
                 latest = max(pool, key=lambda o: sdt[cand.index[cand['so_no'].astype(str) == o][0]])
+                # 2026-09-29: 잔량 남은 오더가 1건뿐이면 사실상 확정 → 「자동 확정」, 둘 이상이면 「모호」(사람 확인)
+                _kind = '자동 확정' if len(live) == 1 else '모호'
+                _issue(r, _kind, c, f'같은 끝 4자리 오더 {len(orders)}건: ' + ', '.join(sorted(orders)) + f' → {latest} 로 배정')
                 cand = cand[cand['so_no'].astype(str) == latest]
             st['matched'] += 1
             cands_all.append(cand)
@@ -373,8 +379,8 @@ def fetch_machine_queue(holds=None, lookback_days=120, log=print):
         q = build_queue(df, holds, worklog=wl, fg_cap=cap)
         q['since'] = fr
         try:
-            n = write_unmatched_report(((q.get('worklog') or {}).get('stats') or {}).get('issues', []))
-            log(f'  → 작업일지 확인 필요 {n}줄 → erp/worklog_unmatched.txt')
+            n1, n2, n3 = write_unmatched_report(((q.get('worklog') or {}).get('stats') or {}).get('issues', []))
+            log(f'  → 작업일지 확인 필요: 최근 14일 {n1}줄 · 그 이전 {n2}줄 (참고 {n3}줄) → erp/worklog_unmatched.txt')
         except Exception as e:
             log(f'  ⚠️ 작업일지 확인 목록 저장 실패(목록 생성은 계속): {type(e).__name__}: {e}')
         return q
@@ -394,10 +400,13 @@ def write_unmatched_report(issues, path=None, recent_days=14, today=None):
     from datetime import datetime
     path = path or UNMATCHED_PATH or os.path.join(os.path.dirname(os.path.abspath(__file__)), 'worklog_unmatched.txt')
     today = today or date.today()
-    order = {'번호 없음': 0, '매칭 실패': 1, '모호': 2}
+    order = {'번호 없음': 0, '매칭 실패': 1, '모호': 2, '자동 확정': 3, '재가공': 4}
     iss = sorted(issues, key=lambda x: (-x['date'].toordinal(), order.get(x['kind'], 9), x['equip']))
-    recent = [x for x in iss if (today - x['date']).days <= recent_days]
-    older = [x for x in iss if (today - x['date']).days > recent_days]
+    ACT = ('번호 없음', '매칭 실패', '모호')          # 사람이 볼 것
+    act = [x for x in iss if x['kind'] in ACT]
+    info = [x for x in iss if x['kind'] not in ACT]   # 자동 확정·재가공 — 참고
+    recent = [x for x in act if (today - x['date']).days <= recent_days]
+    older = [x for x in act if (today - x['date']).days > recent_days]
     cnt = lambda L, k: sum(1 for x in L if x['kind'] == k)
     def fmt(x):
         dia = f"Ø{x['dia']:g}" if x['dia'] is not None else 'Ø?'
@@ -412,15 +421,18 @@ def write_unmatched_report(issues, path=None, recent_days=14, today=None):
     L = [f"작업일지 확인 필요 목록 — 생성 {_now:%Y-%m-%d %H:%M} KST",
          "이 줄들은 ERP 오더와 못 맞춰서 「장비별 투입 목록」에서 수량이 빠지지 않는다.",
          "고치는 법: 월간생산일지 해당 행 특이사항에 오더번호 끝 4자리를 적거나 오타를 바로잡는다 → 다음 자동 실행에 반영",
-         "※ 「모호」는 가장 최근·잔량 남은 오더로 자동 배정했다 — 틀렸을 때만 특이사항에 전체 번호를 적는다",
+         "※ 「모호」 = 끝 4자리가 같은 오더가 여럿이고 둘 이상에 잔량이 남아 있음 → 가장 최근 오더로 배정했다. 틀렸으면 특이사항에 전체 10자리를 적는다",
+         "※ 「자동 확정」(잔량 남은 오더가 1건뿐)·「재가공」(사내 재작업)은 확인할 필요 없음 — 맨 아래 참고 절에만 둔다",
          "",
          f"■ 최근 {recent_days}일 — {len(recent)}줄 (번호 없음 {cnt(recent, '번호 없음')} · 매칭 실패 {cnt(recent, '매칭 실패')} · 모호 {cnt(recent, '모호')})"]
     L += [fmt(x) for x in recent] or ['(없음)']
     L += ["", f"■ 그 이전 — {len(older)}줄 (번호 없음 {cnt(older, '번호 없음')} · 매칭 실패 {cnt(older, '매칭 실패')} · 모호 {cnt(older, '모호')}) — 대부분 이미 출하돼 영향 적음"]
     L += [fmt(x) for x in older] or ['(없음)']
+    L += ["", f"■ 참고 — 확인 불필요 {len(info)}줄 (자동 확정 {cnt(info, '자동 확정')} · 재가공 {cnt(info, '재가공')})"]
+    L += [fmt(x) for x in info] or ['(없음)']
     with open(path, 'w', encoding='utf-8') as f:
         f.write('\n'.join(L) + '\n')
-    return len(iss)
+    return len(recent), len(older), len(info)
 
 
 # ── GX7 품목의 FG 실적 표시 (2026-09-29 신설, 한경준님 확정) ──────────────────────

@@ -1558,7 +1558,7 @@ if __name__ == '__main__':
     if queue:
         _log(f'  → FG {queue["FG"]["n"]}품목/{queue["FG"]["qty"]:,}개 (셋업 {queue["FG"]["setups"]}회) · '
              f'GX7 {queue["GX7"]["n"]}품목/{queue["GX7"]["qty"]:,}개 (셋업 {queue["GX7"]["setups"]}회) · '
-             f'기타 {queue["etc"]["n"]}품목 · 작업일지 {(queue.get("worklog") or {}).get("stats")} '
+             f'기타 {queue["etc"]["n"]}품목 · 작업일지 { {k: v for k, v in ((queue.get("worklog") or {}).get("stats") or {}).items() if k != "issues"} } '
              f'가공완료 제외 {(queue.get("worklog") or {}).get("ground_items", 0)}품목 ({time.time()-_t:.1f}s)')
     else:
         _log(f'  → 생략 (블록 미표시) ({time.time()-_t:.1f}s)')
