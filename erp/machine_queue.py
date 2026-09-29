@@ -131,9 +131,15 @@ def load_worklog(since, today=None, base_dir=None):
             if d < since or d > today:
                 continue
             m = re.match(r'^\s*([\d.]+)', str(j[7]))
+            try:
+                _ct = float(j[14] or 0)
+            except (TypeError, ValueError):
+                _ct = 0.0
             rows.append(dict(date=d, equip=j[3], shape=j[5], skey=shape_key(j[5]),
                              dia=float(m.group(1)) if m else None, qty=int(j[13]),
-                             codes=re.findall(r'(?<!\d)(\d{4})(?!\d)', str(j[10])), note=str(j[10])))
+                             codes=re.findall(r'(?<!\d)(\d{4})(?!\d)', str(j[10])), note=str(j[10]),
+                             blade=int(str(j[6]).strip()) if str(j[6]).strip().isdigit() else None,  # 2026-09-29
+                             ct=_ct))
     return rows
 
 
@@ -212,7 +218,7 @@ def apply_worklog(d, wl):
     return worked, equip, st
 
 
-def build_queue(df, holds=None, today=None, near_days=3, worklog=None, holidays=None):
+def build_queue(df, holds=None, today=None, near_days=3, worklog=None, holidays=None, fg_cap=None):
     """상세 DataFrame → 장비별 정렬 목록 dict. 순수 함수(ERP 호출 없음) — 테스트 가능."""
     import pandas as pd
     holds = holds or {}
@@ -272,6 +278,7 @@ def build_queue(df, holds=None, today=None, near_days=3, worklog=None, holidays=
             worked=int(r['worked']), partial=bool(r['worked'] > 0),
             wl_equip='/'.join(sorted(wl_equip.get(_, set()))),
             setup=(p['shape'], p['dia']) if p else None,
+            fg_hint=fg_hint_for(p, fg_cap) if mach == GX7 else None,
         ))
 
     out = {}
@@ -295,7 +302,10 @@ def build_queue(df, holds=None, today=None, near_days=3, worklog=None, holidays=
         out[mach] = dict(items=lst, n=len(lst), qty=sum(x['rest'] for x in lst),
                          late=sum(1 for x in lst if x['bucket'] == 0),
                          near=sum(1 for x in lst if x['bucket'] == 1),
-                         setups=setups, edge=sum(1 for x in lst if x['edge']))
+                         setups=setups, edge=sum(1 for x in lst if x['edge']),
+                         fg_ok=sum(1 for x in lst if (x.get('fg_hint') or {}).get('grade') == 'ok'),
+                         fg_ok_qty=sum(x['rest'] for x in lst if (x.get('fg_hint') or {}).get('grade') == 'ok'),
+                         fg_cond=sum(1 for x in lst if (x.get('fg_hint') or {}).get('grade') == 'cond'))
     out['etc'] = dict(n=len(items[ETC]), qty=sum(x['rest'] for x in items[ETC]),
                       names=sorted({x['itm'].split('/')[0] for x in items[ETC]}))
     out['excluded'] = dict(hold=int(ex_hold['so_no'].nunique()), minor=int(ex_minor['so_no'].nunique()))
@@ -345,14 +355,22 @@ def fetch_machine_queue(holds=None, lookback_days=120, log=print):
         log(f'  → 납기 = 수주 머리 기준 (품목 납기와 달라 바꾼 행 {int((_o != _n).sum())}개)')
     except Exception as e:
         log(f'  ⚠️ 수주 머리 납기 조회 실패 — 품목 납기로 진행: {type(e).__name__}: {str(e)[:80]}')
-    wl = None
+    wl, cap = None, None
     try:
         from datetime import datetime as _dt
-        wl = load_worklog(_dt.strptime(fr, '%Y-%m-%d').date())
+        _fr = _dt.strptime(fr, '%Y-%m-%d').date()
+        # 2026-09-29: 전년 1월부터 읽어 FG 실적표를 만들고, 가공분 차감에는 조회 기간(fr 이후)만 쓴다
+        wl_all = load_worklog(min(_fr, date(date.today().year - 1, 1, 1)))
+        wl = [r for r in wl_all if r['date'] >= _fr]
+        try:
+            cap = build_fg_capability(wl_all)
+            log(f"  → FG 실적표: Ø8 초과 조합 {len(cap)}개 (🟢 {sum(1 for v in cap.values() if v['grade'] == 'ok')} · 🟡 {sum(1 for v in cap.values() if v['grade'] == 'cond')})")
+        except Exception as e:
+            log(f'  ⚠️ FG 실적표 생성 실패 — 표시 없이 진행: {type(e).__name__}: {e}')
     except Exception as e:
         log(f'  ⚠️ 장비별 투입 목록 — 작업일지 읽기 실패, 가공분 차감 없이 진행: {type(e).__name__}: {e}')
     try:
-        q = build_queue(df, holds, worklog=wl)
+        q = build_queue(df, holds, worklog=wl, fg_cap=cap)
         q['since'] = fr
         try:
             n = write_unmatched_report(((q.get('worklog') or {}).get('stats') or {}).get('issues', []))
@@ -403,3 +421,63 @@ def write_unmatched_report(issues, path=None, recent_days=14, today=None):
     with open(path, 'w', encoding='utf-8') as f:
         f.write('\n'.join(L) + '\n')
     return len(iss)
+
+
+# ── GX7 품목의 FG 실적 표시 (2026-09-29 신설, 한경준님 확정) ──────────────────────
+#   목적: GX7 로더 사용 금지 중 GX7 대기(449개)가 FG(320개)보다 많다 → FG 에서 깎아 본 실적이 있는 GX7 품목을 표시
+#   근거: 2025~2026 작업일지 실측 [실측 검증]. 「FG 로 옮겨라」가 아니라 「FG 실적이 있다」는 참고 표시 — 투입은 현장 판단
+#   키: (형상 shape_key, 날수, 직경). 작업일지 형상에 라핑·HSS·NC 가 들어간 줄은 제외(배정 규칙상 원래 GX7 계열)
+#   판정: FG 실적 ≥ FG_MIN_QTY 개 이고 FG/GX7 평균 가공시간 비 ≤ 1.5 → ok(🟢) / ≤ 2.0 → cond(🟡) / 그 외 표시 없음
+#   2026-09-29 시험 집계: 🟢 평4Ø10(286개·1.44) 코너4Ø10(96·1.19) 코너4Ø12(50·1.31) 코너2Ø10(22·1.03) · 🟡 평4Ø12(26·1.73)
+#   🔴 볼2Ø10·Ø12 는 FG 가공시간 2.2배라 표시 안 됨
+FG_MIN_QTY = 20
+FG_RATIO_OK, FG_RATIO_COND = 1.5, 2.0
+
+
+def build_fg_capability(wl):
+    agg = {}
+    for r in wl:
+        raw = str(r.get('shape') or '').lower()
+        if '라핑' in raw or 'hss' in raw or 'nc' in raw:
+            continue
+        if not r.get('skey') or r.get('blade') is None or r.get('dia') is None or r['dia'] <= 8 or r['qty'] <= 0:
+            continue
+        a = agg.setdefault((r['skey'], r['blade'], r['dia']),
+                           {'FG': [0, 0.0, 0, set()], 'GX7': [0, 0.0, 0, set()]})
+        e = a.get(r['equip'])
+        if e is None:
+            continue
+        e[0] += r['qty']
+        e[3].add(r['date'])
+        if r.get('ct', 0) > 1:
+            e[1] += r['ct'] * r['qty']
+            e[2] += r['qty']
+    cap = {}
+    for k, a in agg.items():
+        fg, gx = a['FG'], a['GX7']
+        if fg[0] <= 0:
+            continue
+        cf = fg[1] / fg[2] if fg[2] else None
+        cg = gx[1] / gx[2] if gx[2] else None
+        ratio = (cf / cg) if (cf and cg) else None
+        if fg[0] >= FG_MIN_QTY and ratio is not None and ratio <= FG_RATIO_OK:
+            grade = 'ok'
+        elif fg[0] >= FG_MIN_QTY and ratio is not None and ratio <= FG_RATIO_COND:
+            grade = 'cond'
+        else:
+            grade = None
+        cap[k] = dict(grade=grade, fg_qty=fg[0], fg_days=len(fg[3]), ratio=ratio,
+                      ct_fg=round(cf) if cf else None, ct_gx=round(cg) if cg else None)
+    return cap
+
+
+def fg_hint_for(p, cap):
+    """GX7 배정 품목 p(parse_item 결과)의 FG 실적 판정. 직경 규칙(Ø8 초과)으로만 GX7 에 간 품목에만 붙인다."""
+    if not cap or not p:
+        return None
+    if p['shape'] == '드릴' or p['mat'] == 'HSS' or '라핑' in p['shape'] or p['dia'] <= 8:
+        return None
+    v = cap.get((shape_key(p['shape']), p['blade'], p['dia']))
+    if not v or not v['grade']:
+        return None
+    return v

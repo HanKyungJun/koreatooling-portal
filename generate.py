@@ -676,6 +676,14 @@ def build_machine_queue_html(queue, max_rows=30):
                 tag = esc(it['tag'])
             top = 'border-top:3px solid #1A3A6B;' if it['new_setup'] and it['seq'] > 1 else ''
             edge = ' <span title="Ø8 경계 — FG·GX7 모두 가능" style="color:#8e24aa">◆</span>' if it['edge'] else ''
+            fh = it.get('fg_hint')   # 2026-09-29 — GX7 품목의 FG 실적 표시 (참고용)
+            if fh and fh.get('grade') in ('ok', 'cond'):
+                _ok = fh['grade'] == 'ok'
+                _r = f"{fh['ratio']:.2f}배" if fh.get('ratio') else '-'
+                edge += (f' <span title="FG 실적 {fh["fg_qty"]}개/{fh["fg_days"]}일 · 가공시간 FG {fh.get("ct_fg")}s / GX7 {fh.get("ct_gx")}s = {_r} (2025~ 작업일지 실측, 참고용 — 투입은 현장 판단)" '
+                         f'style="font-size:0.72rem;border-radius:4px;padding:1px 5px;white-space:nowrap;'
+                         + ('background:#e8f5e9;color:#2e7d32' if _ok else 'background:#fff8e1;color:#b26a00')
+                         + f'">{"🟢 FG 실적" if _ok else "🟡 FG 조건부"} {_r}</span>')
             if it.get('partial'):
                 edge += (f' <span title="작업일지 기준 일부 가공됨 ({esc(it.get("wl_equip", ""))})" '
                          f'style="font-size:0.72rem;background:#e3f2fd;color:#1565c0;border-radius:4px;padding:1px 5px;white-space:nowrap">'
@@ -693,7 +701,7 @@ def build_machine_queue_html(queue, max_rows=30):
         cards += f'''
     <div class="section-card" style="margin:0">
       <div class="chart-title">{names[m]} <span style="font-size:0.8rem;color:#666;font-weight:400">
-        {q["n"]}품목 · {q["qty"]:,}개 · 셋업 {q["setups"]}회 · 지연 {q["late"]} · 임박 {q["near"]}</span></div>
+        {q["n"]}품목 · {q["qty"]:,}개 · 셋업 {q["setups"]}회 · 지연 {q["late"]} · 임박 {q["near"]}{(f' · <span style="color:#2e7d32">🟢 FG 실적 {q.get("fg_ok", 0)}품목/{q.get("fg_ok_qty", 0):,}개</span>' + (f' · 🟡 {q["fg_cond"]}' if q.get("fg_cond") else '')) if m == 'GX7' and (q.get('fg_ok') or q.get('fg_cond')) else ''}</span></div>
       <div style="overflow-x:auto">
         <table class="form-table">
           <thead><tr><th>순서</th><th>납기</th><th>거래처</th><th>품목</th><th style="text-align:right">잔량</th></tr></thead>
@@ -722,7 +730,7 @@ def build_machine_queue_html(queue, max_rows=30):
   <div style="font-size:0.8rem;color:#666;margin:-4px 0 10px">
     배정: 드릴·HSS·라핑·Ø8 초과 → GX7 / Ø8 이하 → FG (2025~2026 작업일지 실측) ·
     순서: 지연(영업일 — 주말·휴무일 제외) → 임박(D-3) → 납기일별, 같은 구간 안에서는 형상·직경이 같은 품목끼리 묶음(굵은 선 = 셋업 전환) ·
-    ◆ = Ø8 경계 · 출하 보류 {ex['hold']}건·자투리 {ex['minor']}건 제외 · {etc_txt}<br>
+    ◆ = Ø8 경계 · 🟢 FG 실적 / 🟡 FG 조건부 = GX7 품목 중 FG 에서 깎아 본 실적이 있는 것(가공시간 FG/GX7 비 ≤1.5 / ≤2.0, 참고용) · 출하 보류 {ex['hold']}건·자투리 {ex['minor']}건 제외 · {etc_txt}<br>
     잔량 = 수주량 − max(작업일지 가공 수량, 출하 수량) · {wl_txt}
   </div>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(460px,1fr));gap:16px;margin-bottom:20px">{cards}
