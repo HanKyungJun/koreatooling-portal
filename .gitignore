@@ -208,3 +208,7 @@ scripts/anca-monitor/*.bak_*
 /wiki/reports/07_KPI/2026년_2분기_판매수량비교_영업팀출하현황기준.docx
 /회의록/260617_회의록.docx
 /scripts/ANCA_중고_시장_보고서_20260623.docx
+
+# 2026-09-29: ERP 점검 스크립트 결과 — 거래처명 포함, 공개 저장소에 올리지 않는다
+erp/probe_*_result.txt
+erp/worklog_unmatched.txt

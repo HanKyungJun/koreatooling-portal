@@ -34,6 +34,38 @@ from datetime import date, timedelta
 FG, GX7, ETC = 'FG', 'GX7', '기타'
 
 
+# ── 지연 일수 = 영업일 기준 (2026-09-29, 한경준님 확정) ─────────────────────
+#   영업일 = 월~금 중 wiki/_handoff/holidays.md 에 없는 날.
+#   토·일 제외 근거: 2025~2026 작업일지 작업 행 4,376건이 전부 월~금 [실측 검증 2026-09-29].
+#   holidays.md 는 휴무일 단일 소스 — 법정공휴일(§1)·사내 휴무·개인 연차(§2) 날짜를 전부 읽는다.
+#   파일을 못 읽으면 주말만 빼고 계산한다(목록 생성은 멈추지 않는다).
+def load_holidays(base_dir=None):
+    import os
+    base_dir = base_dir or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    p = os.path.join(base_dir, 'wiki', '_handoff', 'holidays.md')
+    out = set()
+    try:
+        with open(p, encoding='utf-8') as f:
+            for line in f:
+                m = re.match(r'^\|\s*(\d{4})-(\d{2})-(\d{2})\s*\|', line)
+                if m:
+                    out.add(date(int(m.group(1)), int(m.group(2)), int(m.group(3))))
+    except OSError:
+        pass
+    return out
+
+
+def biz_days_late(dl, today, holidays=()):
+    """납기(dl) 다음 날부터 오늘까지 영업일 수. 예) 납기 09-24(목), 오늘 09-29(화)
+    → 09-25 추석·09-26 토·09-27 일 제외 → 09-28·09-29 = 2일"""
+    n, d = 0, dl + timedelta(days=1)
+    while d <= today:
+        if d.weekday() < 5 and d not in holidays:
+            n += 1
+        d += timedelta(days=1)
+    return n
+
+
 def parse_item(nm):
     """품목명 6필드 파싱. 규격 밖이면 None."""
     p = [x.strip() for x in str(nm or '').split('/')]
@@ -116,9 +148,16 @@ def apply_worklog(d, wl):
     worked = pd.Series(0, index=d.index, dtype=float)
     equip = {}
     st = dict(rows=len(wl), codes=0, matched=0, ambiguous=0, amb_resolved=0, unmatched=0, nocode=0)
+    # 2026-09-29: 못 맞춘 줄을 사람이 확인할 수 있게 남긴다 (한경준님 확정) — write_unmatched_report()
+    st['issues'] = []
+    so4_set = set(so4)
+    def _issue(r, kind, code='', why=''):
+        st['issues'].append(dict(date=r['date'], equip=r['equip'], shape=r['shape'], dia=r['dia'],
+                                 qty=r['qty'], code=code, note=r['note'], kind=kind, why=why))
     for r in wl:
         if not r['codes']:
             st['nocode'] += 1
+            _issue(r, '번호 없음', why='특이사항에 4자리 오더번호가 없다')
             continue
         left = r['qty']
         cands_all = []
@@ -135,6 +174,11 @@ def apply_worklog(d, wl):
                     cand = same
             if len(cand) == 0:
                 st['unmatched'] += 1
+                if c not in so4_set:
+                    _why = '이 끝 4자리 오더가 조회 기간(120일) 수주에 없다 — 오타·기간 밖 의심'
+                else:
+                    _why = '끝 4자리 오더는 있으나 직경이 다르거나 수주일이 작업일보다 늦다'
+                _issue(r, '매칭 실패', c, _why)
                 continue
             orders = cand['so_no'].astype(str).unique()
             if len(orders) > 1:
@@ -148,6 +192,7 @@ def apply_worklog(d, wl):
                 if live and len(live) < len(orders):
                     st['amb_resolved'] = st.get('amb_resolved', 0) + 1
                 pool = live or list(orders)
+                _issue(r, '모호', c, f'같은 끝 4자리 오더 {len(orders)}건: ' + ', '.join(sorted(orders)))
                 latest = max(pool, key=lambda o: sdt[cand.index[cand['so_no'].astype(str) == o][0]])
                 cand = cand[cand['so_no'].astype(str) == latest]
             st['matched'] += 1
@@ -167,12 +212,13 @@ def apply_worklog(d, wl):
     return worked, equip, st
 
 
-def build_queue(df, holds=None, today=None, near_days=3, worklog=None):
+def build_queue(df, holds=None, today=None, near_days=3, worklog=None, holidays=None):
     """상세 DataFrame → 장비별 정렬 목록 dict. 순수 함수(ERP 호출 없음) — 테스트 가능."""
     import pandas as pd
     holds = holds or {}
     today = today or date.today()
     dn = today + timedelta(days=near_days)
+    hol = load_holidays() if holidays is None else set(holidays)
 
     d = df.copy()
     d['so_q'] = pd.to_numeric(d['so_qty'], errors='coerce').fillna(0)
@@ -209,7 +255,9 @@ def build_queue(df, holds=None, today=None, near_days=3, worklog=None):
         if dl is None or pd.isna(dl):
             bucket, bkey, tag = 3, (9, date.max.toordinal()), '납기없음'
         elif dl < today:
-            bucket, bkey, tag = 0, (0, 0), f'지연 {(today - dl).days}일'
+            # 2026-09-29: 달력일 → 영업일. 원래 식 f'지연 {(today - dl).days}일' 은 이 주석으로 남긴다
+            _bd = biz_days_late(dl, today, hol)
+            bucket, bkey, tag = 0, (0, 0), (f'지연 {_bd}일' if _bd else '지연(휴무 중)')
         elif dl <= dn:
             bucket, bkey, tag = 1, (1, 0), ('오늘' if dl == today else f'D-{(dl - today).days}')
         else:
@@ -258,6 +306,11 @@ def build_queue(df, holds=None, today=None, near_days=3, worklog=None):
     return out
 
 
+def pd_to_date(sr):
+    import pandas as pd
+    return pd.to_datetime(sr, errors='coerce', utc=True).dt.tz_convert('Asia/Seoul').dt.date
+
+
 def fetch_machine_queue(holds=None, lookback_days=120, log=print):
     """ERP 조회 + build_queue. 실패하면 None (현황판 나머지는 그대로 진행)."""
     try:
@@ -277,6 +330,21 @@ def fetch_machine_queue(holds=None, lookback_days=120, log=print):
     if len(df) == 0:
         log('  ⚠️ 장비별 투입 목록 — 상세 0행, 생략')
         return None
+    # 2026-09-29: 납기는 수주 머리(chk_detail=0) 값을 쓴다 — 「오늘 할 일」과 같은 기준
+    #   근거: erp/probe_dlv_mismatch.py 실행(2026-09-29 10:29 KST) — 수주 276건 중 9건이 머리≠품목 납기였고,
+    #   9건 모두 품목 납기 = 수주일(오더번호 앞 6자리)이었다. 품목 줄 납기가 수주일 기본값으로 남은 것으로 보인다 [추정값].
+    #   머리 조회가 실패하면 품목 납기로 계속한다(목록 생성은 멈추지 않는다).
+    try:
+        h = TricoClient().수주(fr_dt=fr)
+        hd = h.drop_duplicates('so_no').assign(so_no=lambda x: x['so_no'].astype(str)).set_index('so_no')['dlv_dt']
+        df = df.copy()
+        df['so_no'] = df['so_no'].astype(str)
+        old = df['dlv_dt'].copy()
+        df['dlv_dt'] = df['so_no'].map(hd).fillna(df['dlv_dt'])
+        _o = pd_to_date(old); _n = pd_to_date(df['dlv_dt'])
+        log(f'  → 납기 = 수주 머리 기준 (품목 납기와 달라 바꾼 행 {int((_o != _n).sum())}개)')
+    except Exception as e:
+        log(f'  ⚠️ 수주 머리 납기 조회 실패 — 품목 납기로 진행: {type(e).__name__}: {str(e)[:80]}')
     wl = None
     try:
         from datetime import datetime as _dt
@@ -286,7 +354,52 @@ def fetch_machine_queue(holds=None, lookback_days=120, log=print):
     try:
         q = build_queue(df, holds, worklog=wl)
         q['since'] = fr
+        try:
+            n = write_unmatched_report(((q.get('worklog') or {}).get('stats') or {}).get('issues', []))
+            log(f'  → 작업일지 확인 필요 {n}줄 → erp/worklog_unmatched.txt')
+        except Exception as e:
+            log(f'  ⚠️ 작업일지 확인 목록 저장 실패(목록 생성은 계속): {type(e).__name__}: {e}')
         return q
     except Exception as e:
         log(f'  ⚠️ 장비별 투입 목록 집계 실패: {type(e).__name__}: {e}')
         return None
+
+
+# ── 작업일지 확인 필요 목록 (2026-09-29 신설) ──────────────────────────────────
+#   오더와 못 맞춘 작업일지 줄 = 목록에서 수량이 안 빠지는 줄. 현장에서 특이사항을 고치면 다음 실행에 반영된다.
+#   파일은 매 실행마다 덮어쓴다(최신 1개). 거래처명·단가는 없지만 사내 기록이라 .gitignore 등재.
+UNMATCHED_PATH = None
+
+
+def write_unmatched_report(issues, path=None, recent_days=14, today=None):
+    import os
+    from datetime import datetime
+    path = path or UNMATCHED_PATH or os.path.join(os.path.dirname(os.path.abspath(__file__)), 'worklog_unmatched.txt')
+    today = today or date.today()
+    order = {'번호 없음': 0, '매칭 실패': 1, '모호': 2}
+    iss = sorted(issues, key=lambda x: (-x['date'].toordinal(), order.get(x['kind'], 9), x['equip']))
+    recent = [x for x in iss if (today - x['date']).days <= recent_days]
+    older = [x for x in iss if (today - x['date']).days > recent_days]
+    cnt = lambda L, k: sum(1 for x in L if x['kind'] == k)
+    def fmt(x):
+        dia = f"Ø{x['dia']:g}" if x['dia'] is not None else 'Ø?'
+        code = x['code'] or '(없음)'
+        return (f"{x['date']} | {x['equip']:<3} | {str(x['shape'])[:8]:<8} {dia:<6} {x['qty']:>3}개 | "
+                f"{x['kind']} | 번호 {code} | 특이사항 「{str(x['note'])[:30]}」 | {x['why']}")
+    try:
+        from zoneinfo import ZoneInfo
+        _now = datetime.now(ZoneInfo('Asia/Seoul'))
+    except Exception:
+        _now = datetime.now()
+    L = [f"작업일지 확인 필요 목록 — 생성 {_now:%Y-%m-%d %H:%M} KST",
+         "이 줄들은 ERP 오더와 못 맞춰서 「장비별 투입 목록」에서 수량이 빠지지 않는다.",
+         "고치는 법: 월간생산일지 해당 행 특이사항에 오더번호 끝 4자리를 적거나 오타를 바로잡는다 → 다음 자동 실행에 반영",
+         "※ 「모호」는 가장 최근·잔량 남은 오더로 자동 배정했다 — 틀렸을 때만 특이사항에 전체 번호를 적는다",
+         "",
+         f"■ 최근 {recent_days}일 — {len(recent)}줄 (번호 없음 {cnt(recent, '번호 없음')} · 매칭 실패 {cnt(recent, '매칭 실패')} · 모호 {cnt(recent, '모호')})"]
+    L += [fmt(x) for x in recent] or ['(없음)']
+    L += ["", f"■ 그 이전 — {len(older)}줄 (번호 없음 {cnt(older, '번호 없음')} · 매칭 실패 {cnt(older, '매칭 실패')} · 모호 {cnt(older, '모호')}) — 대부분 이미 출하돼 영향 적음"]
+    L += [fmt(x) for x in older] or ['(없음)']
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(L) + '\n')
+    return len(iss)

@@ -721,7 +721,7 @@ def build_machine_queue_html(queue, max_rows=30):
   </div>
   <div style="font-size:0.8rem;color:#666;margin:-4px 0 10px">
     배정: 드릴·HSS·라핑·Ø8 초과 → GX7 / Ø8 이하 → FG (2025~2026 작업일지 실측) ·
-    순서: 지연 → 임박(D-3) → 납기일별, 같은 구간 안에서는 형상·직경이 같은 품목끼리 묶음(굵은 선 = 셋업 전환) ·
+    순서: 지연(영업일 — 주말·휴무일 제외) → 임박(D-3) → 납기일별, 같은 구간 안에서는 형상·직경이 같은 품목끼리 묶음(굵은 선 = 셋업 전환) ·
     ◆ = Ø8 경계 · 출하 보류 {ex['hold']}건·자투리 {ex['minor']}건 제외 · {etc_txt}<br>
     잔량 = 수주량 − max(작업일지 가공 수량, 출하 수량) · {wl_txt}
   </div>
@@ -741,14 +741,34 @@ def build_dashboard_html(shippings, daily, worklog_date, generated_at, todo=None
     #   현 화면은 이미 끝난 숫자만 보여준다. 앞을 보는 숫자를 맨 위에 둔다.
     #   ERP 조회 실패 시 todo=None → 블록 자체를 그리지 않는다(빈 값 표시 안 함).
     if todo:
-        rows = ''
+        # 2026-09-29 개정 — 지연 N일(영업일) 배지 · 왼쪽 정렬 · 「외 N종」 꼬리표 · 가려진 건수 표시
+        import html as _h, re as _re
+        rows, prev_grp = '', None
         for it in todo['detail']:
-            tag = ('<span style="color:#e53935;font-weight:700">지연</span>'
-                   if it['late'] else
-                   '<span style="color:#f57c00;font-weight:700">임박</span>')
-            rows += (f"<tr><td>{tag}</td><td>{it['dlv']}</td>"
-                     f"<td>{it['cust']}</td><td>{it['itm']}</td>"
-                     f"<td style=\"text-align:right\">{it['rest']:,}</td></tr>")
+            if it['late']:
+                n = it.get('bd', 0)
+                cls = 'l5' if n >= 5 else ('l2' if n >= 2 else 'l1')
+                label = f'지연 {n}일' if n > 0 else '지연(휴무 중)'
+                grp = ('L', n)
+            else:
+                n = -it.get('bd', 0)
+                cls, label, grp = 'near', ('오늘' if n == 0 else f'임박 D-{n}'), ('N', 0)
+            tag = f'<span class="late-badge {cls}">{label}</span>'
+            m = _re.match(r'^(.*?)(?:\s*외\s*(\d+)종)?$', it['itm'])
+            itm = _h.escape(m.group(1)) + (f' <span class="more">+{m.group(2)}종</span>' if m.group(2) else '')
+            sep = ' class="grp"' if prev_grp is not None and grp != prev_grp else ''
+            prev_grp = grp
+            dlv = it['dlv'][5:] + (f" ({it['wd']})" if it.get('wd') else '')
+            rows += (f"<tr{sep}><td>{tag}</td><td class=\"dt\">{dlv}</td>"
+                     f"<td class=\"cu\">{_h.escape(it['cust'])}</td><td style=\"white-space:normal;max-width:none\">{itm}</td>"
+                     f"<td class=\"q\" style=\"text-align:right\">{it['rest']:,}</td></tr>")
+        _hl, _hn = todo.get('detail_hidden_late', 0), todo.get('detail_hidden_near', 0)
+        if _hl or _hn:
+            _parts = ([f'지연 {_hl}건'] if _hl else []) + ([f'임박 {_hn}건'] if _hn else [])
+            todo_foot = (f'<div class="todo-foot">⚠ 전체 {todo.get("detail_total", 0)}건 중 12건만 표시 — '
+                         f'나머지 {" · ".join(_parts)}은 아래 「장비별 투입 목록」 참고</div>')
+        else:
+            todo_foot = ''
         if not rows:
             rows = ('<tr><td colspan="5" style="text-align:center;color:#999;padding:14px">'
                     '납기 임박·지연 건 없음</td></tr>')
@@ -802,13 +822,13 @@ def build_dashboard_html(shippings, daily, worklog_date, generated_at, todo=None
     </div>
   </div>
   <div class="section-card">
-    <div class="chart-title">납기 임박·지연 상세 <span style="font-size:0.78rem;color:#aaa;font-weight:400">(납기 빠른 순, 최대 12건 · 출하 보류 {todo['hold_cases']}건과 부분출하 잔여 {todo['minor_cases']}건 제외)</span></div>
+    <div class="chart-title">납기 임박·지연 상세 <span style="font-size:0.78rem;color:#888;font-weight:400">밀린 날 많은 순 · 지연 일수 = 영업일(주말·휴무 제외) · 출하 보류 {todo['hold_cases']}건과 부분출하 잔여 {todo['minor_cases']}건 제외</span></div>
     <div style="overflow-x:auto">
-      <table class="form-table">
-        <thead><tr><th>구분</th><th>납기</th><th>거래처</th><th>품목</th><th style="text-align:right">잔량</th></tr></thead>
+      <table class="form-table todo-t">
+        <thead><tr><th style="width:96px">상태</th><th style="width:92px">납기</th><th style="width:190px">거래처</th><th>품목 (대표 1종)</th><th style="text-align:right;width:60px">잔량</th></tr></thead>
         <tbody>{rows}</tbody>
       </table>
-    </div>
+    </div>{todo_foot}
   </div>
 {hold_html}
 '''
@@ -985,17 +1005,37 @@ def fetch_erp_todo(lookback_days: int = 120):
         near  = active[active['dlv'].notna() &
                        (active['dlv'] >= today) & (active['dlv'] <= d3)]
 
-        # 임박·지연 상세 (납기 빠른 순 12건)
+        # 임박·지연 상세 — 2026-09-29 개정 (한경준님 「그림2」 안)
+        #   이전: 납기 빠른 순 12건만, 나머지는 알리지 않음 → 지연 21건 중 9건·임박 전부가 가려졌다
+        #   지금: 지연(영업일 많은 순) → 임박(납기 순), 12건 표시 + 가려진 건수를 표 아래에 적는다
+        #   지연 일수 = 영업일(주말·holidays.md 휴무 제외) — erp/machine_queue.py 와 같은 계산
+        try:
+            from machine_queue import load_holidays, biz_days_late
+            _hol = load_holidays(BASE_DIR)
+        except Exception:
+            _hol, biz_days_late = set(), None
         detail = []
-        for _, r in active[active['dlv'].notna() &
-                           (active['dlv'] <= d3)].sort_values('dlv').head(12).iterrows():
+        for _, r in active[active['dlv'].notna() & (active['dlv'] <= d3)].iterrows():
+            is_late = bool(r['dlv'] < today)
+            if is_late:
+                bd = (biz_days_late(r['dlv'], today, _hol) if biz_days_late
+                      else (today - r['dlv']).days)
+            else:
+                bd = -(r['dlv'] - today).days      # 임박: 0=오늘, -1=D-1 …
             detail.append({
                 'dlv':   str(r['dlv']),
+                'wd':    '월화수목금토일'[r['dlv'].weekday()],
                 'cust':  str(r.get('cust_nm', '')),
                 'itm':   str(r.get('itm_nm', ''))[:38],
                 'rest':  int(r['rest']),
-                'late':  bool(r['dlv'] < today),
+                'late':  is_late,
+                'bd':    int(bd),
             })
+        detail.sort(key=lambda x: (0 if x['late'] else 1, -x['bd'] if x['late'] else -x['bd'], x['dlv']))
+        detail_total = len(detail)
+        detail_hidden_late = sum(1 for x in detail[12:] if x['late'])
+        detail_hidden_near = sum(1 for x in detail[12:] if not x['late'])
+        detail = detail[:12]
 
         return {
             'open_cases': int(open_rows['so_no'].nunique()),
@@ -1005,6 +1045,9 @@ def fetch_erp_todo(lookback_days: int = 120):
             'near_cases': int(near['so_no'].nunique()),
             'near_qty':   int(near['rest'].sum()),
             'detail':     detail,
+            'detail_total': detail_total,
+            'detail_hidden_late': detail_hidden_late,
+            'detail_hidden_near': detail_hidden_near,
             'hold_cases': int(hold_rows['so_no'].nunique()),
             'hold_qty':   int(hold_rows['rest'].sum()),
             'hold_detail': [
