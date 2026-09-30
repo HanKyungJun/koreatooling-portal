@@ -2,15 +2,23 @@
 # -*- coding: utf-8 -*-
 r"""
 worklog.md 핸드오프 블록 -> 캘린더 아티팩트 CLAUDE_WORK 자동 업데이트
-실행: python scripts/update_calendar_claude_work.py
+실행: python scripts/update_calendar_claude_work.py            (신규 날짜만 추가)
+      python scripts/update_calendar_claude_work.py --repair   (+ 깨진 줄 재생성)
 동작:
-  1. wiki/_handoff/worklog.md에서 날짜별 "- 한 일:" 섹션의 **볼드** 문구를 라벨 후보로 추출
+  1. wiki/_handoff/worklog.md에서 날짜별 "- 한 일:" 섹션의 작업 라벨을 추출
+       1순위 항목 앞부분의 **볼드**(= 작업 제목)
+       2순위 항목 머리말(구분자 —, →, · 앞까지)
   2. 아티팩트 CLAUDE_WORK에 아직 없는 날짜만 골라 자동 태깅 후 삽입 (최대 3개/일)
   3. 이미 사람이 채워둔 날짜는 절대 건드리지 않음 (수동 큐레이션 값 보존)
+     단 --repair 를 주면, 라벨이 전부 '참조 파편'인 날짜만 골라 재생성한다.
 출력: weekly-calendar-overview\index.html CLAUDE_WORK 갱신
-주의: 요약 품질은 worklog.md 작성 시 핵심 작업에 **볼드**를 붙이는 습관에 의존한다.
-      볼드가 없으면 그 날짜는 자동 채움 대상에서 빠지므로, 세션 종료 worklog 작성 시
-      "- 한 일:" 항목 제목에 **볼드**를 유지할 것.
+
+[2026-09-30 수정] 볼드를 무조건 라벨로 쓰던 로직이 교차 참조까지 긁어오는 버그를 고쳤다.
+  증상: 09-23~09-29 항목이 "(2)", "2026-09-29 (3)" 처럼 날짜·번호만 남음
+  원인: worklog 본문의 `decisions **2026-09-29 (2)**`, `상세 블록 **(2)**` 같은
+        참조 표기와, 문장 중간 강조(`**읽기 전용**`)를 작업 제목과 구분하지 못함
+  대응: REF_CONTEXT(앞 문맥) · REF_ONLY(내용 자체) · BOLD_HEAD_WINDOW(위치) 3중 필터 +
+        볼드가 없으면 항목 머리말로 폴백 → 볼드 습관에 대한 의존 제거
 """
 import sys, io, re
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
@@ -52,8 +60,56 @@ def guess_tag(label: str) -> str:
     return 'cl-infra'
 
 
+# 볼드 바로 앞이 이 문구로 끝나면 '작업 제목'이 아니라 '교차 참조'다
+#   예) decisions **2026-09-29 (2)** / 상세 블록 **(2)**
+REF_CONTEXT = re.compile(r'(?:decisions(?:\.md)?|상세\s*블록|블록|참조|항목)\s*$')
+
+# 그 자체로 참조 번호인 볼드 (작업 내용이 아님)
+#   예) (2) / 2026-09-29 / 2026-09-29 (3) / 2026-09-29 · (3) · (5)
+REF_ONLY = re.compile(
+    r'^(?:\(\d+\)|\d{4}-\d{2}-\d{2}(?:\s*[·,]?\s*\(\d+\))*|[\d\s·,()#-]+)$'
+)
+
+MIN_LABEL_LEN = 5   # 이보다 짧으면 문장 파편으로 보고 버림
+MAX_LABEL_LEN = 60  # 캘린더 셀 폭 고려
+
+
+def clean_label(s: str) -> str:
+    s = re.sub(r'`[^`]*`', '', s)          # 인라인 코드 제거
+    s = re.sub(r'\*\*|~~', '', s)          # 볼드·취소선 마커 제거
+    s = re.sub(r'\s+', ' ', s).strip(' ·—→-')
+    return s[:MAX_LABEL_LEN].strip()
+
+
+def is_usable(s: str) -> bool:
+    return bool(s) and len(s) >= MIN_LABEL_LEN and not REF_ONLY.match(s)
+
+
+BOLD_HEAD_WINDOW = 30  # 볼드가 항목 앞부분에 있어야 '제목'으로 인정
+
+
+def pick_label_from_item(item: str) -> str | None:
+    """리스트 항목 1개에서 대표 라벨 1개를 고른다.
+    1순위: 항목 앞부분(BOLD_HEAD_WINDOW 이내)에 있는, 참조가 아닌 볼드 → 작업 제목
+    2순위: 항목 머리말 (구분자 —, →, · 앞까지)
+    문장 중간의 강조 볼드(예: **읽기 전용**)는 제목이 아니므로 1순위에서 제외된다.
+    """
+    for m in re.finditer(r'\*\*(.+?)\*\*', item):
+        if m.start() > BOLD_HEAD_WINDOW:
+            break                           # 문장 중간 강조 → 제목 아님
+        cand = clean_label(m.group(1))
+        if REF_CONTEXT.search(item[:m.start()].rstrip()):
+            continue                        # decisions/상세 블록 참조 → 건너뜀
+        if is_usable(cand):
+            return cand
+
+    head = re.split(r'\s*(?:—|→|·\s)\s*', item, maxsplit=1)[0]
+    head = clean_label(head)
+    return head if is_usable(head) else None
+
+
 def parse_worklog(text: str) -> dict:
-    """날짜별로 '- 한 일:' 섹션의 **볼드** 라벨을 수집"""
+    """날짜별로 '- 한 일:' 섹션에서 작업 라벨을 수집"""
     blocks = re.split(r'(?m)^## ', text)[1:]
     by_date: dict[str, list[str]] = {}
     for block in blocks:
@@ -63,20 +119,27 @@ def parse_worklog(text: str) -> dict:
             continue
         date_key = m.group(1)
         work_m = re.search(
-            r'한\s*일[:\*\s]*(.*?)(?=\n-\s*\*{0,2}\s*(?:결과|산출물|점검)|\Z)',
+            r'한\s*일[^:\n]*[:\*\s]*(.*?)(?=\n-\s*\*{0,2}\s*(?:결과|산출물|점검|보강|미완|다음|챗)|\Z)',
             block, re.S,
         )
         if not work_m:
             continue
-        bolds = re.findall(r'\*\*(.+?)\*\*', work_m.group(1))
+
+        body = work_m.group(1)
+        # 번호 목록(1. 2. …) 또는 하위 불릿(- , * )으로 항목 분리.
+        # 분리가 안 되면(한 줄 서술형) 본문 전체를 항목 1개로 본다.
+        items = [s for s in re.split(r'(?m)^\s*(?:\d+\.|[-*])\s+', body) if s.strip()]
+        if not items:
+            items = [body]
+
         bucket = by_date.setdefault(date_key, [])
         added_from_this_block = 0
-        for b in bolds:
+        for item in items:
             if added_from_this_block >= MAX_TAGS_PER_BLOCK:
                 break
-            b = b.strip()
-            if b and b not in bucket:
-                bucket.append(b)
+            label = pick_label_from_item(item.strip())
+            if label and label not in bucket:
+                bucket.append(label)
                 added_from_this_block += 1
     return by_date
 
@@ -89,6 +152,8 @@ def main():
         log('[calendar-work] ERROR - artifact not found')
         sys.exit(1)
 
+    repair = '--repair' in sys.argv
+
     by_date = parse_worklog(WORKLOG.read_text(encoding='utf-8'))
     html = ARTIFACT.read_text(encoding='utf-8')
 
@@ -97,6 +162,35 @@ def main():
         log('[calendar-work] ERROR - CLAUDE_WORK marker not found')
         sys.exit(1)
     existing_dates = set(re.findall(r'"(\d{4}-\d{2}-\d{2})":', m.group(1)))
+
+    # --repair: 이미 들어간 줄 중 '참조 파편'만 담긴 날짜를 찾아 재생성한다.
+    #   예) "2026-09-29":[{...l:"🤖 2026-09-29 (3)"},{...l:"🤖 2026-09-29"}]
+    if repair:
+        repaired = []
+        for line_m in re.finditer(r'(?m)^  "(\d{4}-\d{2}-\d{2})":\[(.*?)\],$', m.group(1)):
+            date_key, payload = line_m.group(1), line_m.group(2)
+            labels = [clean_label(x) for x in re.findall(r'l:"🤖\s*(.*?)"', payload)]
+            if not labels:
+                continue
+            bad = sum(1 for l in labels if not is_usable(l))
+            if bad == 0:
+                continue                      # 정상 줄은 건드리지 않음
+            fresh = by_date.get(date_key, [])[:MAX_TAGS_PER_DAY]
+            if not fresh:
+                log(f'[calendar-work] REPAIR-SKIP {date_key} - worklog에서 대체 라벨을 못 찾음')
+                continue
+            items = ','.join(
+                '{t:"%s",l:"🤖 %s"}' % (guess_tag(l), l.replace('"', "'"))
+                for l in fresh
+            )
+            html = html.replace(line_m.group(0), f'  "{date_key}":[{items}],', 1)
+            repaired.append(date_key)
+        if repaired:
+            ARTIFACT.write_text(html, encoding='utf-8')
+            log(f'[calendar-work] REPAIR - fixed {len(repaired)} date(s): {", ".join(repaired)}')
+            m = re.search(r'const CLAUDE_WORK = \{(.*?)\n\};', html, re.S)
+        else:
+            log('[calendar-work] REPAIR - nothing to fix')
 
     new_lines = []
     added_dates = []
