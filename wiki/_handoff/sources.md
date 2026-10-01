@@ -141,6 +141,7 @@
 - **[ACA-BOX2005]** Box, G.E.P., Hunter, J.S., & Hunter, W.G. (2005). *Statistics for Experimenters: Design, Innovation, and Discovery* (2nd ed.). Wiley. Ch.5 — Design of Experiments (변종 시리즈 해석 베이스).
 - **[ACA-INASAKI1996]** Inasaki, I. (1996). Surface grinding. *CIRP Annals*, 45(2), 729-739. — 5축 공구 연삭 Op 시퀀스의 표면조도·잔류응력 영향.
 - **[ACA-BRINKSMEIER2010]** Brinksmeier, E., Aurich, J.C., Govekar, E., Heinzel, C., Hoffmeister, H.-W., Klocke, F., Peters, J., Rentsch, R., Stephenson, D.J., Uhlmann, E., Weinert, K., & Wittmann, M. (2010). Advances in modeling and simulation of grinding processes. *CIRP Annals*, 59(2), 652-671. — 연삭 공정 모델링·시뮬레이션 종합.
+- **[ACA-BRINKSMEIER2006]** Brinksmeier, E., Aurich, J.C., Govekar, E., Heinzel, C., Hoffmeister, H.-W., Klocke, F., Peters, J., Rentsch, R., Stephenson, D.J., Uhlmann, E., Weinert, K., & Wittmann, M. (2006). Advances in modeling and simulation of grinding processes. *CIRP Annals*, 55(2), 667–696. https://doi.org/10.1016/j.cirp.2006.10.003 — 연삭 공정 모델링·시뮬레이션 종합(STC G 키노트). [[Brinksmeier_2006_검증_백업]] 의 인용 대상. 서지는 Crossref 조회로 확인(2026-10-01). ⚠️ 바로 위 `[ACA-BRINKSMEIER2010]` 은 제목·저자 12명이 이 논문과 같고 권호만 59(2) 652-671 / 2010 으로 적혀 있다 — 같은 논문의 권호 오기일 가능성이 있으나 2010년 쪽은 **확인 필요**(이번에 그 항목은 고치지 않음). (2026-10-01 등재)
 
 ## 0-I. 연삭 휠 / 슈퍼아브레시브 — 표준·교재·논문·카탈로그 (2026-05-18 등재)
 
@@ -305,7 +306,8 @@
 ### 치수 공차 국제 표준 (2026-10-01 등재)
 
 - **[STD-ISO286]** ISO 286-1:2010 — *Geometrical product specifications (GPS) — ISO code system for tolerances on linear sizes — Part 1: Basis of tolerances, deviations and fits* / ISO 286-2:2010 — *Part 2: Tables of standard tolerance classes and limit deviations for holes and shafts*. International Organization for Standardization, Geneva. IT 공차 등급·기초 편차(Part 1), 구멍·축 공차역 수치표(Part 2). [[끼워맞춤공차]] 의 H5~H9 구멍 공차표·H7 조합표 근거. 상세 서지는 [[ISO_표준_참조집]] §ISO 286-1. ⚠️ 위키 수치는 사내 `raw/manuals/끼워맞춤공차.xls` 환산표에서 옮긴 것 — 표준 원문 대조는 미실시(원문 미보유).
-- **[STD-ISO2768]** ISO 2768-1:1989 — *General tolerances — Part 1: Tolerances for linear and angular dimensions without individual tolerance indications*. International Organization for Standardization, Geneva. 도면에 개별 공차가 없을 때 적용하는 일반 공차(f·m·c·v 등급). [[치수불량]] 에서 인용. ⚠️ 측정 기준 온도(20 °C)는 이 표준이 아니라 ISO 1(*Standard reference temperature*) 소관 — [[치수불량]] 해당 줄의 인용 정정 필요(확인 필요).
+- **[STD-ISO2768]** ISO 2768-1:1989 — *General tolerances — Part 1: Tolerances for linear and angular dimensions without individual tolerance indications*. International Organization for Standardization, Geneva. 도면에 개별 공차가 없을 때 적용하는 일반 공차(f·m·c·v 등급). [[치수불량]] 에서 인용. ⚠️ 측정 기준 온도(20 °C)는 이 표준이 아니라 ISO 1 소관 — [[치수불량]] 해당 줄은 2026-10-01 `[STD-ISO1]` 로 정정.
+- **[STD-ISO1]** ISO 1:2016 — *Geometrical product specifications (GPS) — Standard reference temperature for the specification of geometrical and dimensional properties*. International Organization for Standardization, Geneva. 기하·치수 사양의 표준 기준 온도를 **20 °C** 로 규정. 허용 편차(±값)는 규정하지 않는다. [[치수불량]] 측정 온도 줄의 근거. 상세는 [[ISO_표준_참조집]] §2-1. (2026-10-01 등재)
 
 ### 사내 원본 자료 (Internal TOOLKOREA Data)
 
@@ -455,6 +457,7 @@
 - **[SYS-KLEPPMANN]** Kleppmann, M., Wiggins, A., van Hardenberg, P., & McGranaghan, M. (2019). Local-first software: You own your data, in spite of the cloud. *ACM Onward!*. https://www.inkandswitch.com/local-first/
 - **[SYS-PROGIT]** Chacon, S. & Straub, B. (2014). *Pro Git* (2nd ed.). Apress.
 - **[SYS-SPINELLIS]** Spinellis, D. (2012). Git. *IEEE Software*, 29(3), 100-101. doi:10.1109/MS.2012.61
+- **[SYS-COWORK]** TOOLKOREA 내부 작업 기록 — Claude(Cowork) 세션 산출물·핸드오프 기록(`wiki/_handoff/worklog.md`·`decisions.md` 및 각 아카이브). **외부 문헌이 아니다** — 가공·연삭 조건의 근거로 인용하지 않는다. 사내 프로젝트 진행 기록 페이지(예: [[projects/워크숍-업무자동화-B2B사이트-2026-10]])의 출처 표기용. 신뢰도는 기록 내용 각각의 표기(실측 검증·추정값 등)를 따른다. (2026-10-01 등재, 한경준님 결정)
 
 ## 7. 내부 위키 페이지 맵 (역참조)
 
@@ -525,7 +528,7 @@
 | 페이지 | 인용 출처 ID |
 |---|---|
 | [[끼워맞춤공차]] | [STD-ISO286] |
-| [[치수불량]] | [STD-ISO2768], [ACA-MALKINGUO2008] |
+| [[치수불량]] | [STD-ISO2768], [STD-ISO1], [ACA-MALKINGUO2008] |
 
 ### 기존 페이지 매핑 (이전 세션 등재 — 변동 없음)
 
