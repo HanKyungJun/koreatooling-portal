@@ -2,8 +2,8 @@
 type: script
 tags: [weibull, 수명분석, 통계, 재연마, MLE, 검열데이터]
 sources:
-  - "[ACA-MALKING2008]"
-updated: 2026-06-08
+  - "[ACA-MALKINGUO2008]"
+updated: 2026-10-01
 ---
 
 # weibull_tool_life.py — 공구 수명 Weibull 분석 스크립트

@@ -5,10 +5,10 @@ severity: "중~고"
 tags: [채터, chatter, 진동, 연삭, 공명, 강성, ANCA, 밸런스]
 sources:
   - "[ACA-INASAKI2001]"
-  - "[ACA-MALKING2008]"
+  - "[ACA-MALKINGUO2008]"
   - "[ACA-KLOCKE2009]"
   - "[VEN-ANCA]"
-updated: 2026-06-08
+updated: 2026-10-01
 status: "양식 정비 완료. 케이스 발생 시 §5에 즉시 기록"
 ---
 
@@ -131,7 +131,7 @@ status: "양식 정비 완료. 케이스 발생 시 §5에 즉시 기록"
 | Feed | 경우에 따라 증가 (마찰형 감소) | 표면조도 확인 |
 | 스프링 패스 | 추가 (1~2회 무절입 패스) | 시간 증가 |
 
-> 신뢰도: 사내 경험값 + [ACA-MALKING2008] Ch.7
+> 신뢰도: 사내 경험값 + [ACA-MALKINGUO2008] Ch.7
 
 ### 4.4 클램핑 점검
 
@@ -182,7 +182,7 @@ status: "양식 정비 완료. 케이스 발생 시 §5에 즉시 기록"
 ## 7. 참고 문헌
 
 - Inasaki, I., Karpuschewski, B., & Lee, H.S. (2001). Grinding chatter — Origin and suppression. *CIRP Annals*, 50(2), 515-534. doi:10.1016/S0007-8506(07)62999-8. [ACA-INASAKI2001]
-- Malkin, S. & Guo, C. (2008). *Grinding Technology: Theory and Application of Machining with Abrasives* (2nd ed.). Industrial Press. Ch.7 — Vibration and chatter in grinding. [ACA-MALKING2008]
+- Malkin, S. & Guo, C. (2008). *Grinding Technology: Theory and Application of Machining with Abrasives* (2nd ed.). Industrial Press. Ch.7 — Vibration and chatter in grinding. [ACA-MALKINGUO2008]
 - Klocke, F. (2009). *Manufacturing Processes 2: Grinding, Honing, Lapping*. Springer. §5 — Dynamic behavior. [ACA-KLOCKE2009]
 - ANCA ToolRoom 운영 매뉴얼 — iBalance, Vibration monitoring 섹션. [VEN-ANCA]
 

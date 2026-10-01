@@ -302,6 +302,11 @@
 - **[STD-DIN1835B]** DIN 1835-B — *Tool shanks — Weldon shank*. 웰던 샹크(평면 홈 + 사이드 잠금 스크루). 고토크·측면가공 고정 방식. 고속 회전·정밀 런아웃 불리.
 - **[STD-DIN6535]** DIN 6535 — *Tool shanks — Nomenclature and dimensions*. 샹크 용도별 분류: HA(고정밀 스트레이트, 진원도·원통도·공차·표면 정밀) / HB(웰던) / HE(연장). HA는 절삭 성능 규정 없음 — 샹크 정밀도만 규정.
 
+### 치수 공차 국제 표준 (2026-10-01 등재)
+
+- **[STD-ISO286]** ISO 286-1:2010 — *Geometrical product specifications (GPS) — ISO code system for tolerances on linear sizes — Part 1: Basis of tolerances, deviations and fits* / ISO 286-2:2010 — *Part 2: Tables of standard tolerance classes and limit deviations for holes and shafts*. International Organization for Standardization, Geneva. IT 공차 등급·기초 편차(Part 1), 구멍·축 공차역 수치표(Part 2). [[끼워맞춤공차]] 의 H5~H9 구멍 공차표·H7 조합표 근거. 상세 서지는 [[ISO_표준_참조집]] §ISO 286-1. ⚠️ 위키 수치는 사내 `raw/manuals/끼워맞춤공차.xls` 환산표에서 옮긴 것 — 표준 원문 대조는 미실시(원문 미보유).
+- **[STD-ISO2768]** ISO 2768-1:1989 — *General tolerances — Part 1: Tolerances for linear and angular dimensions without individual tolerance indications*. International Organization for Standardization, Geneva. 도면에 개별 공차가 없을 때 적용하는 일반 공차(f·m·c·v 등급). [[치수불량]] 에서 인용. ⚠️ 측정 기준 온도(20 °C)는 이 표준이 아니라 ISO 1(*Standard reference temperature*) 소관 — [[치수불량]] 해당 줄의 인용 정정 필요(확인 필요).
+
 ### 사내 원본 자료 (Internal TOOLKOREA Data)
 
 - **[INT-PRICELIST-2609]** TOOLKOREA 내부 자료 — `raw/단가표/26.09 재연마정가표_정리.xlsx` 시트 「정가표(26.09)」 (2026-09 개정). 재연마 정가 매트릭스 — 재질(초경/HSS) × 형상계열(평/코너·볼) × 가공부(밑날/밑옆날·밑골수리/골수리=외경연삭) × 코팅(비코팅/일반/고경도) × 날수(2날/4날) 4축 구조, 직경 구간 「이하」 기준. 블록 옆 주석이 계산 규칙을 담고 있음(HSS 라핑 「밑날가격=옆날가격」, 초경 라핑 「밑날=초경밑날×1.1」, 「4날=2날×1.25」, Long×1.5/Ex-Long×2). 2026-09-01 개정으로 라핑 블록 「밑옆날」→「밑골수리」 개명, 밑날 블록에 비코팅 열·30이하/31이상 구간 신설. 신뢰도: **사내 확정값**(정가표 원본) — 판독 규칙은 **실측 검증**(2026-08-31 라핑 2,433건 · 2026-09-02 2,370건 전수 대조 일치). ⚠️ **금액은 대외비로 위키 미기재**(CLAUDE.md §4) — 값은 원본 참조. — [[standards/재연마-정가표-읽는법]] 참조.
@@ -514,6 +519,13 @@
 | [[고성능-엔드밀-제작-가이드-part1]] | [VEN-ANCA-MATHEW2022], [ACA-ENGIN2001], [ACA-SMITH2008-CTT], [ACA-INASAKI2001], [ACA-STEPHENSON2016], [ACA-TLUSTY1979] |
 | [[에너지효율-연삭-7가지팁]] | [VEN-ANCA-MULDER2024], [VEN-OELHELD-LOWERY2022], [VEN-NORTON-WINTER-2023], [ACA-MARINESCU2016], [ACA-BRINKSMEIER2010] |
 | [[anca-rfid-workflow]] | [VEN-ANCA-RFID-SCHUNK], [VEN-ANCA-RFID-CARBITOOLS] |
+
+### 치수 공차 (0-K 추가분) 페이지 매핑 (2026-10-01 등재)
+
+| 페이지 | 인용 출처 ID |
+|---|---|
+| [[끼워맞춤공차]] | [STD-ISO286] |
+| [[치수불량]] | [STD-ISO2768], [ACA-MALKINGUO2008] |
 
 ### 기존 페이지 매핑 (이전 세션 등재 — 변동 없음)
 
