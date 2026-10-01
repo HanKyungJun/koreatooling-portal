@@ -27,6 +27,19 @@ from pathlib import Path
 
 BASE     = Path(__file__).resolve().parent.parent
 WORKLOG  = BASE / 'wiki' / '_handoff' / 'worklog.md'
+# 2026-09-29 아카이브 분할 이후 옛 블록은 worklog-archive/YYYY-MM.md 로 이동한다.
+# --repair 로 과거 날짜를 고치려면 아카이브까지 읽어야 한다.
+WORKLOG_ARCHIVE = BASE / 'wiki' / '_handoff' / 'worklog-archive'
+
+
+def read_all_worklogs() -> str:
+    parts = []
+    if WORKLOG.exists():
+        parts.append(WORKLOG.read_text(encoding='utf-8'))
+    if WORKLOG_ARCHIVE.is_dir():
+        for p in sorted(WORKLOG_ARCHIVE.glob('*.md')):
+            parts.append(p.read_text(encoding='utf-8'))
+    return '\n'.join(parts)
 ARTIFACT = Path(r'C:\Users\TOOLKOREA\Documents\Claude\Artifacts\weekly-calendar-overview\index.html')
 LOG      = BASE / 'wiki' / 'reports' / 'daily' / 'run.log'
 
@@ -75,9 +88,17 @@ MAX_LABEL_LEN = 60  # 캘린더 셀 폭 고려
 
 
 def clean_label(s: str) -> str:
-    s = re.sub(r'`[^`]*`', '', s)          # 인라인 코드 제거
+    # 인라인 코드 제거. 뒤에 홀로 남는 조사(`price_audit.py` 가 → " 가 ")까지 함께 지운다.
+    s = re.sub(r'`[^`]*`\s*(?:가|이|은|는|을|를|에서|에|의|로|으로|와|과)(?=\s)', ' ', s)
+    s = re.sub(r'`[^`]*`', '', s)
     s = re.sub(r'\*\*|~~', '', s)          # 볼드·취소선 마커 제거
+    # 코드 제거로 비거나 반쪽만 남은 괄호 정리 — "선행 작업( 가 …" 같은 잔해 방지
+    s = re.sub(r'\(\s*[,·]?\s*\)', '', s)  # 빈 괄호
+    s = re.sub(r'\(\s*(?=[가-힣]{1,2}\s)', '', s)   # 여는 괄호 + 조사만 남은 경우
+    s = re.sub(r'\s+([,.)])', r'\1', s)
     s = re.sub(r'\s+', ' ', s).strip(' ·—→-')
+    if s.count('(') != s.count(')'):       # 짝이 안 맞으면 괄호 전부 제거
+        s = s.replace('(', '').replace(')', '')
     return s[:MAX_LABEL_LEN].strip()
 
 
@@ -154,7 +175,7 @@ def main():
 
     repair = '--repair' in sys.argv
 
-    by_date = parse_worklog(WORKLOG.read_text(encoding='utf-8'))
+    by_date = parse_worklog(read_all_worklogs())
     html = ARTIFACT.read_text(encoding='utf-8')
 
     m = re.search(r'const CLAUDE_WORK = \{(.*?)\n\};', html, re.S)
