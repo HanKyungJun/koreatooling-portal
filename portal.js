@@ -5,7 +5,8 @@
    ===================================================== */
 
 /* ── 상수 ──────────────────────────────────────────── */
-var GAS_FORM_URL = 'https://script.google.com/macros/s/AKfycbzjgm7IhynT5CCQzX1f9M78HUN8cDwwmLj9xVNSV3lrF_TPkvPCmLFt9E7GwRYmRipA/exec';
+// 2026-10-02: 공개폼 프로젝트(코리아툴링 공개폼) 배포로 교체 — 옛 AKfycbzjgm7I… 는 계정에서 프로젝트를 찾지 못함
+var GAS_FORM_URL = 'https://script.google.com/macros/s/AKfycbyXK6wvfA8pLepD9RHqtdNa5P6aMC6ktK3UYgVIciXwh2rPDFbanI9KOZCMi8UGLjNA1g/exec';
 
 /* ── GAS 폼 제출 공통 핸들러 ─────────────────────────
    대상: defect / inquiry / request / supplies
