@@ -1,3 +1,10 @@
+## [2026-10-02] 검수 — `ACA-BRINKSMEIER2010` 서지 혼합 오기 확정 · 인용 3곳을 `ACA-BRINKSMEIER2006` 으로 교체
+
+`[ACA-BRINKSMEIER2010]` 은 제목·저자(「Advances in modeling and simulation of grinding processes」, 12명)는 2006 논문(*CIRP Annals* 55(2) 667–696, DOI 10.1016/j.cirp.2006.10.003)이고, 권호 59(2) 652-671 / 2010 은 같은 저널의 다른 논문 「Ultra-precision grinding」(Brinksmeier · Mutlugünes · Klocke · Aurich · Shore · Ohmori)이었다 — ScienceDirect 59권 2호 목차와 인용 서지(OUCI)로 확인. 세 페이지 모두 「모델링·시뮬레이션」 논문을 뜻하므로 2006 으로 교체하고 각 줄에 정정 표기를 남겼다. sources.md 의 2010 항목은 삭제하지 않고 「폐기 · 인용 금지」로 표시했다. 본문 주장(예: 「절삭유 영향 포함」)이 논문 내용과 맞는지는 이번에 대조하지 않았다(서지만 정정)
+
+영향받은 페이지: [[에너지효율-연삭-7가지팁]], [[연삭유-성능-가이드]], [[공구사양-실험-이력]]
+출처 추가: 없음 (기존 [ACA-BRINKSMEIER2006] 사용 · [ACA-BRINKSMEIER2010] 폐기)
+
 ## [2026-10-01] 검수 — 출처 후속 2건: 치수불량 측정온도 인용 ISO 1로 정정 · Brinksmeier 2006 등재
 
 [[치수불량]] §4.3 「상온(20±2°C) 냉각 후 측정」 줄이 근거로 ISO 2768(일반 공차)을 들고 있었는데, 기준 온도 20 °C는 ISO 1 소관이라 `[STD-ISO1]`로 정정했다. ±2 °C 허용폭은 ISO 1 규정이 아니므로 근거 확인 필요로 표시했고, 값은 바꾸지 않았다. `[STD-ISO1]`(ISO 1:2016)을 sources.md 0-K에 등재했다. `[ACA-BRINKSMEIER2006]`은 Crossref에서 CIRP Annals 55(2) 667–696, 2006(doi:10.1016/j.cirp.2006.10.003)으로 확인하고 등재했다. 같은 제목으로 등재된 `[ACA-BRINKSMEIER2010]`(59(2) 652-671)은 확인 필요로 표시만 하고 고치지 않았다([[공구사양-실험-이력]]이 인용 중). `[SYS-COWORK]`도 한경준님 결정에 따라 sources.md §6에 「내부 작업 기록, 외부 문헌 아님」으로 등재했다. 이로써 출처 미등재는 0건이다.

@@ -140,8 +140,8 @@
 - **[ACA-ULRICH2016]** Ulrich, K.T. & Eppinger, S.D. (2016). *Product Design and Development* (6th ed.). McGraw-Hill. Ch.9 Product Architecture — 모듈러 설계 원칙.
 - **[ACA-BOX2005]** Box, G.E.P., Hunter, J.S., & Hunter, W.G. (2005). *Statistics for Experimenters: Design, Innovation, and Discovery* (2nd ed.). Wiley. Ch.5 — Design of Experiments (변종 시리즈 해석 베이스).
 - **[ACA-INASAKI1996]** Inasaki, I. (1996). Surface grinding. *CIRP Annals*, 45(2), 729-739. — 5축 공구 연삭 Op 시퀀스의 표면조도·잔류응력 영향.
-- **[ACA-BRINKSMEIER2010]** Brinksmeier, E., Aurich, J.C., Govekar, E., Heinzel, C., Hoffmeister, H.-W., Klocke, F., Peters, J., Rentsch, R., Stephenson, D.J., Uhlmann, E., Weinert, K., & Wittmann, M. (2010). Advances in modeling and simulation of grinding processes. *CIRP Annals*, 59(2), 652-671. — 연삭 공정 모델링·시뮬레이션 종합.
-- **[ACA-BRINKSMEIER2006]** Brinksmeier, E., Aurich, J.C., Govekar, E., Heinzel, C., Hoffmeister, H.-W., Klocke, F., Peters, J., Rentsch, R., Stephenson, D.J., Uhlmann, E., Weinert, K., & Wittmann, M. (2006). Advances in modeling and simulation of grinding processes. *CIRP Annals*, 55(2), 667–696. https://doi.org/10.1016/j.cirp.2006.10.003 — 연삭 공정 모델링·시뮬레이션 종합(STC G 키노트). [[Brinksmeier_2006_검증_백업]] 의 인용 대상. 서지는 Crossref 조회로 확인(2026-10-01). ⚠️ 바로 위 `[ACA-BRINKSMEIER2010]` 은 제목·저자 12명이 이 논문과 같고 권호만 59(2) 652-671 / 2010 으로 적혀 있다 — 같은 논문의 권호 오기일 가능성이 있으나 2010년 쪽은 **확인 필요**(이번에 그 항목은 고치지 않음). (2026-10-01 등재)
+- **[ACA-BRINKSMEIER2010]** Brinksmeier, E., Aurich, J.C., Govekar, E., Heinzel, C., Hoffmeister, H.-W., Klocke, F., Peters, J., Rentsch, R., Stephenson, D.J., Uhlmann, E., Weinert, K., & Wittmann, M. (2010). Advances in modeling and simulation of grinding processes. *CIRP Annals*, 59(2), 652-671. — 연삭 공정 모델링·시뮬레이션 종합. 🔴 **폐기 (2026-10-02 정정 — 서지 혼합 오기, 인용 금지)**: 제목·저자 12명은 2006 논문이고, 59(2) 652-671 / 2010 은 같은 저널의 **다른 논문** 「Ultra-precision grinding」(Brinksmeier, Mutlugünes, Klocke, Aurich, Shore, Ohmori — ScienceDirect CIRP Annals 59권 2호 목차로 확인)이다. 인용 3곳([[에너지효율-연삭-7가지팁]] · [[연삭유-성능-가이드]] · [[공구사양-실험-이력]])은 모두 「모델링·시뮬레이션」 논문을 뜻하므로 → `[ACA-BRINKSMEIER2006]` 으로 교체했다. 이 ID는 옛 인용 추적용으로만 남긴다.
+- **[ACA-BRINKSMEIER2006]** Brinksmeier, E., Aurich, J.C., Govekar, E., Heinzel, C., Hoffmeister, H.-W., Klocke, F., Peters, J., Rentsch, R., Stephenson, D.J., Uhlmann, E., Weinert, K., & Wittmann, M. (2006). Advances in modeling and simulation of grinding processes. *CIRP Annals*, 55(2), 667–696. https://doi.org/10.1016/j.cirp.2006.10.003 — 연삭 공정 모델링·시뮬레이션 종합(STC G 키노트). [[Brinksmeier_2006_검증_백업]] 의 인용 대상. 서지는 Crossref 조회로 확인(2026-10-01). ⚠️ 바로 위 `[ACA-BRINKSMEIER2010]` 은 제목·저자 12명이 이 논문과 같고 권호만 59(2) 652-671 / 2010 으로 적혀 있다 — 같은 논문의 권호 오기일 가능성이 있으나 2010년 쪽은 **확인 필요**(이번에 그 항목은 고치지 않음). (2026-10-01 등재) ✅ **2026-10-02 해소**: 위 2010 항목은 서지 혼합 오기로 확정·폐기 — 권호 55(2) 667–696 · DOI는 인용 서지(OUCI 참고문헌 목록)로 재확인.
 
 ## 0-I. 연삭 휠 / 슈퍼아브레시브 — 표준·교재·논문·카탈로그 (2026-05-18 등재)
 
@@ -518,9 +518,9 @@
 | [[휠-밸런싱-iBalance]] | [VEN-ANCA-RICHARDSON2022], [ACA-INASAKI2001], **[STD-EN13236]**, ~~[STD-ISO12413]~~(초지립 비적용·보존), [VEN-NORTON-WINTER-2023] |
 | [[공구-직경별-연삭조건]] | [VEN-ANCA-BADGER2011], [ACA-BADGER-AGGR2020], [IND-CTE-AGGR], [VEN-NORTON-WINTER-2023], [VEN-ANCA-GRAF2011], [INT-TOOLKOREA-FEEDRATE-2017] |
 | [[MRR-기반-연삭공정-분석]] | [VEN-ANCA-ZAISER2022], [VEN-ANCA-GRAF2011], [ACA-MALKINGUO2008], [ACA-MARINESCU2016], [ACA-ROWE2014], [VEN-NORTON-WINTER-2023] |
-| [[연삭유-성능-가이드]] | [VEN-OELHELD-LOWERY2022], [VEN-OELHELD], [ACA-MARINESCU2016], [ACA-MALKINGUO2008], [ACA-BRINKSMEIER2010] |
+| [[연삭유-성능-가이드]] | [VEN-OELHELD-LOWERY2022], [VEN-OELHELD], [ACA-MARINESCU2016], [ACA-MALKINGUO2008], [ACA-BRINKSMEIER2006] |
 | [[고성능-엔드밀-제작-가이드-part1]] | [VEN-ANCA-MATHEW2022], [ACA-ENGIN2001], [ACA-SMITH2008-CTT], [ACA-INASAKI2001], [ACA-STEPHENSON2016], [ACA-TLUSTY1979] |
-| [[에너지효율-연삭-7가지팁]] | [VEN-ANCA-MULDER2024], [VEN-OELHELD-LOWERY2022], [VEN-NORTON-WINTER-2023], [ACA-MARINESCU2016], [ACA-BRINKSMEIER2010] |
+| [[에너지효율-연삭-7가지팁]] | [VEN-ANCA-MULDER2024], [VEN-OELHELD-LOWERY2022], [VEN-NORTON-WINTER-2023], [ACA-MARINESCU2016], [ACA-BRINKSMEIER2006] |
 | [[anca-rfid-workflow]] | [VEN-ANCA-RFID-SCHUNK], [VEN-ANCA-RFID-CARBITOOLS] |
 
 ### 치수 공차 (0-K 추가분) 페이지 매핑 (2026-10-01 등재)
