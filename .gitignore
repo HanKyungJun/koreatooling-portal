@@ -212,3 +212,6 @@ scripts/anca-monitor/*.bak_*
 # 2026-09-29: ERP 점검 스크립트 결과 — 거래처명 포함, 공개 저장소에 올리지 않는다
 erp/probe_*_result.txt
 erp/worklog_unmatched.txt
+
+# 2026-09-30: ERP 조회 스냅샷(거래처명 포함, 매 실행 덮어씀) — 사내 PC 전용, 공개 저장소 제외
+erp/snapshot/
