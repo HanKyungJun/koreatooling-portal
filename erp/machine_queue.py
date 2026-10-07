@@ -185,6 +185,12 @@ def apply_worklog(d, wl, holds=None):
     def _issue(r, kind, code='', why=''):
         st['issues'].append(dict(date=r['date'], equip=r['equip'], shape=r['shape'], dia=r['dia'],
                                  qty=r['qty'], code=code, note=r['note'], kind=kind, why=why))
+    # 2026-10-07: 같은 날 안에서는 오더번호 1개 줄을 먼저 배정하고, 번호가 2개 이상인 줄은 남은 잔량을 채운다 (한경준님 확정)
+    #   근거: 10-06 FG 「0160, 0141」 드릴 Ø6 9개 줄이 「0160」 14개 줄보다 먼저 처리돼 9개 전부 0160 에 들어감
+    #         → 2609210160 드릴 6mm 수주 17 < 배정 23(+6), 2609180141 드릴 6mm 가 미가공으로 남음.
+    #   회귀(10-07 07:50 스냅샷·오프라인 재현): 바뀐 것은 이 건뿐 — GX7 102→101품목 · 460→454개, 초과 배정 16→15.
+    #   전역 정렬(날짜 무시)은 0166·0168 배정까지 바뀌어 기각. decisions.md 2026-10-07
+    wl = sorted(wl, key=lambda r: (r['date'], len(r['codes']) > 1))
     for r in wl:
         if not r['codes']:
             st['nocode'] += 1
