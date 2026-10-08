@@ -198,6 +198,7 @@ ANCA 공식 기술 뉴스레터의 정착된 1차 자료. 인덱스 + 5개 풀�
 - [[daily-report|daily_report.py 상세]] — 재연마 일일보고 Excel 자동화. 함수 8개·실행 흐름·트러블슈팅. (2026-05-26 신규)
 - [[generate|generate.py 상세]] — 생산팀 포털 정적 HTML 6페이지 빌드·GitHub Pages 배포. Chart.js 대시보드·폼 페이지·환경변수 관리. (2026-05-26 신규)
 - [[scripts/github-token-발급-체크리스트]] — GitHub fine-grained PAT 발급·교체 절차. **`Repository access`와 `Permissions`는 별개 설정** — 이걸 놓쳐 push 403이 3회 반복됨(2026-07-07·07-08·08-28). 검증은 `git push --dry-run`. (2026-08-28 신규)
+- [[scripts/거래처조회-AppsScript-배포-가이드]] — 거래처 발주·재고 조회(워크숍 범위 ③) Apps Script 웹 앱 첫 배포 · 거래처 추가/중지 · 코드 수정 시 재배포(**「배포 관리 > 새 버전」은 URL 유지, 「새 배포」는 URL 변경**) · 토큰 교체 · 문제 해결. (2026-10-08 신규)
 - [[app|app.py 상세]] — Flask 서버·Drive/Sheets API 프록시. 라우트 6개·Drive 유틸리티·자동화 체인 전체 그림·보안 주의사항·트러블슈팅. (2026-05-26 신규)
 - [[weibull-tool-life|weibull_tool_life.py]] — 공구 수명 Weibull 분석 (MLE+검열데이터). B10/B50/B90/MTTF·확률지 PNG·Excel 출력. (2026-06-08 신규)
 

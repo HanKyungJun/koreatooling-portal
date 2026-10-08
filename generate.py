@@ -71,7 +71,11 @@ INTERNAL_ONLY = {
     'portal-auth.js',         # 2026-09-08 신설 — 직원 게이트. 사내 전용, 공개 배포 금지
     'field-record-config.js', # 2026-09-08 신설 — 현장기록 GAS URL·토큰. 사내 전용
     'submissions-data.js',    # 2026-09-14 신설 — 접수현황(회사명·담당자·연락처 포함). 사내 전용, 공개 금지
+    'order-status.html',      # 2026-10-08 신설 — 거래처 조회 화면(워크숍 범위 ③). 사내 검토 단계라 공개 금지
 }
+
+# 거래처 조회 화면 원본 (2026-10-08) — 사내 검토 동안 현황판으로만 내보낸다. decisions.md 2026-10-08 (4)
+CUSTOMER_PORTAL_PAGE = os.path.join(BASE_DIR, 'scripts', 'customer_portal', 'order-status.html')
 
 YEARS = [2026, 2025, 2024, 2023, 2022]
 
@@ -242,6 +246,11 @@ def build_portal_html(show_staff: bool = None):
         <div class="card-icon">📝</div>
         <div class="card-title">현장 기록</div>
         <div class="card-desc">가공 테스트 결과 및 불량 현황을 현장에서 바로 기록합니다.</div>
+      </a>
+      <a class="card staff" href="order-status.html">
+        <div class="card-icon">📦</div>
+        <div class="card-title">거래처 조회 (사내 검토)</div>
+        <div class="card-desc">거래처가 보게 될 발주·진행 현황 화면입니다. 접속 코드로 확인합니다.</div>
       </a>
     </div>
   </div>
@@ -1298,6 +1307,149 @@ def _notify_internal_deploy(ok: bool, reason: str) -> None:
         _log(f'  ⚠️ 알림 처리 중 예외(무시): {type(e).__name__}: {str(e)[:120]}')
 
 
+# ── 차단성 장애 경보 메일 (2026-10-08 신설) ───────────────────────────────────
+#   통합 브리핑(예약 작업)의 Gmail 커넥터 경로는 예약 실행에서 한 번도 발송된 적이 없다
+#   [실측 — Gmail 전체(휴지통 포함) 검색 2026-10-08: [CNC위키] 메일은 09-21 대화 세션
+#   발송 1통뿐, 10-07 10:24 수동 발사의 [테스트] 메일도 미발송]. 반면 이 프로세스의
+#   Gmail API 경로는 09-14·15 사내 배포 실패 메일이 실제로 도착했다.
+#   → 차단성 4종 중 나머지 3종(push 실패 · index.lock 잔존 · 일일보고 누락)도 여기서 보낸다.
+#     사내 배포 실패는 _notify_internal_deploy 가 이미 맡는다. decisions.md 2026-10-08.
+#   발송 제한: 정상→실패 전환 시 1통 + 같은 장애가 이어지면 하루 1통.
+#   발송에 실패하면 「보냄」으로 기록하지 않는다 → 다음 실행에서 다시 시도한다.
+ALERT_STATE_PATH = os.path.join(BASE_DIR, 'outputs', '.blocking_alert_state.json')
+_UPLOAD_FAIL_REASON = ''
+
+
+def _send_alert_mail(subject: str, body: str) -> bool:
+    """Gmail API 로 메일 1통. 성공하면 True. 어떤 경우에도 예외를 밖으로 던지지 않는다."""
+    to_addr = os.getenv('ALERT_EMAIL_TO', '')
+    if not to_addr:
+        _log('  ⚠️ ALERT_EMAIL_TO 미설정 — 경보 메일을 보내지 않습니다')
+        return False
+    try:
+        import base64
+        from email.mime.text import MIMEText
+        sys.path.insert(0, os.path.join(BASE_DIR, 'erp'))
+        from daily_dlv_alert import get_gmail_service
+        svc = get_gmail_service()   # 토큰 파일이 없으면 sys.exit(1) — 아래에서 SystemExit 도 받는다
+        msg = MIMEText(body, _charset='utf-8')
+        msg['to'] = to_addr
+        msg['subject'] = subject
+        svc.users().messages().send(
+            userId='me',
+            body={'raw': base64.urlsafe_b64encode(msg.as_bytes()).decode()}).execute()
+        _log(f'  📧 경보 메일 발송: {subject}')
+        return True
+    except (Exception, SystemExit) as e:
+        _log(f'  ⚠️ 경보 메일 발송 실패(무시): {type(e).__name__}: {str(e)[:120]}')
+        return False
+
+
+def _notify_blocking(key: str, ok: bool, title: str, detail: str = '', hint: str = '') -> None:
+    """차단성 장애 1종의 상태를 기록하고, 필요할 때만 메일 1통. 예외를 밖으로 던지지 않는다."""
+    try:
+        now = datetime.now()
+        today = now.strftime('%Y-%m-%d')
+        try:
+            with open(ALERT_STATE_PATH, encoding='utf-8') as f:
+                state = json.load(f)
+        except Exception:
+            state = {}
+        prev = state.get(key, {})
+        was_ok = prev.get('ok', True)
+        last = prev.get('notified_on', '')
+        sent = False
+        if ok:
+            if not was_ok:
+                _log(f'  🟢 정상 복귀: {key}')
+        elif was_ok or last != today:
+            body = (f'{title}\n\n'
+                    f'시각: {now:%Y-%m-%d %H:%M:%S} (이 PC 시계 = KST)\n'
+                    f'내용: {detail}\n\n'
+                    f'확인·조치:\n{hint}\n\n'
+                    '── 이 메일에 대해 ──\n'
+                    '보낸 곳: 경준님 PC의 generate.py (07:50 시작프로그램 · 16:00 일일보고 회차).\n'
+                    '같은 장애는 하루 1통까지만 보냅니다. 정상으로 돌아오면 메일 없이 generate.log 에 '
+                    '「정상 복귀」가 남습니다.\n')
+            sent = _send_alert_mail(f'[CNC위키] 🔴 차단 — {title}', body)
+        else:
+            _log(f'  (차단 경보 {key} — 오늘 이미 발송, 생략)')
+        state[key] = {'ok': ok, 'detail': (detail or '')[:300],
+                      'at': now.strftime('%Y-%m-%d %H:%M:%S'),
+                      'notified_on': today if sent else last}
+        try:
+            os.makedirs(os.path.dirname(ALERT_STATE_PATH), exist_ok=True)
+            with open(ALERT_STATE_PATH, 'w', encoding='utf-8') as f:
+                json.dump(state, f, ensure_ascii=False, indent=1)
+        except Exception:
+            pass
+    except Exception as e:
+        _log(f'  ⚠️ 차단 경보 처리 중 예외(무시): {type(e).__name__}: {str(e)[:120]}')
+
+
+def _prev_business_day(today, holidays):
+    """오늘 이전의 가장 가까운 영업일(월~금, holidays.md 휴무 제외)."""
+    d = today - timedelta(days=1)
+    while d.weekday() >= 5 or d in holidays:
+        d -= timedelta(days=1)
+    return d
+
+
+def check_daily_report_file(today=None) -> bool:
+    """직전 영업일 일일보고 xlsx 가 있는지 — 통합 브리핑 A-6b 와 같은 기준."""
+    today = today or date.today()
+    try:
+        sys.path.insert(0, os.path.join(BASE_DIR, 'erp'))
+        from machine_queue import load_holidays
+        hol = load_holidays(BASE_DIR)
+    except Exception:
+        hol = set()
+    d = _prev_business_day(today, hol)
+    fname = f'{d:%Y-%m-%d}_일일보고.xlsx'
+    ok = os.path.exists(os.path.join(BASE_DIR, 'wiki', 'reports', 'daily', fname))
+    _log(f'  일일보고 파일 점검(직전 영업일 {d:%Y-%m-%d}): {"✅ 있음" if ok else "🔴 없음"}')
+    _notify_blocking(
+        'daily_report', ok, f'일일보고 파일 누락 — {d:%Y-%m-%d}',
+        f'wiki/reports/daily/{fname} 이 없습니다.',
+        '1) 그날이 휴무였다면 wiki/_handoff/holidays.md 에 등록하면 다음 실행부터 정상 처리됩니다.\n'
+        '2) 아니면 Cowork 에서 「스케줄러 진단」(scheduler-diagnose 스킬)으로 원인을 확인하세요.\n'
+        f'3) 소급 생성: python scripts\\daily_report.py {d:%Y-%m-%d}')
+    return ok
+
+
+def check_git_lock(min_age_sec: int = 600) -> bool:
+    """.git/index.lock 이 10분 넘게 남아 있는지. 직접 지우지 않는다(보고만)."""
+    p = os.path.join(BASE_DIR, '.git', 'index.lock')
+    detail = ''
+    ok = True
+    try:
+        if os.path.exists(p):
+            mtime = os.path.getmtime(p)
+            age = time.time() - mtime
+            ok = age < min_age_sec
+            detail = (f'.git/index.lock {os.path.getsize(p)} byte, '
+                      f'생성 {datetime.fromtimestamp(mtime):%m-%d %H:%M} ({age/60:.0f}분 경과)')
+    except Exception as e:
+        detail = f'점검 실패: {type(e).__name__}'
+    if not ok:
+        _log(f'  🔴 {detail}')
+    _notify_blocking(
+        'git_lock', ok, '.git/index.lock 잔존 — 커밋·push 막힘', detail,
+        'PowerShell (cnc-wiki 폴더에서):\n'
+        '  Get-Process git,git-remote-https -ErrorAction SilentlyContinue\n'
+        '  → 아무것도 안 나오면:  Remove-Item .git\\index.lock\n'
+        '  → git 프로세스가 나오면 지우지 말고 끝날 때까지 기다리세요.')
+    return ok
+
+
+def notify_upload_result(ok: bool) -> None:
+    _notify_blocking(
+        'upload', ok, 'GitHub 업로드(push) 실패', _UPLOAD_FAIL_REASON or '사유 미상 — generate.log 참조',
+        '1) wiki/reports/daily/generate.log 의 [git] 줄 확인\n'
+        '2) 403 이면 GitHub 토큰 만료·권한 문제 — wiki/scripts/github-token-발급-체크리스트.md\n'
+        '3) index.lock 이면 같은 시각의 「index.lock 잔존」 메일 참조')
+
+
 def publish_internal(pages: dict) -> bool:
     """생성된 페이지와 정적 파일을 사내 LAN 공유폴더에 한 벌 더 쓴다.
 
@@ -1386,6 +1538,8 @@ def _mask_secret(s):
 
 
 def upload_to_github():
+    global _UPLOAD_FAIL_REASON
+    _UPLOAD_FAIL_REASON = ''
     git = 'git'
     env = os.environ.copy()
     # 2026-07-07: 16:00 병목 조사에서 실제 원인 확인 — 원격 URL에 토큰이 포함돼 있어도
@@ -1468,6 +1622,7 @@ def upload_to_github():
         _log(f'  ❌ git add 실패 {len(_add_fail)}건 — 첫 오류: {_add_fail[0][:200]}')
         if 'index.lock' in (_add_fail[0] or ''):
             _log('  → .git/index.lock 잔존. git 프로세스 종료 후 해당 파일을 삭제하세요.')
+        _UPLOAD_FAIL_REASON = f'git add 실패 {len(_add_fail)}건 — {(_add_fail[0] or "")[:200]}'
         return None
 
     # 커밋 (변경 없으면 스킵)
@@ -1486,12 +1641,14 @@ def upload_to_github():
     #   뒤이은 push가 code=0을 반환해 성공으로 오인된다. 여기서 끊는다.
     if code != 0:
         _log(f'  ❌ 커밋 실패 (code={code}): {(err or out)[:300]}')
+        _UPLOAD_FAIL_REASON = f'커밋 실패 (code={code}): {(err or out)[:200]}'
         return None
 
     # 푸시 (파이썬 레벨 timeout 없음 — daily_report.py의 1800s가 상위 안전장치)
     code, out, err = run([git, 'push', 'origin', 'main'], timeout=None, label='push')
     if code != 0:
         _log(f'  ❌ 푸시 실패: {err}')
+        _UPLOAD_FAIL_REASON = f'push 실패 (code={code}): {(err or "")[:200]}'
         return None
 
     url = f'https://{GITHUB_USER}.github.io/{GITHUB_REPO}/'
@@ -1504,7 +1661,17 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--local', action='store_true', help='GitHub Pages 업로드 건너뜀')
+    parser.add_argument('--test-alert', action='store_true',
+                        help='경보 메일 경로 검증용 [테스트] 메일 1통만 보내고 종료 (2026-10-08)')
     args = parser.parse_args()
+
+    if args.test_alert:
+        _ok = _send_alert_mail(
+            f'[테스트] [CNC위키] 경보 메일 경로 검증 — {datetime.now():%Y-%m-%d %H:%M}',
+            '이 메일은 발송 경로 검증용입니다. 평소에는 차단성 장애가 있는 날에만 옵니다.\n\n'
+            '보낸 곳: 경준님 PC의 generate.py --test-alert\n'
+            '차단성 4종: index.lock 잔존 · push 실패 · 사내 배포 실패 · 일일보고 파일 누락\n')
+        sys.exit(0 if _ok else 1)
 
     _log(f'generate.py 시작 '
          f'{"(로컬 전용)" if args.local else "(GitHub Pages 업로드 포함)"}')
@@ -1586,6 +1753,15 @@ if __name__ == '__main__':
         'inquiry.html':   public_pages['inquiry.html'],
         'dashboard.html': build_dashboard_html(shippings, daily, worklog_date, generated_at, todo, queue),
     }
+    # 2026-10-08 — 거래처 조회 화면(사내 검토). 파일이 없으면 넣지 않는다
+    try:
+        with open(CUSTOMER_PORTAL_PAGE, encoding='utf-8') as _f:
+            _html = _f.read()
+        _url = os.getenv('CUSTOMER_PORTAL_GAS_URL', '')
+        if _url:   # URL 은 .env 에서만 주입(field-record-config.js 와 같은 원칙). 없으면 화면을 내보내지 않는다
+            internal_pages['order-status.html'] = _html.replace('__CUSTOMER_PORTAL_GAS_URL__', _url)
+    except OSError:
+        pass
     pages = public_pages   # 이하 공개 배포 경로는 기존 로직 그대로
     _log(f'페이지 생성 완료 — 공개 {len(public_pages)}개 / 사내 {len(internal_pages)}개 '
          f'({time.time()-_t:.1f}s)')
@@ -1625,6 +1801,15 @@ if __name__ == '__main__':
     _log(f'사내 배포 단계 종료 ({time.time()-_t:.1f}s) — '
          f'{"성공" if internal_ok else "실패/건너뜀"}')
 
+    # 3-D) 거래처 조회 데이터 업로드 (2026-10-08 신설) — .env 의 CUSTOMER_PORTAL_CUSTS 가 있을 때만.
+    #   실패해도 이후 단계는 그대로 진행한다(사내 검토 단계라 차단성 경보 대상 아님).
+    try:
+        sys.path.insert(0, os.path.join(BASE_DIR, 'erp'))
+        from customer_portal_export import upload_from_env
+        upload_from_env(_log)
+    except Exception as e:
+        _log(f'  ⚠️ 거래처 조회 업로드 모듈 로드 실패(무시): {type(e).__name__}: {e}')
+
     # 4) GitHub Pages 업로드
     upload_ok = True
     if args.local:
@@ -1637,6 +1822,12 @@ if __name__ == '__main__':
         if not url:
             upload_ok = False
             _log('⚠ 업로드 실패 — 로컬 파일만 생성됨')
+        notify_upload_result(upload_ok)
+
+    # 5) 차단성 장애 점검 → 필요할 때만 메일 (2026-10-08 신설, decisions.md 2026-10-08)
+    _log('차단성 장애 점검...')
+    check_git_lock()
+    check_daily_report_file()
 
     _log(f'완료. (전체 소요 {time.time()-_START_TS:.1f}s)')
 
