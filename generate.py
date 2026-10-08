@@ -1374,7 +1374,7 @@ def _notify_blocking(key: str, ok: bool, title: str, detail: str = '', hint: str
             sent = _send_alert_mail(f'[CNC위키] 🔴 차단 — {title}', body)
         else:
             _log(f'  (차단 경보 {key} — 오늘 이미 발송, 생략)')
-        state[key] = {'ok': ok, 'detail': (detail or '')[:300],
+        state[key] = {'ok': ok, 'detail': '' if ok else (detail or '')[:300],   # 정상이면 비운다(10-08: 정상인데 「없습니다」가 남던 것 수정)
                       'at': now.strftime('%Y-%m-%d %H:%M:%S'),
                       'notified_on': today if sent else last}
         try:
