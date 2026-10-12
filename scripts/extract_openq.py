@@ -32,7 +32,11 @@ from openpyxl.utils import get_column_letter
 BASE = Path(__file__).resolve().parent.parent
 WIKI = BASE / 'wiki'
 CSV_OUT = BASE / 'outputs' / 'worklog_parsed' / 'open_questions.csv'
-TODAY = datetime.date.today()
+# 2026-10-12: 날짜 기준을 KST 로 고정 — Cowork VM(UTC)에서 돌리면 아침 08~09시 KST 에
+#   date.today() 가 전날(UTC)을 돌려줘 파일명·경과일이 하루 밀렸다(확인필요_대장_20261011.xlsx 사례).
+#   한국은 서머타임이 없어 고정 +9h 로 충분하다. zoneinfo 는 Windows 에 tzdata 가 없으면 실패하므로 쓰지 않는다.
+KST = datetime.timezone(datetime.timedelta(hours=9), 'KST')
+TODAY = datetime.datetime.now(KST).date()
 XLSX_OUT = BASE / 'wiki' / '_handoff' / f'확인필요_대장_{TODAY:%Y%m%d}.xlsx'
 
 MARK = re.compile(r'확인\s*필요|미확정|미확인|미판독|미해결')

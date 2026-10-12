@@ -3,6 +3,30 @@
 > 무엇을(What), 왜(Why), 출처(Where)를 **시간 역순(최신이 맨 위)** 으로 기록합니다.
 > 챗에서 결정된 내용도 반드시 여기로 옮겨야 Code/Cowork가 따라옵니다.
 
+## 2026-10-12: `scripts/extract_openq.py` 날짜 기준을 **KST 로 고정** — 확인 필요 대장 파일명·경과일
+
+- 결정: `TODAY = datetime.date.today()` → `datetime.datetime.now(KST).date()`(KST = 고정 +9 h). 대장 파일명 `확인필요_대장_YYYYMMDD.xlsx` · 「경과 일수」 · 표지 「기준일」이 모두 KST 날짜가 된다. 이미 생긴 `확인필요_대장_20261011.xlsx`(실제 10-12 KST 생성분)는 **그대로 둔다** — 이름 변경·삭제는 한경준님 판단
+- 근거:
+  - 10-12 주간브리핑(예약 작업)이 Cowork VM(기본 TZ = UTC)에서 08:2x KST(= 10-11 23:2x UTC)에 실행 → 대장이 `확인필요_대장_20261011.xlsx` 로 저장됨 [실측 — 파일 mtime 2026-10-12 08:18 KST]. 아침 브리핑은 매번 이 시간대(00:00~08:59 KST)라 **매주 하루씩 밀린다**
+  - 한경준님(2026-10-12): 「진행 해봐」(KST 전환 제안에 대한 답)
+  - `zoneinfo("Asia/Seoul")` 대신 고정 오프셋을 쓴 이유: Windows 파이썬은 tzdata 패키지가 없으면 zoneinfo 가 실패한다 · 한국은 서머타임이 없다
+  - 검증 [실측]: 문법 검사 통과 · 경계 4건 PASS(10-11 23:30 UTC → 10-12 · 14:59:59 UTC → 10-11 · 15:00 UTC → 10-12 · KST 입력 그대로) · TZ=UTC / Asia/Seoul / America/Los_Angeles 세 환경 모두 KST 날짜 반환. 스크립트 전체 실행은 하지 않음(대장 파일이 하나 더 생기므로) → 다음 월요일(10-19) 브리핑에서 `확인필요_대장_20261019.xlsx` 로 확인
+  - 📌 같은 패턴(`date.today()`)이 스크립트 26개에 있으나, 경준님 PC(Windows, KST)에서 도는 것은 영향 없음. Cowork VM 에서 도는 것은 브리핑 14번의 `scripts/archive_handoff.py`(300 KB 초과 시 드라이런) 1건 — 이번에는 고치지 않음(판단 대기)
+- 출처: 챗(Cowork) + 한경준님(2026-10-12)
+- 영향: `scripts/extract_openq.py`(사본 `.bak_20261012`) · 통합 아침 브리핑 B절 10번(프롬프트 변경 없음) · tasks.md 「예약 작업 2건 정비」 종결
+
+## 2026-10-08 (6): Windows 작업 `CNC_Daily_Report`(평일 16:00)를 **창 없이 실행** — wscript + VBS 래퍼
+
+- 결정: 작업 동작을 `cmd.exe /c scripts\daily_and_upload.bat` → `wscript.exe //B //Nologo scripts\run_daily_report_hidden.vbs`(같은 명령을 창 숨김·완료 대기로 실행, 종료 코드 전달)로 바꾼다. 트리거·계정·로그인 방식(Interactive / Limited)은 그대로. 백업 `outputs/CNC_Daily_Report_backup_20261008.xml`, 되돌리기 1줄은 `scripts/hide_daily_task_window.ps1` 머리말. `CNC_Daily_Report_OnBoot` · 07:50 시작프로그램은 이번 결과 확인 후 같은 방식 검토
+- 근거:
+  - 2026-10-08 16:00 실행이 중간에 끊김 — `Get-ScheduledTaskInfo` **LastTaskResult 3221225786 = 0xC000013A(Ctrl+C·창 닫기)** [실측 — 한경준님 PowerShell]. 1단계(일일보고 + 현황판) push 도중 끊겨 커밋 `402bcf1` 미푸시 · 2~4단계(캘린더 · overview · generate) 미실행
+  - 한경준님(2026-10-08): 「그렇게 해봐」(대안 「그대로 두고 창을 닫지 않기」 대비)
+  - S4U(「로그온 여부와 관계없이 실행」)로 바꾸면 창은 사라지지만 2026-09 사내 배포 1312 실패 전례가 있어 쓰지 않는다(project memory 「사내 공유폴더 배포 실패」)
+  - `.bat` 에 `pause` 등 입력 대기 없음 확인 [실측] — 숨김 실행 중 멈춤 위험 없음
+  - 📌 적용 스크립트 첫 시도가 일반 PowerShell 에서 「액세스 거부」였는데 `APPLIED` 를 찍었다(조용한 성공) → 반영 여부를 다시 읽어 확인하도록 수정 후 관리자 PowerShell 로 적용
+- 출처: 챗(Cowork) + 한경준님(2026-10-08)
+- 영향: Windows 작업 스케줄러 `CNC_Daily_Report` · `scripts/hide_daily_task_window.ps1`(신설) · `scripts/run_daily_report_hidden.vbs`(신설, 적용 스크립트가 생성) · 실행 상태는 화면 대신 run.log · 경보 메일 · 아침 브리핑으로 확인
+
 ## 2026-10-08 (5): 범위 ③ 사내 검토 — 조회 동작 확인 · 납기 지난 진행 건은 **「진행중」 그대로** 표시
 
 - 결정: 납기가 지난 미출하 건도 상태는 「진행중」, 납기는 원래 날짜 그대로 보여 준다(별도 표시·숨김 없음). 화면 폭은 680 → 1280 px

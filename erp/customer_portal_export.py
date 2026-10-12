@@ -113,16 +113,22 @@ def _post(obj, timeout=60):
     #   업로드(큰 본문)가 doGet 응답을 받아 「성공」으로 찍힌 사례가 있어, 경로를 눈에 보이게 한다.
     #   Apps Script 정상 경로 = POST /exec → 302 → GET script.googleusercontent.com/macros/echo…
     from urllib.parse import urlparse
-    first = requests.post(url, data=json.dumps(obj, ensure_ascii=False).encode('utf-8'),
-                          headers={'Content-Type': 'text/plain; charset=utf-8'},
-                          timeout=timeout, allow_redirects=False)
-    diag = f'POST {first.status_code}'
-    resp = first
-    if first.status_code in (301, 302, 303, 307, 308):
-        loc = first.headers.get('Location', '')
-        diag += f' → GET {urlparse(loc).netloc}{urlparse(loc).path[:30]}'
-        resp = requests.get(loc, timeout=timeout)
-        diag += f' {resp.status_code}'
+    diag = 'POST'
+    try:
+        first = requests.post(url, data=json.dumps(obj, ensure_ascii=False).encode('utf-8'),
+                              headers={'Content-Type': 'text/plain; charset=utf-8'},
+                              timeout=timeout, allow_redirects=False)
+        diag = f'POST {first.status_code}'
+        resp = first
+        if first.status_code in (301, 302, 303, 307, 308):
+            loc = first.headers.get('Location', '')
+            diag += f' → GET {urlparse(loc).netloc}{urlparse(loc).path[:30]}'
+            resp = requests.get(loc, timeout=timeout)
+            diag += f' {resp.status_code}'
+    except requests.exceptions.RequestException as e:
+        # 2026-10-08: 구글 쪽 응답 지연(ReadTimeout 30 s)으로 --view 가 traceback 을 내고 죽은 사례 — 실패로 돌려준다
+        _post.last_diag = diag + ' → ' + type(e).__name__
+        return None, f'연결 실패({type(e).__name__}) — 구글 응답 지연일 수 있음, 잠시 후 다시 시도'
     _post.last_diag = diag
     try:
         return resp.json(), ''
