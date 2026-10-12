@@ -15,10 +15,11 @@
   - 도입 후: 2026-09-29 ~ (마지막 데이터일)
 출력: wiki/reports/09_업무일정/워크숍_셋업당개수_지표.csv (UTF-8 BOM) + 화면 요약
 실행: python scripts\\parse_worklog.py              ← 연도 인자 없이(전체). 연도를 주면 jobs_all 이 그 해만으로 덮어써진다
-      python scripts\\setup_metrics_from_worklog.py
+      python scripts\\setup_metrics_from_worklog.py            ← 오늘(KST) 진행분 자동 제외
+      python scripts\\setup_metrics_from_worklog.py --to 2026-10-15   ← 10-16 최종 비교용
 주의: 오늘 날짜는 작업일지가 덜 찼을 수 있다 — 하루 끝난 뒤 값으로 비교할 것
 """
-import csv, datetime as dt, os
+import csv, datetime as dt, os, sys
 from collections import defaultdict
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -74,6 +75,17 @@ def summarize(days, lo, hi, excl=()):
     return out
 
 
+def parse_to(argv):
+    """--to YYYY-MM-DD : 비교 마지막 날. 생략하면 「오늘(KST) 이전의 마지막 작업일」.
+    2026-10-12 추가 — 진행 중인 오늘 작업일지가 섞여 값이 낮게 나오던 문제(10-12 화면 요약 FG 6.5 vs 마감일 기준 6.6)."""
+    for i, a in enumerate(argv):
+        if a == '--to' and i + 1 < len(argv):
+            return dt.date.fromisoformat(argv[i + 1])
+        if a.startswith('--to='):
+            return dt.date.fromisoformat(a.split('=', 1)[1])
+    return None
+
+
 def main():
     days = load()
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
@@ -82,13 +94,22 @@ def main():
         w.writeheader()
         w.writerows(days)
     last = max(dt.date.fromisoformat(r['날짜']) for r in days)
-    print(f'마지막 작업일: {last}')
+    kst_today = dt.datetime.now(dt.timezone(dt.timedelta(hours=9))).date()
+    to = parse_to(sys.argv[1:])
+    if to is None:
+        done = [dt.date.fromisoformat(r['날짜']) for r in days if dt.date.fromisoformat(r['날짜']) < kst_today]
+        to = max(done) if done else last
+        note = f'(오늘 {kst_today} KST 진행분 제외 — 바꾸려면 --to YYYY-MM-DD)'
+    else:
+        note = '(--to 지정)'
+    print(f'마지막 작업일: {last} · 비교 끝: {to} {note}')
     for name, lo, hi, ex in [('도입 전 9/1~9/26 (F수리 3일 제외)', *BEFORE, EXCLUDE),
-                             (f'도입 후 9/29~{last.month}/{last.day}', AFTER_FROM, last, ())]:
+                             (f'도입 후 9/29~{to.month}/{to.day}', AFTER_FROM, to, ())]:
         print(name)
         for m, (n, s, q, k) in summarize(days, lo, hi, ex).items():
-            print(f'  {m}: 일수 {n} | 셋업/일 {s:.1f} | 개/일 {q:.1f} | 개/셋업 {k:.1f}')
-    print(f'저장: {OUT}  ({len(days)}행)')
+            print(f'  {m}: 일수 {n} | 셋업/일 {s:.1f} | 개/일 {q:.1f} | 개/셋업 {k:.1f}'
+                  f'  (셋업 합 {round(s * n)} · 개 합 {round(q * n)})')
+    print(f'저장: {OUT}  ({len(days)}행 — CSV 는 진행 중인 날도 포함)')
 
 
 if __name__ == '__main__':

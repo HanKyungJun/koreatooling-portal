@@ -190,6 +190,7 @@
 ### 제조사 카탈로그 (Tool Grinding 1차 출처, 2건)
 
 - **[VEN-NORTON-WINTER-2023]** Saint-Gobain Norton Winter — *NORTON WINTER PRECISION TECHNOLOGY TOOL GRINDING* (Catalog, 2023, 162p). https://media.saint-gobain.com/Abrasives/Norton/Sweden/2023/NORTON-WINTER-TOOL-GRINDING/ — **본 위키 휠RPM 검증의 결정적 1차 출처**. 초경(WC-Co) + Resin Bond Diamond + ANCA / Walter / Rollomatic / SAACKE 장비에서의 실측 case study 8건 (Vc 17-22 m/s, p.18~34 / p.39~43) + HSS + Resin Bond CBN case 2건 (Vc 35-40 m/s, p.35 / p.43). 제품 라인업 (Q-Flute / V-Pro / V-PRIME / μicro+ / K-시리즈 / KSS-시리즈) + 5종 본드 + 형상 12+종 + 기계 호환표. [[휠RPM-정책-검증-노트]] 핵심 인용.
+- **[VEN-NORTON-WINTER-DRESSING]** Saint-Gobain Norton Winter — *NORTON WINTER Dressing Tools* (Catalog, 파일명 기준 2021 EN — 본문에 판 연도 표기 없음). https://www.nortonabrasives.com/sites/mac3-acs-norton/files/2024-07/NORTON_WINTER_catalogue_DressingTools_2021_EN_0.pdf — 로터리 드레서(프로파일 롤러·드레싱 디스크) 카탈로그. 변수 a_ed(반경 드레싱 절입, 패스당) · f_ad(축방향 드레싱 이송) · U_d(중첩비) · q_d(드레서/휠 속도비, p.20 — 산·골 높이 제어 변수). 적용 사례 pp.47~50: a_ed 2~4 μm · q_d 0.3~0.7 · U_d 2~9(사례값). 권장 범위 절(pp.100~102)은 미확인. ⚠️ 사내 레진 다이아 휠 스틱 드레싱과 방식이 다름 — 변수 정의 참고용. [[연삭-테스트-방법]] §4.5 인용 (2026-10-12 등재)
 - **[VEN-NORTON-SUPERABRASIVES]** Saint-Gobain — *Norton Diamond and cBN Superabrasives*. https://www.saint-gobain-abrasives.com/sga-common/files/document/21743_0.pdf — Saint-Gobain Abrasives 슈퍼아브레시브 종합 카탈로그.
 
 ### 한국 동종 제조사 (Komachine 등재 5건)
@@ -208,6 +209,7 @@
 ### 제조사 1차 — Tool Grinding 운영 방법론 (2026-05-18 등재)
 
 - **[VEN-ANCA-GRAF2011]** Graf, W. (2011). *효과적인 연삭 테스트 구성 방법 (How to run a Grinding Test)*. ANCA *e-Sharp News*, December 2011. Winterthur Technology Group. https://machines.anca.com/e-sharp-news/december-2011/how-to-run-a-grinding-test — **6단계 연삭 테스트 방법론** (목적→준비→테스트→평가→기록→공유) + Q'w 공식 + 권장값 매트릭스 + 드레싱 변수 + Load 미터 단계 규칙. 글로벌 연삭재 제조사 CMO 1차 자료. [[연삭-테스트-방법]] 본문 출처.
+  - **같은 기사 인쇄판 (2026-10-12 확인)**: ANCA *The Sharp Edge*, Issue 8 (2011), p.19 「How to Run a Grinding Test」 — https://machines.anca.com/Anca.CNC/media/Images/The%20Sharp%20Edge/ANCA_SharpEdge_Issue8_2011.pdf . 「Good engineering is to change only one parameter at a time, observe changes, evaluate and then make changes.」 문장 원문 확인. 온라인판(e-Sharp News 2011-12)과 같은 기사 — 별도 ID 를 만들지 않는다
   - **Evaluate 단계 핵심 원칙(2026-07-10 재확인)**: "good engineering is to change only one parameter at a time" — 재현 가능한 비교를 위해 1회 테스트당 변수 1개만 변경. `테스트-보고서-표준양식` §7·`AL엔드밀-호닝-비교` 사례(호닝·코팅·Overhang·절삭속도 동시 변경으로 개별효과 분리 불가)의 근거로 인용.
   - **Record 단계 권장 기록 항목(연삭 전용)**: 휠속도 vc, 드레싱 절입 ad, 이송 vw, 재료제거율 Q'w, 평균 칩두께 hm, 공격성 인자 Fa, 드레싱 비율 qd, Amp 부하(%), 사이클타임 tc. hm·Fa·qd/ad는 현 표준양식 §5에 없음 — 연삭(휠) 테스트 기록 시에만 추가 필요, 절삭공구(엔드밀·드릴) 비교에는 해당 없음.
   - **Preparation 단계 체크리스트**: 노즐 손상 확인, 냉각수 온도 조·석 2회 측정, air grinding 시간 확인(전체 사이클의 70~80%가 공회전인 경우가 흔함 — 사이클타임 단축은 이송 증가보다 공회전 제거가 먼저).
@@ -322,6 +324,7 @@
 ## 0-L. 공작기계 정밀도·런아웃 표준 (2026-06-12 등재)
 
 - **[STD-ISO230-7]** ISO 230-7:2015 — *Test code for machine tools — Part 7: Geometric accuracy of axes of rotation*. International Organization for Standardization, Geneva. 회전 축 런아웃·TIR·축 방향 흔들림 측정 표준. [[런아웃-편심]] §3 허용 기준 인용.
+- **[VEN-BIGDAISHOWA-RUNOUT-2026]** BIG DAISHOWA (2026). *Combat Rising Carbide Costs with Better Tool Holders* (기술 블로그, 2026-03-13 갱신본). https://www.bigdaishowa.com/en/node/1652 — 런아웃 0.0005″(≈12.7 μm) TIR 에서 초경 엔드밀 수명 약 50% 감소 · 0.0001″(≈2.5 μm) 줄일 때마다 수명 약 10% 증가 · Ø10 4날 초경 엔드밀 시험에서 15.2 → 2.0 μm 로 줄여 절삭 길이 약 30% 증가(피삭재·홀더 조건 미기재). ⚠️ 홀더 제조사 마케팅 자료 — 경향 참고용. [[치수불량]] 런아웃 점검 항목 인용 (2026-10-12 등재)
 
 ## 0-M. 원통연삭 방식 — 기초 정의 (2026-07-01 등재)
 
@@ -372,7 +375,7 @@
 ### 사내 견적서·비용지원 확인서
 
 - **[VEN-SWEMC-24H]** ㈜에스엠작업환경측정센터 — *2024년도 하반기 작업환경측정 견적서 (코고툴㈜)*, 견적일 **2024-02-27**. 사내 보관: `raw/작업환경측정/24년 하반기 견적서/24년 하반기 작업환경측정 견적서 - 코고툴(주) 비용지원O.pdf` (비용지원 O/X 2종 보관, 2026-08-21 판독). 기관 정보 — 대표 성시선, 등록번호 611-88-00564, 경기도 안성시 공도읍 서동대로 4520 A동 201호, 담당 한경준 과장. **측정 항목 4건(항목명 명시)**: 범용가공 — 기타광물성분진(여과채취법/중량분석법) 1건, **금속류(이산화티타늄·크롬·니켈)**(여과채취법/**ICP-OES**) 1건, **텅스텐**(**여과채취법-호흡성**/ICP-OES) 1건 / CNC가공 — 금속가공유(여과채취법/추출법 PTFE) 1건. 기본관리비 1~49인 미만 1건. ★ **이 문서의 가치**: ①**측정기관 변경 시점을 2024년으로 확정**하는 근거(2023년까지 (주)사랑작업환경연구소) ②2026년 견적서의 축약 표기 "금속/알카리류 ICP-OES 2건"이 **①TiO₂·Cr·Ni 묶음 1건 + ②텅스텐 단독 1건**임을 확정하는 대조 자료(텅스텐은 호흡성 채취라 별도 건). 금액 미기재(§4). 신뢰도: **실측 검증**.
-- **[VEN-SWEMC-26H]** ㈜에스엠작업환경측정센터 — *2026년도 하반기 작업환경측정 견적서 (코고툴)*, 문서번호 **SWEMC 26하-051**, 시행일자 **2026-08-10**, 유효기간 발행일로 30일(→ 2026-09-09). 사내 보관: `raw/작업환경측정/26년 하반기 견적서-코고툴.pdf` (2026-08-21 판독). 고용노동부지정 작업환경측정/보건관리전문기관. 측정 담당자 **오대성 010-3440-0086**, 수신 코고툴 / 참조 한경준 과장. **유해인자별 측정 건수**: 분진(중량분석법 PVC) 1, 오일미스트(추출법 PTFE) 1, 금속/알카리류(**ICP-OES**) **2**, 소음(소음노출량계) **0** ← ⚠️ **2026-08-21 실제 측정에는 소음이 포함됐으나 견적 항목 횟수는 0** (청구 내역 대조 필요, 미해소). 유해인자 소계 4건 + 사업장 규모별 기본관리비(50인 이하) 1일. 금액 미기재(§4). 신뢰도: **실측 검증**.
+- **[VEN-SWEMC-26H]** ㈜에스엠작업환경측정센터 — *2026년도 하반기 작업환경측정 견적서 (코고툴)*, 문서번호 **SWEMC 26하-051**, 시행일자 **2026-08-10**, 유효기간 발행일로 30일(→ 2026-09-09). 사내 보관: `raw/작업환경측정/26년 하반기 견적서-코고툴.pdf` (2026-08-21 판독). 고용노동부지정 작업환경측정/보건관리전문기관. 측정 담당자 **오대성 010-****-******, 수신 코고툴 / 참조 한경준 과장. **유해인자별 측정 건수**: 분진(중량분석법 PVC) 1, 오일미스트(추출법 PTFE) 1, 금속/알카리류(**ICP-OES**) **2**, 소음(소음노출량계) **0** ← ⚠️ **2026-08-21 실제 측정에는 소음이 포함됐으나 견적 항목 횟수는 0** (청구 내역 대조 필요, 미해소). 유해인자 소계 4건 + 사업장 규모별 기본관리비(50인 이하) 1일. 금액 미기재(§4). 신뢰도: **실측 검증**.
 - **[GOV-KOSHA-2025H]** 한국산업안전보건공단 — *작업환경측정 비용지원 신청결과 확인서 (50인 미만 사업장)*, 사업년도 **2025년 하반기**, 발급 **2025-07-18**. 사내 보관: `raw/작업환경측정/25년 작업환경측정 지원 사업.pdf`. 사업장관리번호 11386224350, 관할노동관서 평택 / 관할 경기남부지사. 지원 비율 — 기존 측정 사업장 **공단 산정금액의 80%(최대 40만원 한도)**, 신규 측정 사업장(`22년부터 미실시) 첫 회 최대 100만원. 유의사항 — 예산 한도 내 청구 순 조기마감, 측정기관 선택은 공단 미관여. 신뢰도: **실측 검증**.
 - **[GOV-KOSHA-2026H1]** 한국산업안전보건공단 — *작업환경측정 비용지원 신청결과 확인서 (50인 미만 사업장)*, 사업년도 **2026년 상반기**, 발급 **2026-01-12**. 사내 보관: `raw/작업환경측정/26년 20260112102510513.pdf`. 지원 비율 동일(기존 80%·최대 40만원 / 신규는 `23년부터 미실시 기준 첫 회 최대 100만원 — 당사는 **기존 측정 사업장**). ⚠️ **반기 불일치 (미해소)**: 본 확인서는 **상반기**인데 실제 측정([VEN-SWEMC-26H], 2026-08-21)과 견적서는 **하반기** — 지원금 청구 시 거부 위험, **하반기 확인서 별도 발급 여부 공단 확인 필요**. 신뢰도: **실측 검증**.
 - **[DOC-COGO-CHEM-2026]** 코고툴(주) — *26년 코고툴_화학물질현황*, 사내 작성 xls. 사내 보관: `raw/작업환경측정/26년 코고툴_화학물질현황.xls` (2026-08-18 pandas 파싱, 2026-08-21 재확인). 등재 2건 — ①**MACRON 2429S-8**(비수용성 절삭유, 금속가공유 용도, 월 취급량 **200 ℓ**) ②**초경합금**(원자재, 월 취급량 **0.3 ton**, 이산화티타늄·크롬·니켈·텅스텐 함유). ⚠️ 2022·2023년 결과보고서 §다(공정별 화학물질 사용 상태)에는 절삭유만 등재돼 있었고 초경합금은 없었음 — 서식·판단 기준 차이로 **추정**(미확정). 신뢰도: **실측 검증**(사내 원본).
@@ -407,6 +410,8 @@
 - **[VEN-ANCA-MGMTSUITE-BROCHURE]** ANCA Pty Ltd — *Management Suite (RedaX / Tool Management / Wheel Management)* 공식 브로셔. https://machines.anca.com/Anca.CNC/media/Images/Brochures/Management-Suite-Brochure-English.pdf (WebFetch, 2026-09-18 접근). **RedaX = 실시간 기계·생산 모니터링 솔루션**(원어 설명: "Monitors machine and production in real time and deliver up to date information") — 사무실·원격지 어디서든 생산 현황 확인 가능. **기술 요건**: 장비별 **OPC UA 서버** 설치(데이터 브로드캐스트) + 데이터 수집·통합용 **OPC 클라이언트** + 웹 브라우저로 열람(사내 서버 접속 필요, "if you are logged into the company's server"). Tool Management·Wheel Management는 RedaX와 **별도의 독립 서버 기반** 구성요소이며, 세 기능 모두 사용자 로그인·권한 관리를 공유하고 운영자는 장비 화면 포털에서 접근. ⚠️ **가격·PC 사양·지원 장비 대수 상한은 브로셔에 미기재** — ANCA 스토어에 "Management Suite - OPC-UA License for Redax" 판매 페이지(https://shop.anca.com/products/management-suite-opc-ua-license-for-redax)가 존재해 **라이선스 단위 판매 상품임은 확인**되나 robots.txt 차단으로 가격 확인 불가 — **비용은 ANCA 공식 견적 문의 필요**(§3.3 견적 요청과 함께 진행 권장). 신뢰도: **제조사 기준**(요건) / 비용은 **확인 필요**. [[projects/ANCA-장비-투자-생산력강화-검토]] §3.4·§3.5 본문 출처.
 - **[VEN-EHWA-GRINDING-2022]** 이화다이아몬드공업(주) (Ehwa Diamond Industrial Co., Ltd.) — *Grinding 2022* 종합 카탈로그 (108p, 영문·국문 혼용). 사내 보관: `raw/Catalog/이화다이아_Grinding_2022web.pdf` (Adobe InDesign CS5 출력 **이미지 PDF**, 텍스트 레이어 0자, MD5 `ae95ae8b7d437303286e29022a9405ae`, 작성일 2022-04-28). **2026-08-21 `tesseract-ocr-kor` 설치 후 150 dpi 렌더링 → 108페이지 전수 OCR 판독** (2026-05-18 "OCR 불가" 기록 해소). 주요 확보 내용 — **p.102 다이아몬드 휠 권장 원주속도**: Resinoid bond 습식 1,400~1,600 m/min(**23.3~26.7 m/s**)·건식 900~1,200 m/min(15.0~20.0 m/s), Metal bond 습식 1,000~1,800 m/min·건식 600~900 m/min (표 헤더는 원본 이미지 육안 판독으로 확정) + 그릿별 권장 절입(#100~120 0.02~0.03 mm / #140~200 0.01~0.02 mm / **#230 이상 0.01 mm 이하**) + 표면조도 2단 그릿 조합(#100→#270 / #120→#325 / #140→#400 / #600) / **p.104 CBN 휠**: Resinoid 습식 1,750~1,850 m/min(**29.2~30.8 m/s**)·건식 900~1,200 m/min, 단서 — 쿨런트 압력 충분 시 **13,000 ft/min(= 66.0 m/s)까지 상향 가능** / **★ p.045 ANCA FX7(19 kW) 초경 실적용 사례**: Carbide Ø12~50 mm LOF 2날 K10, **휠 원주속도 18 m/s**, 이송 120 mm/min, 절입 2.4 mm, **본드 Hybrid / New porosity hybrid**(스핀들 부하 비교 차트 범례 — 가공 80개 시점 Hybrid 약 63% vs New porosity hybrid 약 41%, 그래프 판독 추정값). ⚠️ **정정(2026-08-21 재검증)**: 최초 판독 시 이 사례의 휠을 `VB-1A1`(연삭)·`R/D-RR`(드레싱)으로 기록했으나 **오귀속**이었다 — p.045는 4개 블록 2단 배치 페이지이고 OCR이 단 구분을 잃어 아래쪽 **Tap 블록의 Specification 표**가 붙은 것이다(원본 이미지 육안 재확인). ANCA FX7 블록에는 휠 형번 표가 없으며 `VB-1A1`은 **Tap 연삭용**, `MD-1V1`은 **Rotary burr용**이다. ⚠️ 본드가 레진이 아니라 **하이브리드**이므로 사내(레진) 정책의 **1차 근거로 쓸 수 없다** — 정황 보강용 / **p.043 초경·PCBN 인서트 외주 연삭**: Wendt 715 WAC Quattro + Carbide insert **20 m/s**(RD-11A2), Agathon + PCBN insert **18 m/s**(VD-11A2), D46 고온 레진 본드 & D40 하이브리드 본드 / **휠 형번 코드 체계(2026-08-21 역산 확보)**: 접두 2자리 = 본드 + 연삭재 — `RD`=Resin+Diamond, `VD`=Vitrified+Diamond, `RB`=Resin+CBN, `VB`=Vitrified+CBN, `MD`=Metal+Diamond, `MB`=Metal+CBN (근거 p.039·043·045·047·051·053, 신뢰도 추정값). ★ **`RD` 계열 존재는 이화가 사내와 동일한 레진+다이아몬드 조합 라인업을 보유함을 뜻하며**, [[comparisons/홍익다이아-vs-이화다이아]] §3.2의 "Ehwa는 Vitrified·CBN 위주, Resin·Diamond 미확인" 판단을 정정하게 함 / p.010 캠샤프트 120 m/s·p.011 크랭크샤프트 80 m/s·p.020 기어 앵귤러 25~80 m/s·p.028 베어링 30~80 m/s(전부 **비트리파이드 CBN + 전용 대형 연삭기** — 사내 조건 비해당, 인용 금지). ⚠️ **Vmax(최대 안전 원주속도, ISO 12413:2019 §6.6)는 본 카탈로그에도 미기재** — 수록값은 전부 "recommended peripheral speed"(권장 작업속도). ⚠️ **타사 제품 자료**: 사내 보유 휠은 홍익다이아(HID) 제품이므로 **직접 적용값이 아니라 교차참조**이며, 한경준님 판단(2026-08-21, 신뢰도 **사내 경험값**) — 홍익다이아는 이화다이아를 모델로 한 **하위 모델**로 보이므로 이화 상한은 **보수적으로 하향 적용**할 것. 신뢰도: **제조사 기준**(수치) / OCR 판독 정확도는 표 헤더 육안 대조로 보정. [[tools/wheels/catalog/이화다이아-카탈로그]] §4.2~4.4, [[tools/wheels/index]], [[tools/wheels/스택-1-1]], [[tools/wheels/스택-1-2]], [[machines/anca-cnc-tool-grinder]] 본문 출처.
 
+
+- **[VEN-UNITEDGRINDING-REGRIND-2021]** UNITED GRINDING (2021). *Regrinding Tools Yourself: Save Time and Money* (Motion Blog, 2021-09-28, 2022-01-17 수정). https://www.grinding.ch/en/united-grinding/motion/motion-blog/article/news/regrinding-tools-yourself-save-time-and-money/ — 「많은 엔드밀은 최소 3회 재연삭할 수 있다」 · 소경(5~6 mm) 초경 엔드밀은 재연삭 비권장. Walter·Ewag 모회사 자료. [[공구-수명-관리]] 재연삭 횟수 인용 (2026-10-12 등재)
 
 ### 2-R. 사내 정비 원본 자료 (repairs 백필, 2026-08-24 신규)
 
@@ -444,12 +449,23 @@
 > 형식: 저자(연도). 제목. *저널명*, 권(호), 페이지. DOI.
 
 - *(자료 추가 예정 — 인용 ID는 [ACA-YYYYY-키워드] 형식으로 부여)*
+- **[ACA-GARCIA2026-JMMP]** García Álvarez, Á., Lin, H.-Y., Yau, H.-T., Tran, T., & Liang, S. Y. (2026). Tool Condition Diagnostics Flanked by Force and Acceleration Correlation in Machining. *Journal of Manufacturing and Materials Processing*, 10(10), 421. https://doi.org/10.3390/jmmp10100421 — §2.2 에서 ISO 8688-2 수명 판정 기준을 「균일 플랭크 마모 0.3 mm · 국부(최대) VBmax 0.5 mm」로 인용(참고문헌 [19] = ISO 8688-2:1989). 오픈 액세스. [[공구-수명-관리]] §2.3 인용 (2026-10-12 등재)
+- **[ACA-EQUETER2020-MSF]** Equeter, L., Devlamincq, R., Ducobu, F., Dutoit, C., & Dehombreux, P. (2020). Use of Longitudinal Roughness Measurements as Tool End-of-Life Indicator in AISI 1045 Dry Longitudinal Turning. *Materials Science Forum*, 986, 93–101. — ISO 3685 의 「가장 흔히 쓰는」 수명 기준을 VBB 0.3 mm / VBBmax 0.6 mm 로 인용. [[공구-수명-관리]] §2.3 인용 (2026-10-12 등재)
 
 ## 5. 산업 보고서 / 뉴스 (Industry Reports & News)
 
 - **[IND-MMS]** Modern Machine Shop — https://www.mmsonline.com (영문 주간지)
 - **[IND-MFG]** MFG Tech Update / 한국기계산업진흥회 — 국내 가공 산업 동향
 - *(인용 시 발행일·기사명·URL 명기)*
+
+### 재연마 서비스 사이트 벤치마킹 · 개인정보 (2026-10-12 등재)
+
+- **[INT-KTC-B2B-SCREEN-20261012]** 사내 — 회사 운영 거래처 B2B(`코리아툴링.com/jsp/common/main.jsp`) 테스트 계정 메인 화면 캡처 1장(한경준님 제공, 2026-10-12). 메뉴·기능 판독용. ⚠️ 화면 속 담당자 이름·연락처는 위키에 옮기지 않음. 로그인 뒤 다른 화면 미확인. [[projects/B2B-사이트-공개전-점검-2026-10]] §3-A
+- **[IND-IMD-SANDVIK-RECON-2026]** Industrial Machinery Digest (2026-04-13). *New digital cutting tool reconditioning portal puts customers fully in control*. https://www.industrialmachinerydigest.com/fabrication/cutting-systems/new-digital-cutting-tool-reconditioning-portal-puts-customers-fully-in-control — Sandvik Coromant 재연마 포털: 품번·수량 입력 즉시 견적 · 운송비 부담(대부분 지역) · 전용 박스 · 담당 거점·담당자 표시 · 공구별 재연마 횟수 이력 · 21일 납기 목표. [[projects/B2B-사이트-공개전-점검-2026-10]] §2
+- **[VEN-OSG-REGRIND]** OSG USA — *Regrind Services*. https://osgtool.com/regrinds/ — 문의 폼 · Express Service · 재코팅 5종 · 타사 공구 재연마 · 원제조사 사양·검사 기준. 납기·조회 안내 없음
+- **[VEN-IMCO-RECON]** IMCO Carbide Tool — *Reconditioning*. https://www.imcousa.com/reconditioning — 지시서 동봉 방식 · 표준 재연마 사양(면 연삭 최소 .010″ · 외경 감소 최소 .020″ · 끝단 후퇴 최소 .030″ · 반경 런아웃 최대 .001″ TIR) · 최소 수량 없음 · 신품 대비 40% 이상 절감 · 타사 공구
+- **[IND-KIDD-REGRIND-2025]** 산업일보 (2025-10-29). *마모된 드릴·엔드밀 절삭 날, 제조현장서 연마한다*. https://kidd.co.kr/news/243735 — 현장 재생 연마기 업체 기사. 「제조사에 재연마를 맡기면 통상 일주일」 언급(업계 통념 수준 — 보조 참고)
+- **[IND-LAWTALK-PRIVACY-2022]** 김동우 변호사 (2022-01-15, 이데일리 기고 → 로톡). *개인정보처리방침, 어떻게 작성할까*. https://www.lawtalk.co.kr/posts/38307 — 개인정보보호법 제30조 처리방침 수립·공개 의무 · 필수 기재 10항목. ⚠️ 법령 원문 아님(5순위 성격) — 공개 전 법령·전문가 확인
 
 ## 6. 핸드오프 시스템 자체의 근거
 
@@ -464,6 +480,15 @@
 ## 7. 내부 위키 페이지 맵 (역참조)
 
 > 위키 페이지가 외부 출처를 인용할 때, 위 ID로 참조하면 자동으로 역참조 가능.
+
+### 2026-10-12 위키 검수 출처 보강 페이지 매핑
+
+- [[projects/B2B-사이트-공개전-점검-2026-10]] → [IND-IMD-SANDVIK-RECON-2026] · [VEN-OSG-REGRIND] · [VEN-IMCO-RECON] · [IND-KIDD-REGRIND-2025] · [IND-LAWTALK-PRIVACY-2022]
+- [[연삭-테스트-방법]] → [VEN-NORTON-WINTER-DRESSING]
+- [[templates/테스트-보고서-표준양식]] → [VEN-ANCA-ENDMILL-GUIDE] (§8-6 측정→보정→재측정)
+- [[공구-수명-관리]] → [ACA-GARCIA2026-JMMP] · [ACA-EQUETER2020-MSF] · [VEN-UNITEDGRINDING-REGRIND-2021]
+- [[초경]] → [STD-ISO4499-2]
+- [[치수불량]] → [VEN-ANCA-ENDMILL-GUIDE] · [VEN-BIGDAISHOWA-RUNOUT-2026]
 
 ### 사내 정비 기록 (2-R 섹션) 페이지 매핑 (2026-10-07 등재)
 
