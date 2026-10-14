@@ -3,6 +3,47 @@
 > 무엇을(What), 왜(Why), 출처(Where)를 **시간 역순(최신이 맨 위)** 으로 기록합니다.
 > 챗에서 결정된 내용도 반드시 여기로 옮겨야 Code/Cowork가 따라옵니다.
 
+## 2026-10-14 (2): CADCraft(무료 오픈소스 2D CAD) **시험 사용** · Claude 연동(MCP) · 한국어 화면은 **10-21 까지 공식 릴리스 대기**
+
+- 결정: ① CADCraft v0.6.2(Windows x64 portable)를 경준님 PC 에서 **시험용으로만** 쓴다 — 기존 도면 원본은 저장하지 않는다 ② Claude 데스크톱에 MCP 서버 `cadcraft`(`cadcraft-cli.exe mcp`, 화면 없는 방식)를 등록해 Claude 가 도면을 그리고·조회하고·저장한다 ③ 한국어 화면은 직접 빌드하지 않고 **10-21(화)까지 공식 릴리스를 기다린다** — 없으면 그때 개발본 빌드 여부 판단
+- 근거:
+  - 조사(챗): 「AI CAD」 중 Zoo Design Studio·AdamCAD 는 문장→3D 단일 부품 수준(엔드밀 형상 불가), CADCraft 는 오토캐드 2D 재구현(Rust, MIT/Apache-2.0, 2026-10-08 첫 공개) + MCP 내장 [제조사 기준 — GitHub README · docs/mcp.md] · About 창 Models 탭: Anthropic Claude Opus 5.5 커밋 25건(+70,529줄) [실측 — 화면]
+  - 실측: 시험 DXF 한글(TTF)·치수 정상 · 기존 DWG 는 SHX 추정 작은 메모만 깨짐 · MCP 로 사각형·치수 작성/조회/DXF 저장 성공
+  - 한국어: v0.6.2 태그에 `ko.tsv` 없음 · main(10-13)에 1,235항목 [실측 — git 태그 대조]. 릴리스 5회/5일(10-08~10-13 KST)이나 다음 릴리스 공지는 없음 → 기다리는 비용은 거의 없고(명령어 동일) 직접 빌드는 비용·유지 부담이 큼. 한경준님 「기다리지」
+- ⚠️ 주의: 초기 개발 단계(원작자 표현 「early, fast development」) — 실무 도면 원본 편집·대외 제출용으로 쓰지 않는다. 다음 출시에 한국어가 들어간다는 보장은 없다
+- 출처: 챗 + Cowork + 한경준님(2026-10-14)
+- 영향: Claude 데스크톱 `claude_desktop_config.json`(mcpServers.cadcraft, 백업 생성) · `outputs/add_cadcraft_mcp.py` · tasks 「CADCraft 시험 사용」 · 예약 알림 `trig_011WLUQeoLkdYpRa9oxeSBwy`(10-21 09:00 KST)
+
+## 2026-10-14: `daily_and_upload.bat` 5단계 **rc 판정 수정** — 리다이렉트 실패가 `rc=0` 으로 찍히던 결함 · 실패 시 프로세스 목록 자동 기록
+
+- 결정: 5단계를 `set "RC5=OK"` → `(…) 2>> step5_err.log || set "RC5=FAIL"` → `EL5=%ERRORLEVEL%`(FAIL 인데 0 이면 1 로 올림) 순서로 바꾼다. rc ≠ 0 이면 `step5_err.log` 에 `[step5-fail] 날짜 시각 rc=N` 줄과 **python·cmd·wscript·powershell 프로세스 목록**(PID·부모 PID·시작 시각·명령줄)을 남긴다. 1~4단계와 종료 코드 전달(`exit /b %RC5%`)은 그대로. ASCII·CRLF(49줄). 백업 `scripts/daily_and_upload.bat.bak_20261014`. 검증 도구 `scripts/test_step5_rc.ps1`(신규 — 임시 폴더에서 3가지 경우를 재현, 실제 로그는 안 건드림)
+- 근거 [실측]:
+  - 2026-10-14 OnBoot: `step5_err.log`(07:58:24 KST, 81 byte) = 「The process cannot access the file because it is being used by another process.」 → **5단계 실패 원인 = generate.log 를 다른 프로세스가 쥐고 있음(공유 위반)** 확정. 쥐고 있는 주체는 미확정
+  - 같은 회차 run.log `[step5-start] 7:58:24.88` → `[step5-end] 7:58:24.89 rc=0` — 10 ms 만에 끝났고 generate.log 에 5단계 기록 0줄인데 `rc=0`. cmd 는 리다이렉트 실패 때 ERRORLEVEL 을 바꾸지 않고 `||` 분기만 실행한다 [추정값 — cmd 동작 일반론, 위 실측과 부합. 수정본은 `test_step5_rc.ps1` 사례 C 로 확인 예정 — Cowork VM 에는 cmd 가 없어 직접 실행 못 함]
+  - ⇒ decisions **2026-10-13** 의 「`LastTaskResult` 판정 불변」은 틀렸다. 괄호로 감싼 뒤 실패가 0 으로 바뀌었다(10-13 아침은 감싸기 전이라 `LastTaskResult 1`). 진단 줄이 실패를 가린 **조용한 성공**
+  - 상주 프로세스 후보: 시작프로그램 bat 의 `start "cnc-wiki Flask"/"cnc-wiki Watcher" … >> generate.log 2>&1`. 단 같은 상주 상태에서 16:00 회차(10-12·10-13)는 정상이라 미확정 → 다음 실패 때 자동 기록되는 프로세스 목록으로 가린다
+  - 한경준님(2026-10-14): 「진행 해」(rc 판정 수정 → 쥐고 있는 주체 가리기)
+- 🔲 검증: ① 한경준님 PowerShell `scripts\test_step5_rc.ps1` → `RESULT: ALL PASS`(사례 C = rc 1 + 프로세스 목록) · 같은 실행의 probe(지금 generate.log HELD/FREE · python 프로세스 목록) ② 오늘 16:00 회차 `[step5-end] rc=0` · `LastTaskResult 0` ③ **10-15(목) 아침 OnBoot** — `step5_err.log` `[step5-fail]` 블록에서 generate.log 를 쥔 후보 확인 · `LastTaskResult` 가 **1** 이어야 정상(이제 실패가 드러남)
+- ✅ 검증 ① 통과(2026-10-14 15:02 KST, 한경준님 PowerShell) [실측]: `RESULT: ALL PASS` — A exit/rc 0 · B 3 · C(잠금) 1, C 의 step5_err.log 첫 줄 「다른 프로세스가 파일을 사용 중이기 때문에…」 + `[step5-fail] … rc=1 process dump:`. probe(15:02 KST): **generate.log FREE · python 프로세스 0개** — 오후에는 Flask·Watcher 가 떠 있지 않다 → 「16:00 은 정상」과 「상주 Flask·Watcher 가 쥔다」의 모순이 풀리는 정황(아침 로그온 직후에만 떠 있음). 확정은 10-15 아침 프로세스 목록으로
+- ⚠️ 주의: 내일 아침 `LastTaskResult 1` 은 **수정이 맞게 동작한다는 뜻**이다(원인은 아직 그대로). 아침 브리핑·성적표가 이것을 새 장애로 세지 않도록 볼 것. 실제 피해는 여전히 없음(1단계 내부 generate 가 커밋·push·사내 배포)
+- 되돌리기: `scripts\daily_and_upload.bat.bak_20261014` → `daily_and_upload.bat`(10-13 진단 줄 상태) · 진단 전 상태는 `.bak_20261013`
+- 출처: Cowork + 한경준님(2026-10-14)
+- 영향: `scripts/daily_and_upload.bat` · `scripts/test_step5_rc.ps1`(신규) · `wiki/reports/daily/step5_err.log` · 예약 작업 `CNC_Daily_Report`·`CNC_Daily_Report_OnBoot` 의 `LastTaskResult`
+
+## 2026-10-13: `daily_and_upload.bat` 5단계에 **진단 줄** 추가 — 아침 OnBoot 회차 5단계 즉시 실패(종료 코드 1, 로그 0줄)의 원인 문구를 남긴다
+
+- 결정: 5단계 `python generate.py >> generate.log 2>&1` 를 `( … ) 2>> wiki\reports\daily\step5_err.log` 로 감싸 **cmd 자신의 오류 문구**(리다이렉트 대상 열기 실패 등)를 남기고, 앞뒤로 `[step5-start]` · `[step5-end] rc=N` 줄을 run.log 에 쓴다. 마지막에 `exit /b %RC5%` 로 **5단계 종료 코드를 그대로 넘긴다**(`LastTaskResult` 판정 불변). ASCII·CRLF 유지(40줄). 백업 `scripts/daily_and_upload.bat.bak_20261013`(gitignore `*.bak_*`) · `step5_err.log` 는 `*.log` 로 git 제외
+- 근거 [실측]:
+  - 2026-10-13 OnBoot: 작업 스케줄러 이벤트 201 **07:57:41**(4단계 끝과 같은 초) · 반환 코드 2147942401(=0x80070001=종료 코드 1) · generate.log 5단계 0줄. generate.py 는 업로드 실패여도 「완료.」를 찍으므로 **시작 전 실패** 쪽
+  - 같은 증상 09-10(당시 S4U) · 10-12(숨김 전)에도 — 창 숨김과 무관. 16:00 회차는 정상(10-12 16:01:03)
+  - 시작프로그램 bat 이 Flask·Watcher 를 `start … >> wiki\reports\daily\generate.log 2>&1` 로 띄움(한경준님 10-13 확인) — 상주 프로세스가 같은 파일 핸들을 쥘 가능성(유력 용의자, 16:00 정상이라 미확정)
+  - 대안 B(시작프로그램 리다이렉트 제거)는 원인 확인 없이 고치면 무엇이 원인이었는지 모르게 되므로 보류 — 한경준님 「A진행」(2026-10-13)
+- 🔲 검증: ① **오늘 16:00 회차** — run.log `[step5-end] rc=0` · generate.log 5단계 블록 · `step5_err.log` 없음/빈 파일 · `LastTaskResult 0`(정상 경로가 그대로인지) ② **10-14(수) 아침 OnBoot** — `step5_err.log` 내용 · `[step5-start]`/`[step5-end]` 시각·rc
+- 되돌리기: `scripts\daily_and_upload.bat.bak_20261013` 을 `daily_and_upload.bat` 로 복사
+- 🔴 2026-10-14 정정: 위 「`LastTaskResult` 판정 불변」은 틀렸다 — 리다이렉트 실패는 ERRORLEVEL 을 바꾸지 않아 10-14 아침 실패가 `rc=0` 으로 찍혔다. decisions **2026-10-14** 에서 수정
+- 출처: Cowork + 한경준님(2026-10-13)
+- 영향: `scripts/daily_and_upload.bat` · 예약 작업 `CNC_Daily_Report`·`CNC_Daily_Report_OnBoot`(둘 다 이 bat 사용) · `wiki/reports/daily/run.log` · `step5_err.log`(신규)
+
 ## 2026-10-12 (7): 로그온 캐치업 예약 작업 `CNC_Daily_Report_OnBoot` 도 **창 숨김**(wscript + VBS) — 16:00 작업과 같은 방식
 
 - 결정: OnBoot 작업의 실행 명령을 `powershell.exe …` → `wscript.exe //B //Nologo scripts\run_onboot_hidden.vbs` 로 바꾼다. VBS 는 **기존 명령(「오늘자 xlsx 없을 때만 daily_and_upload.bat」 조건 포함)을 글자 그대로** 숨김(0)·완료 대기(True)로 실행하고 종료 코드를 넘긴다. 트리거(AtLogOn + `Delay PT3M`)·계정·Interactive/Limited 는 그대로

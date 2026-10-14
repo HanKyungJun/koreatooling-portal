@@ -1,3 +1,42 @@
+## 2026-10-14 (#1) 핸드오프 — Cowork · 아침 5단계 원인 문구 확보 · bat rc 판정 수정 · 10-13 기록 보충 · CADCraft 조사·설치·Claude 연동
+
+- 한 일 (14:5x~16:5x KST):
+  1. 세션 시작 핸드오프 요약 — 10-13 worklog 블록 누락 발견 · 10-14 아침 `step5_err.log` 「The process cannot access the file because it is being used by another process.」 → **5단계 실패 = generate.log 공유 위반** 확정 · 같은 회차 run.log `rc=0` → 리다이렉트 실패가 ERRORLEVEL 을 안 바꾸는 **조용한 성공** 발견
+  2. `scripts/daily_and_upload.bat` 5단계 rc 판정 수정(`|| set RC5=FAIL` · 0 이면 1 · 실패 시 프로세스 목록 덤프) — decisions **2026-10-14** · 백업 `.bak_20261014` · 검증 도구 `scripts/test_step5_rc.ps1` → 한경준님 PC **ALL PASS**(15:02) · 16:00 회차 `rc=0`(25초 실행) [실측]
+  3. 주체 정황: 15:02 python 프로세스 0개 · 한경준님 「아침 로그온 때 뜨는 창 **1개**를 8시쯤 직접 닫음」 → 아침에만 실패하는 시간대와 일치(확정은 10-15 아침 덤프)
+  4. 10-13 worklog 블록 사후 재구성(아래) · tasks 검증 ②/(2) 갱신 · decisions 10-13 「LastTaskResult 불변」 정정 줄
+  5. **AI CAD 조사**(챗) → Zoo Design Studio · AdamCAD 비교 → 한경준님 지목 **CADCraft** 조사 → 설치(x64 portable, arm64 두 번 잘못 받음) → 시험 DXF `outputs/cadcraft_test_blank_D10x75.dxf`(한글·치수 정상) · 기존 DWG 열람(작은 SHX 메모 2곳 깨짐) · 한국어 화면은 v0.6.2 미포함/main 포함 확인 → 10-21 까지 대기(알림 `trig_011WLUQeoLkdYpRa9oxeSBwy`)
+  6. **Claude 연동(MCP)** — `outputs/add_cadcraft_mcp.py`(설정 백업 후 `mcpServers.cadcraft` 만 추가, 가짜 설정으로 사전 시험) → 한경준님 실행·앱 재시작 → Cowork 에 `cadcraft__*` 도구 표시 · 사각형+치수 작성·조회·render·`outputs/cadcraft_mcp_test_75x10.dxf` 저장 성공. decisions **2026-10-14 (2)**
+- 결과/산출물: `scripts/daily_and_upload.bat`(+`.bak_20261014`) · `scripts/test_step5_rc.ps1`(신규) · `outputs/cadcraft_test_blank_D10x75.dxf` · `outputs/cadcraft_mcp_test_75x10.dxf` · `outputs/add_cadcraft_mcp.py` · `wiki/_handoff/decisions.md`·`tasks.md`·`worklog.md`(각 `.bak_20261014`)
+- 미완·블로커:
+  - ⬜ **10-15(목) 아침** — `step5_err.log` `[step5-fail]` 프로세스 목록으로 generate.log 를 쥔 주체 판정(창은 8시 10분 이후 닫기 부탁 — 잊어도 평소대로면 기록됨) · OnBoot `LastTaskResult 1` 이 정상
+  - ⬜ 10-14 16:00 `LastTaskResult` (한경준님, 0 예상)
+  - ⬜ CADCraft — 실제 공구 외형도 1장 작성·PDF 품질 · SHX 메모 글꼴 교체 시험 · 10-21 한국어판 확인
+  - ⬜ 10-16(금) 개/셋업 최종 비교(그대로)
+- 다음 단계 제안: ① 10-15 아침 덤프 확인 → 대안 B(시작프로그램 `>> generate.log` 제거) 판단 ② CADCraft 로 공구 외형도 작성 ③ 10-16 개/셋업 최종 비교
+- 챗으로 가져갈 질문: 없음
+
+## 2026-10-13 (#1) 핸드오프 — Cowork · OnBoot 첫 실전 확인 → 5단계 실패 발견 · 진단 줄 추가 · GX7 수리 완료 · 개/셋업 재측정 (📝 2026-10-14 보충 작성)
+
+> 📝 10-13 세션이 worklog 블록 없이 끝나, 10-14 세션에서 decisions **2026-10-13** · tasks.md · log.md · git log · 프로젝트 메모리를 근거로 **사후 재구성**했다. 세션 시각·작업 순서는 기록이 없어 적지 않는다(추정하지 않음).
+
+- 한 일:
+  1. **OnBoot 창 숨김 첫 실전 확인** — 숨김 자체는 정상(작업 시작 07:52:30 · 1~4단계 정상 · 내부 generate 커밋 `35e6117` 07:57:33 push 0 · 사내 배포 성공). 🔴 그러나 **5단계 `generate.py >> generate.log` 즉시 실패**(이벤트 201 07:57:41 · 반환 코드 2147942401 = 종료 코드 1 · `LastTaskResult 1` · generate.log 0줄) [실측 — run.log · git log · 작업 스케줄러 이벤트 로그]
+  2. 10-12 아침에도 같은 패턴 + 1~4단계가 **두 번** 돈 흔적 → 10-12 #21 · 프로젝트 메모리의 「배치당 2회 커밋 = 정상(두 번째는 5단계)」은 **틀린 정정**이었음을 재정정
+  3. 시작프로그램 bat 전문 확인(한경준님) — Flask·Watcher 를 `start … >> generate.log 2>&1` 로 띄움 → 유력 용의자(16:00 정상이라 미확정). Flask 가 `0.0.0.0:5000` 으로 사내망에 인증 없이 열려 있음도 확인 — 한경준님께 알림(P2 후보, 미변경)
+  4. **진단 줄 추가**(한경준님 「A진행」) — `daily_and_upload.bat` 5단계를 감싸 cmd 오류 → `step5_err.log`, `[step5-start]/[step5-end] rc=` → run.log. decisions **2026-10-13** · 백업 `.bak_20261013`
+  5. 검증 ① **10-13 16:00 통과** — `[step5-end] 16:01:13.52 rc=0` · generate.log 5단계 블록 · `step5_err.log` 0 byte · 커밋 `a4e4ee7` · `LastTaskResult 0`(한경준님)
+  6. **GX7 로더 실린더 교체 수리 완료 · 정상 작동**(한경준님, 08시대 KST) — 로더 사용금지(08-13~) 해제 · tasks GX7 항목 종결 · log.md [2026-10-13]. 완료 시각·시운전 상세는 미기록
+  7. 대표님 지시 ③ 원통연마 — 보류 해제 조건(GX7 가용) 충족 → 착수일·대외 재회신 여부를 한경준님 판단 대기로 등재(날짜 추정 안 함)
+  8. 투입 목록 개/셋업 중간 재측정(9/29~10/12 마감분) — FG **7.1**(도입 전 7.5) · GX7 **5.0**(도입 전 3.6) [실측]. `jobs_all.csv` 재생성(사본 `.bak_20261013`). ⚠️ GX7 은 10-13 부터 로더 복구 → 「9/29~10/11」과 「10/13~」을 나눠 볼 것
+- 결과/산출물: `scripts/daily_and_upload.bat`(백업 `.bak_20261013`) · `wiki/reports/daily/step5_err.log`(신규) · `wiki/repairs/gx7-로더-사용금지-2026-08-13.md` · `wiki/log.md` · `wiki/_handoff/decisions.md` · `tasks.md` · `jobs_all.csv`
+- 미완·블로커:
+  - ⬜ 검증 ② 10-14 아침 OnBoot → **10-14 세션에서 확인**: 원인 문구 확보 + rc 판정 결함 발견(decisions 2026-10-14)
+  - ⬜ 10-13 작업분 마감 커밋 — 10-13 에는 자동 `update:` 커밋 2건(`35e6117` · `a4e4ee7`)만 있고 수동 마감 커밋 없음 [실측 — git log]
+  - ⏸ 원통연마 착수일 · Flask 사내망 공개 처리 — 한경준님 판단
+- 다음 단계 제안: ① 10-14 아침 `step5_err.log` 확인 ② 10-16(금) 개/셋업 최종 비교(GX7 로더 복구 전후 분리)
+- 챗으로 가져갈 질문: 없음
+
 ## 2026-10-12 (#1) 핸드오프 — Cowork · 종일(08:30~16:40 KST) · KST 전환 · 캘린더 대조 · ISO 검증 · B2B 공개 전 점검 · 핸드오프 압축 · OnBoot 창 숨김
 
 - 한 일 (08:30~16:40 KST):
@@ -29,6 +68,7 @@
   21. 아침 generate 두 번(07:56 · 07:57)을 「OnBoot·시작프로그램 동시 발사」로 진단 → `scripts/delay_onboot_trigger.ps1`(조회 먼저·이미 목표값이면 중단) 실행 결과 **「Already Delay=PT3M」 — 변경 없음.** 🔴 자체 정정: 2026-09-10 에 이미 보정·작동 확인(decisions-archive/2026-09.md ⑪). 오늘 실측: 시작프로그램 generate 07:53:59~07:54:50(변경 없음) → OnBoot 배치 07:56:18 시작, 내부 generate 커밋 `41fae64` 07:56:50 + 5단계 커밋 `ea6247e` 07:57:35 = **배치당 2회 정상 동작, 겹침 없음** [실측 — generate.log · run.log · git log]. 프로젝트 메모리 2건 정정
   22. **로그온 캐치업 작업(`CNC_Daily_Report_OnBoot`) 창 숨김 적용** — `scripts/hide_onboot_task_window.ps1`(16:00 용 스크립트 복제, ASCII·CRLF) · 첫 시도 일반 PowerShell 「액세스 거부」→ `FAILED` 정확 보고 · 관리자 PowerShell 재실행 **`APPLIED`** · `Delay=PT3M` 유지 [실측]. decisions **2026-10-12 (7)** · tasks P1 「첫 실전 확인」(10-13 아침)
   23. **GX7 로더 실린더 교체 수리 진행 중 — 오늘 중 완료 예정**(한경준님 16:3x KST) → `repairs/gx7-로더-사용금지-2026-08-13.md` §2026-10-12 · repairs README · tasks GX7 항목 · log.md. 10-12 = GX7 수리일(평상일 제외) · 10-16 개/셋업 비교에 표시 메모
+  24. 16:3x 「검은 창」(한경준님 목격) 정체 확인 — **예약 작업 `cnc-wiki Drive 동기화`**(매일 16:30, `python.exe scripts/sync_to_gdrive.py`) [실측 — `Get-ScheduledTaskInfo` LastRun 16:30:30 · Result 0]. 정상 동작이며 오늘 바꾼 작업과 무관. 창 숨김은 미적용 — 한경준님 판단 대기. 📌 메모리의 「실행 주체 3개」 표가 git 안 만지는 예약 작업(Drive 동기화 · ANCA_Scraper_Daily)을 빠뜨리고 있었음 → 보충
 - 결과/산출물: `scripts/extract_openq.py`(사본 `.bak_20261012`) · `wiki/_handoff/tasks.md` · `decisions.md`(사본 `.bak_20261012`) · `holidays.md`(사본 `.bak_20261012`) · `scripts/fix_calendar_artifact_20261012.py`(신규) · 이 블록(사본 `worklog.md.bak_20261012`)
 - 📌 **tasks.md 가 09:30 KST 에 다른 곳에서 수정됨** [실측 — mtime 2026-10-12 00:30:59 UTC]: 「예약 작업 2건 정비」의 10-12 ⬜ 줄에 ✅ 문구가 추가됐고, 같은 시각 `tasks.md.bak_20261012` 도 생겼다(이 세션 아님). 그래서 이 세션의 `cp -n` 백업은 건너뛰어졌다 — 기존 `.bak_20261012` 는 09:30 이전 상태
 - 미완·블로커:
