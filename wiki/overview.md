@@ -21,16 +21,16 @@ updated: 2026-10-19
 | **tools/wheels (휠·스택)** | 10 |
 | **tools/wheels/catalog (카탈로그 분석)** | 7 |
 | **gcode** | 7 |
-| **cadcam** | 13 |
-| **comparisons** | 22 |
+| **cadcam** | 15 |
+| **comparisons** | 24 |
 | **troubleshoot** | 7 |
-| **reports** | 13 |
+| **reports** | 14 |
 | **projects** | 11 |
 | **scripts** | 6 |
-| **standards** | 4 |
-| **합계 (콘텐츠)** | **138** |
+| **standards** | 5 |
+| **합계 (콘텐츠)** | **144** |
 
-> **성장 추이**: 현재 **138페이지** (2026-10-19 기준)
+> **성장 추이**: 현재 **144페이지** (2026-10-19 기준)
 > 이번 세션(2026-05-27) 신규 8페이지 — raw/report 테스트 기록 전량 위키화 완료
 
 ---
