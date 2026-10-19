@@ -730,6 +730,7 @@ def build_machine_queue_html(queue, max_rows=30):
         wl_txt = '⚠️ 작업일지 미반영(읽기 실패) — 수주·출하 기준으로만 계산'
 
     etc_txt = (f'기타(장비 배정 제외) {etc["n"]}품목 · {etc["qty"]:,}개 ({esc(", ".join(etc["names"]))})'
+               + (f' — 그중 외주 {etc["out_n"]}품목 · {etc["out_qty"]:,}개' if etc.get('out_n') else '')   # 2026-10-19
                if etc['n'] else '기타(장비 배정 제외) 없음')
     return f'''
   <div class="section-title-row">

@@ -244,7 +244,7 @@ def build_today_sheet(target, td, prev, avg, detail, n_prev, n_work):
     rows = []
 
     # 제목
-    rows.append([f'재연마 일일생산 보고  —  {date_str}  (17:30 기준)'])
+    rows.append([f'재연마 일일생산 보고  —  {date_str}  ({now_str} 생성 · 속보값)'])  # 2026-10-19: 「(17:30 기준)」 → 실제 생성 시각
     rows.append([f'생성: {now_str}  |  전일: {prev_str}  |  월평균 기준: 이전 {n_prev}일  |  {m}월 누적 작업일: {n_work}일'])
     rows.append([])
 

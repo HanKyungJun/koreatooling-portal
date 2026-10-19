@@ -235,7 +235,7 @@ def make_report(target: datetime) -> Path:
     n_work    = len(work_days)
     n_prev    = len(summary[(summary['일'] < d) & (summary['합수량'] > 0)])
 
-    title(ws1, 1, f"재연마 일일생산 보고  ─  {date_str}  (17:30 기준)", 9)
+    title(ws1, 1, f"재연마 일일생산 보고  ─  {date_str}  ({now} 생성 · 속보값)", 9)  # 2026-10-19: 「(17:30 기준)」 → 실제 생성 시각 (decisions 2026-10-19 (2))
 
     ws1.merge_cells('A2:I2')
     ws1['A2'] = (f"생성: {now}   |   전일: {prev_str}   |"

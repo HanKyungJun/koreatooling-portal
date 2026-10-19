@@ -12,6 +12,9 @@ ERP 재연마 수주 **품목 상세**(sdb100_jae_g10, @chk_detail=1)에서 미�
   4) 직경 > 8 mm                   → GX7   (88~100%)
   5) 그 외(직경 ≤ 8 mm)            → FG    (86~96%) — Ø8 은 경계로 표시
   ※ 'NC드릴' 은 2)에 걸리지 않고 직경 규칙을 따른다 (실측 FG 73%).
+  2026-10-19 추가 (한경준님 확정 — decisions.md 2026-10-19 (4)):
+  1-2) 형상 == '리머' → 기타(외주)  — 리머는 외주가공. 작업일지에 리머 줄이 없어 출하 전까지 FG 에 남던 것을 뺀다.
+  1-3) 외주 대장(erp/outsource_items.json)에 있는 품목 → 기타(외주) — 오더 일부만 외주로 돌린 건(예: 2609280155 볼·평 20 mm, HSS 평 35 mm).
 
 제외(「오늘 할 일」과 같은 기준)
   - 출하 보류 대장(erp/hold_orders.json) 에 있는 수주
@@ -88,6 +91,8 @@ def assign_machine(nm):
     p = parse_item(nm)
     if p is None:
         return ETC, False, None
+    if p['shape'] == '리머':          # 2026-10-19: 리머 = 외주가공 (한경준님 확정)
+        return ETC, False, p
     if p['shape'] == '드릴':
         return GX7, False, p
     if p['mat'] == 'HSS' or '라핑' in p['shape']:
@@ -307,7 +312,26 @@ def apply_worklog(d, wl, holds=None):
     return worked, equip, st
 
 
-def build_queue(df, holds=None, today=None, near_days=3, worklog=None, holidays=None, fg_cap=None):
+# ── 외주 대장 (2026-10-19 신설, 한경준님 확정 — decisions.md 2026-10-19 (4)) ─────────────────────
+#   오더 일부 품목만 외주로 돌린 건을 FG/GX7 목록에서 빼고 「기타(외주)」로 센다.
+#   형식: {"items": [{"so_no": "수주번호", "itm": "ERP 품목명(생략하면 오더 전체)", "since": "등재일", "note": "참고"}]}
+#   품목명 비교는 공백을 무시한다. 출하되면 ERP 잔량이 0 이 되어 저절로 목록에서 빠지므로 대장 정리는 선택이다.
+def load_outsource(path=None):
+    import os, json
+    path = path or os.path.join(os.path.dirname(os.path.abspath(__file__)), 'outsource_items.json')
+    if not os.path.exists(path):
+        return []
+    data = json.load(open(path, encoding='utf-8'))
+    return [dict(so_no=str(x['so_no']), itm=str(x.get('itm') or '').replace(' ', ''))
+            for x in data.get('items', []) if x.get('so_no')]
+
+
+def is_outsourced(so_no, itm_nm, outsource):
+    _i = str(itm_nm or '').replace(' ', '')
+    return any(o['so_no'] == str(so_no) and (not o['itm'] or o['itm'] == _i) for o in (outsource or ()))
+
+
+def build_queue(df, holds=None, today=None, near_days=3, worklog=None, holidays=None, fg_cap=None, outsource=None):
     """상세 DataFrame → 장비별 정렬 목록 dict. 순수 함수(ERP 호출 없음) — 테스트 가능."""
     import pandas as pd
     holds = holds or {}
@@ -346,6 +370,10 @@ def build_queue(df, holds=None, today=None, near_days=3, worklog=None, holidays=
     items = {FG: [], GX7: [], ETC: []}
     for _, r in act.iterrows():
         mach, edge, p = assign_machine(r.get('itm_nm'))
+        # 2026-10-19: 외주(리머 + 외주 대장) → 기타
+        _out = bool(p and p['shape'] == '리머') or is_outsourced(r['so_no'], r.get('itm_nm'), outsource)
+        if _out:
+            mach, edge = ETC, False
         dl = r['dlv']
         if dl is None or pd.isna(dl):
             bucket, bkey, tag = 3, (9, date.max.toordinal()), '납기없음'
@@ -368,6 +396,7 @@ def build_queue(df, holds=None, today=None, near_days=3, worklog=None, holidays=
             wl_equip='/'.join(sorted(wl_equip.get(_, set()))),
             setup=(p['shape'], p['dia']) if p else None,
             fg_hint=fg_hint_for(p, fg_cap) if mach == GX7 else None,
+            outsource=_out,
         ))
 
     out = {}
@@ -396,7 +425,9 @@ def build_queue(df, holds=None, today=None, near_days=3, worklog=None, holidays=
                          fg_ok_qty=sum(x['rest'] for x in lst if (x.get('fg_hint') or {}).get('grade') == 'ok'),
                          fg_cond=sum(1 for x in lst if (x.get('fg_hint') or {}).get('grade') == 'cond'))
     out['etc'] = dict(n=len(items[ETC]), qty=sum(x['rest'] for x in items[ETC]),
-                      names=sorted({x['itm'].split('/')[0] for x in items[ETC]}))
+                      names=sorted({x['itm'].split('/')[0] for x in items[ETC] if not x.get('outsource')}),
+                      out_n=sum(1 for x in items[ETC] if x.get('outsource')),        # 2026-10-19: 외주
+                      out_qty=sum(x['rest'] for x in items[ETC] if x.get('outsource')))
     out['excluded'] = dict(hold=int(ex_hold['so_no'].nunique()), minor=int(ex_minor['so_no'].nunique()))
     # 가공 완료(작업일지) 로 목록에서 빠진 품목 — 출하 전
     ground = d[(d['ship_rest'] > 0) & (d['rest'] <= 0) & ~d['so_no'].isin(holds)]
@@ -501,7 +532,14 @@ def fetch_machine_queue(holds=None, lookback_days=120, log=print):
     except Exception as e:
         log(f'  ⚠️ 장비별 투입 목록 — 작업일지 읽기 실패, 가공분 차감 없이 진행: {type(e).__name__}: {e}')
     try:
-        q = build_queue(df, holds, worklog=wl, fg_cap=cap)
+        try:
+            _osrc = load_outsource()   # 2026-10-19
+            if _osrc:
+                log(f'  → 외주 대장: {len(_osrc)}줄 (erp/outsource_items.json)')
+        except Exception as e:
+            _osrc = []
+            log(f'  ⚠️ 외주 대장 읽기 실패 — 대장 없이 진행: {type(e).__name__}: {e}')
+        q = build_queue(df, holds, worklog=wl, fg_cap=cap, outsource=_osrc)
         q['since'] = fr
         try:
             n1, n2, n3 = write_unmatched_report(((q.get('worklog') or {}).get('stats') or {}).get('issues', []))
