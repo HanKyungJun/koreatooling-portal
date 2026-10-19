@@ -1,3 +1,10 @@
+## [2026-10-19] 신규 — iGrind 원통연삭으로 넥 Ø3.7 가공 — 2JJCR 040 010 200
+
+다른 Cowork 세션 인계 파일 반영. iGrind Cylindrical Grinding 넥 설정 · Allow Wheel Overhang 해제(CIM3D: 켜면 머리 Ø4 를 깎음) · 기존 Ø3.85 프로그램 조건 이력 보존. ⚠️ 넥 Ø3.7 은 Cowork 도면의 작도용 가정값 — 요구 넥 지름 확인 전 변경 보류 권고
+
+영향받은 페이지: [[cadcam/iGrind-원통연삭-넥가공-2JJCR040010200]] (신규), [[cadcam/원통연삭-넥-조건검토-2026-10]], [[decisions]], [[index]]
+출처 추가: [VEN-ANCA-IGRIND-USER] · [VEN-ANCA-IGRIND-CYCLES] 보강
+
 ## [2026-10-19] 신규 — 원통연삭 넥 가공 조건 검토 (진행 중)
 
 다른 Cowork 세션 정리(현행 조건 · 계산 · Norton · 시험 순서)를 수록하고 계산을 검산. Norton 「초경 17~35 m/s」 표기는 기존 기록(초경 17~22, 35~40 은 HSS+CBN)과 달라 병기·확인 필요. 휠 지름 미확인으로 RPM 미확정
