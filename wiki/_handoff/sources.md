@@ -350,6 +350,9 @@
 - **[SYS-BLUEHOUSE2005]** 대통령비서실 보고서 품질향상 연구팀 (2005). *보고서 작성 매뉴얼 — 보고서 잘 쓰는 방법*. 대통령비서실, 75p. 원본: `raw/manuals/청와대_보고서작성매뉴얼_대통령비서실_2005.pdf` (2026-07-07 한경준님 입수). 보고서 내용·형식 일반원칙, 유형별(정책/상황·정보/회의/행사) 작성법 + 체크리스트 5종.
 - **[SYS-MOIS-OFFICE]** 행정안전부 — 「행정업무의 운영 및 혁신에 관한 규정」(현행 대통령령) 및 *행정업무운영 편람*. https://www.law.go.kr / https://mois.go.kr (확인일: 2026-07-07). 공문서 작성 형식의 현행 정부 기준. ※ 1986년 「정부공문서규정」(대통령령 제12020호)은 1991년 「사무관리규정」 제정으로 폐지된 역사 자료 — 인용하지 않음.
 
+- **[STD-NISO-Z3918]** NISO (2005, reaffirmed 2010). *ANSI/NISO Z39.18-2005 (R2010) Scientific and Technical Reports — Preparation, Presentation, and Preservation*. https://niso.org/publications/z39.18-2005-r2010 (확인일: 2026-10-21, 본문 PDF Table 1 · §5.2 열람). 기술 보고서 본문 순서: Summary → Introduction → Methods, Assumptions, and Procedures → Results and Discussion → Conclusions → Recommendations(조건부) → References(조건부). Summary 는 새 정보 없이 문제 · 주요 결과 · 결론 · 권고를 담는다. → [[보고서-작성-원칙]] §5-A (2026-10-21 등재)
+- **[STD-ISO17025]** ISO/IEC (2017). *ISO/IEC 17025:2017 General requirements for the competence of testing and calibration laboratories* — §7.8 결과 보고. 확인 경로: NIST 「7.8 17025 Crosswalk Reporting Results」(2018-02-01) https://www.nist.gov/document/7-8-17025-crosswalk-reporting-results-20180201pdf (확인일: 2026-10-21). §7.8.2.1 필수 기재 항목 · §7.8.3.1 시험 보고 추가 항목 · §7.8.6 판정 규칙 · §7.8.7 의견 · 해석 구분. ⚠️ 표준 원문 미대조(유료) — 조항 문구는 확인 필요. 사내는 인정 시험소가 아니므로 항목만 차용. → [[보고서-작성-원칙]] §5-A (2026-10-21 등재)
+
 ## 0-O. 정밀 기준점 설정구(Accu-Center/하이센터) 카탈로그 (2026-07-09 등재)
 
 > [[comparisons/아큐센터-비교]] 페이지에서 활용.
