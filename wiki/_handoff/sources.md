@@ -361,6 +361,14 @@
 - **[IND-WIKI-AISIGNS]** Wikipedia: Signs of AI writing. 확인 경로: TechCrunch (2025-11-20) 「The best guide to spotting AI writing comes from Wikipedia」 https://techcrunch.com/2025/11/20/the-best-guide-to-spotting-ai-writing-comes-from-wikipedia/ (확인일: 2026-10-21, 위키 원문 직접 열람 실패). 의미 부풀리기 · 홍보 어조 · 꼬리 분사구 등. 5순위 보조 참고. (2026-10-21 등재)
 - **[IND-BRAINDETOX2026]** 「AI가 쓴 한국어는 어디서 어긋나는가」. braindetox.kr (2026-08-11). https://braindetox.kr/posts/ai_korean_writing_conventions.html (확인일: 2026-10-21). 한국어 AI 문체 특징(종결어미 혼용 · 번역투 · 영문식 대시 등). 블로그 — 5순위 보조 참고, 단독 인용 금지. (2026-10-21 등재)
 
+- **[ACA-GARNER-ALLEY2011]** Garner, J. K., Alley, M., Sawarynski, L. E., Wolfe, K. L., & Zappe, S. E. (2011). Assertion-Evidence Slides Appear to Lead to Better Comprehension and Recall of More Complex Concepts. *ASEE Annual Conference*, AC 2011-900. https://peer.asee.org/assertion-evidence-slides-appear-to-lead-to-better-comprehension-and-recall-of-more-complex-concepts.pdf (확인일: 2026-10-21). 공대생 111명 비교 실험 — 1주 뒤 복잡 개념 문항 A-E 유의(p = 0.038), 장당 단어 30.4 → 19.3. → [[standards/발표자료-작성-사례]] (2026-10-21 등재)
+- **[ACA-ALLEY2010-EYE]** Alley, M. (2010). *The Craft of Engineering Presentations: A Workshop on Presenting Engineering*. Penn State College of Engineering, ASME-EYE Conference(Salerno). https://writing.engr.psu.edu/eye_presenting.pdf (확인일: 2026-10-21). 문장 제목 2줄 이내 · 제목 28 pt · 본문 18 ~ 24 pt · 출처 14 pt · before / after 예시. → [[standards/발표자료-작성-사례]] (2026-10-21 등재)
+- **[IND-THKOELN-AES2017]** Schneider, K. (2017). *Assertion-Evidence Structure* (info sheet). TH Köln, Zentrum für Lehrentwicklung. https://www.th-koeln.de/mam/downloads/englisch/about/info_sheet_aes.pdf (확인일: 2026-10-21). 대학 교수법 자료. → [[standards/발표자료-작성-사례]] (2026-10-21 등재)
+- **[ACA-MAYER2009]** Mayer, R. E. (2009). *Multimedia Learning* (2nd ed.). Cambridge University Press. 확인 경로: Dartmouth 「Mayer's 12 Principles of Multimedia Learning」 https://services.dartmouth.edu/TDClient/1806/Portal/KB/PrintArticle?ID=171655 (확인일: 2026-10-21, 원서 미열람). → [[standards/발표자료-작성-사례]] (2026-10-21 등재)
+- **[ACA-TUFTE2006]** Tufte, E. R. (2006). *The Cognitive Style of PowerPoint: Pitching Out Corrupts Within* (2nd ed.). Graphics Press. 확인 경로: 저자 페이지 https://www.edwardtufte.com/notebook/new-edition-of-the-cognitive-style-of-powerpoint/ (확인일: 2026-10-21) — 원문 미열람, 요지만 인용. → [[standards/발표자료-작성-사례]] (2026-10-21 등재)
+- **[IND-PLUSAI2026]** Li, D. (2026-07-15). How to Make AI-Generated Slides That Don't Look Like AI Slop. Plus AI blog. https://plusai.com/blog/how-to-make-ai-slides-that-dont-look-like-ai-slop (확인일: 2026-10-21). 업체 블로그 — 5순위 보조. (2026-10-21 등재)
+- **[IND-CHATSLIDE2026]** Li, Q. (2026-06-15). How to Make AI Slides That Don't Look AI-Generated. ChatSlide guide. https://www.chatslide.ai/guides/how-to-make-ai-slides-not-look-ai-generated (확인일: 2026-10-21). 업체 블로그(자사 도구 홍보) — 5순위 보조. (2026-10-21 등재)
+
 ## 0-O. 정밀 기준점 설정구(Accu-Center/하이센터) 카탈로그 (2026-07-09 등재)
 
 > [[comparisons/아큐센터-비교]] 페이지에서 활용.
