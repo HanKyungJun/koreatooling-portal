@@ -373,6 +373,13 @@
 - **[VEN-OSG-IR-FY25]** OSG Corporation (2026-01). *Financial Results For FY2025*. https://osg.co.jp/en/about_us/ir/news/file/OSG_fy2025_4q_financialresultsreport_en.pdf (확인일: 2026-10-22). 공구 제조사 발표 형식 참고 — Agenda, (1/2) 번호, TOPICS 장, 단위 라벨. → [[standards/발표자료-작성-사례]] §5-A (2026-10-22 등재)
 - **[VEN-SANDVIK-CMD2019]** Sandvik (2019). *Sandvik Machining Solutions Capital Markets Day 2019*. https://www.home.sandvik/siteassets/investors/capital-markets-day/2019/sandvik-machining-solutions-cmd-2019.pdf (확인일: 2026-10-22). 반복 그림 진행 표시 · 주제어 제목. → [[standards/발표자료-작성-사례]] §5-A (2026-10-22 등재)
 
+- **[ACA-PARK2025-KATFISHNET]** Park, S., Kim, S., Kim, D.-K., & Han, Y.-S. (2025). KatFishNet: Detecting LLM-Generated Korean Text through Linguistic Feature Analysis. *Proceedings of ACL 2025 (Long Papers)*, 21189–21222. https://aclanthology.org/2025.acl-long.1030 · 본문 https://arxiv.org/html/2503.00032v4 (확인일: 2026-10-22). 수필 자료: 쉼표 든 문장 사람 26.31 % vs LLM 61.03 %, 형태소당 쉼표 1.13 % vs 2.56 %, LLM 띄어쓰기가 더 규칙적, 품사 n-gram 다양성 사람 > LLM. → [[standards/문서작성-AI티-점검표]] (2026-10-22 등재)
+- **[STD-KR-HANGEUL41]** 국립국어원. 「한글 맞춤법」 제41항 「조사는 그 앞말에 붙여 쓴다.」 확인: https://www.korean.go.kr/nkview/nknews/200003/20_2.htm (확인일: 2026-10-22). → [[standards/문서작성-AI티-점검표]] (2026-10-22 등재)
+- **[ACA-KIM2012-BEONYEOK]** 김한식 (2012). 일한 번역에 나타난 번역투 문장. *새국어생활*, 22(1), 81–98. 국립국어원. https://www.korean.go.kr/nkview/nklife/2012_1/22_0106.pdf (확인일: 2026-10-22). 쉼표 · 「 」 남용 등. → [[standards/문서작성-AI티-점검표]] (2026-10-22 등재)
+- **[IND-YOONMOON2026]** amondnet(이민수). 윤문(yoonmoon) — 한국어 글 다듬기 Claude Code 플러그인, 11대 AI 티 분류. https://github.com/amondnet/yoonmoon (확인일: 2026-10-22). 5순위 보조. (2026-10-22 등재)
+- **[IND-IMNOTAI2026]** epoko77-ai. im-not-ai — 한국어 AI 문체 10대 분류. 소개 글: 9bow(박정환), PyTorch 한국 사용자 모임 2026-06-27 https://discuss.pytorch.kr/t/im-not-ai-ai-claude-code/10666 (확인일: 2026-10-22). 5순위 보조. (2026-10-22 등재)
+- ※ [SYS-MOIS-OFFICE] 보강(2026-10-22): 행정업무운영 편람(수원대 게시본, 구 「행정업무의 효율적 운영에 관한 규정」 판) https://cced.suwon.ac.kr/content/pds/down.asp?fileid=593 — 날짜 「2011. 12. 12.」, 시각 「15:20」, 항목 기호 1. 가. 1) 가) (1) (가) ① ㉮(규칙 제2조제1항). 현행 규정과 조문 대조 필요.
+
 ## 0-O. 정밀 기준점 설정구(Accu-Center/하이센터) 카탈로그 (2026-07-09 등재)
 
 > [[comparisons/아큐센터-비교]] 페이지에서 활용.
