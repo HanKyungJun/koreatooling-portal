@@ -3,6 +3,14 @@
 > 무엇을(What), 왜(Why), 출처(Where)를 **시간 역순(최신이 맨 위)** 으로 기록합니다.
 > 챗에서 결정된 내용도 반드시 여기로 옮겨야 Code/Cowork가 따라옵니다.
 
+## 2026-10-23: CAM 연결 시험은 **FreeCAD 1.1.4 + freecad-mcp**로 — 생성 G코드는 **다른 도구(CAMotics · 공운전)로 확인**
+
+- 결정: ① Claude 와 연결되는 CAM 으로 FreeCAD(무료, CAM 작업대 · fanuc_post 포함)를 시험한다. Fusion(공식 MCP, 유료 구독)은 보류 ② 첫 시험은 RuRu HOUSE 명판 2D 음각(O1002 · O1003 과 같은 조건)으로 경로를 만들어 기존 G코드와 비교 ③ 생성 G코드는 새 파일로만 저장하고, 경로를 만든 도구가 아닌 CAMotics · 공운전으로 확인 ④ Blender 는 보여 주기 전용 유지(decisions 2026-10-22 (5))
+- 근거: 한경준님(2026-10-22) 「FreeCAD로 해보자」. 조사: Fusion 공식 MCP 는 설계 기능만 문서화(CAM 미언급, 커뮤니티 fusion-cam-mcp 는 WIP), FreeCAD MCP 는 execute_code 로 CAM 스크립트 가능, Blender CAM(Fabex)은 FANUC 포스트 없음 · 실험 단계. 연결 확인(2026-10-23): RPC 127.0.0.1:9875 정상 · CAM 모듈 OK · 포스트 33종 중 fanuc_post.py 있음 · Auto-Start 켬
+  - 학술 · 표준 출처: 해당 없음(제조사 · 개발자 문서)
+- 출처: 챗(Cowork)
+- 영향: FreeCAD 1.1.4 · 애드온 `%APPDATA%\FreeCAD\v1-1\Mod\FreeCADMCP` · Claude 설정 `mcpServers.freecad`(uvx freecad-mcp==0.1.27) · `outputs/add_freecad_mcp.py` · `outputs/freecad_mcp_addon_0.1.27/` · tasks(P2 명판 CAM 시험)
+
 ## 2026-10-22 (5): Blender 연동 도입 — **화면 방식(Blender 창 켜 둠)으로만 실사용**, 결과물은 **그림 · 영상 전용**
 
 - 결정: ① Blender 5.2.2 + Blender Lab 공식 MCP 애드온 1.0.3 + Claude 커넥터를 쓴다. 작업은 경준님이 Blender 를 켜 둔 화면 방식으로 한다 ② 백그라운드(`for Command-Line`) 도구는 결과를 돌려받지 못하므로 쓰지 않는다(실행은 되나 Claude 경유 약 2분 > 60 s 응답 제한) ③ Blender 결과물(3D · 렌더 · 가공 영상)은 그림 · 발표용이며 가공 조건 · G코드 검증의 근거로 쓰지 않는다. 도면에 없는 형상은 추정값 표시 ④ 쓰기 · 삭제 도구는 「항상 허용」으로 바꾸지 않는다 ⑤ 결과물 위치: 공구 3D `outputs/3D_Blender_YYYYMMDD/` 주제별, 연습 자료는 해당 연습 폴더(RuRu HOUSE → `raw/도면 작업/연습 1/05_3D_영상/`, 경준님 지시)

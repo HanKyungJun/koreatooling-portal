@@ -1,3 +1,11 @@
+## 2026-10-23 (#1) 핸드오프 — Cowork(컴퓨터1 desktop-35ose6p) · CAM 프로그램 조사 · FreeCAD MCP 연결
+
+- 한 일: (10-22 저녁 ~ 10-23 아침) Blender 백그라운드 방식 결론 정정(멈춤 아님, 약 2분) · 영상 .blend 경로 확인 · 위키 정리 커밋(9e60aa8) · 발표 소재에 CADCraft · Blender 사례 표 추가 · CAM 연결 후보 조사(Fusion 공식 MCP · FreeCAD MCP · Fabex · CAMotics) → 한경준님 FreeCAD 선택 → FreeCAD 1.1.4 · uv 0.13.4 · 애드온 설치 · Claude 등록 · 연결 확인(CAM 모듈 · fanuc_post 있음) · Auto-Start 켬
+- 결과/산출물: `outputs/add_freecad_mcp.py` · `outputs/freecad_mcp_addon_0.1.27/` · decisions 2026-10-23 · tasks(P2 FreeCAD CAM 시험) · [[projects/파일럿2기-발표-소재-모음]] 「추가 사례 (2026-10-22)」 · tasks 발표 항목(10-23 CADCraft · Blender 추가 검토)
+- 미완·블로커: FreeCAD CAM 실제 경로 생성은 아직 · CAMotics 미설치 · 발표 숫자 재측정(오늘 10-23)
+- 다음 단계 제안: ① 오늘 발표 일: `pilot_numbers.py` 재측정 → PPT v1.4(숫자 · CADCraft/Blender 장 여부) ② FreeCAD 명판 CAM 시험(새 세션) — 시작 전 `get_rpc_status` 로 연결 확인
+- 챗으로 가져갈 질문: 발표에 CAD · 3D 사례를 넣을 위치(8번 한 장 vs ① 표 한 줄) · 영상 직접 삽입 vs 캡처 2장
+
 ## 2026-10-22 (#2) 핸드오프 — Cowork(컴퓨터1 desktop-35ose6p) · PPT v1.3 숫자 반영 · Blender 연동 · 공구 3D · 명판 가공 영상
 
 - 한 일: 세션 시작 요약 → 발표 숫자 10-22 기준 미리 반영(PPT v1.3: 위키 147 p · 결정 320여 건(실측 326) · 스크립트 59개 · 일일보고 136건 · 10월 그래프 14건, 점검 0) → Blender 연동(5.2.2 + Blender Lab MCP 1.0.3, zip 설치 · 커넥터) → 2JJCR 040 010 200 공구 3D v1 ~ v5(v5 = CIM3D DXF 3F_SQ_1 메시 단면을 D4 로 축소) → RuRu HOUSE 명판 3D → O1002 · O1003 G코드 가공 시뮬레이션 영상(26.8 s) → 파일 정리(경준님 승인) → 백그라운드 방식 시험(PATH 추가로 실행되나 약 2분 · 60 s 제한) → 영상 .blend 프레임 경로 새 위치로
