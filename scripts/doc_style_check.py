@@ -71,10 +71,12 @@ P = {
 TRANSLATIONESE = ["을 통해", "를 통해", "에 있어서", "에 의해", "에 대한", "에 대해", "가지고 있", "되어지", "것이다", "하는 것이", "라고 할 수 있", "할 수 있을 것으로", "으로 보인다", "로 보인다"]
 AI_PHRASE = ["결론적으로", "주목할 만", "시사하는 바", "중요한 역할", "핵심적", "다양한", "효과적으로", "획기적", "혁신적", "한눈에", "살펴보", "알아보", "에 그치지 않고", "뿐만 아니라", "궁극적으로", "본질적으로"]
 SUMMARY_WORDS = ["축적", "확대", "해소", "우선", "고도화", "극대화", "강화", "혁신", "최적화", "효율화", "체계화", "구축 완료", "생성 완료"]
+CLAUSE_COMMA = re.compile(r"(고|며|면서|서|면|지만|는데|은데|으나|하나|되나|이나|여|해|니|으로|로|도|다|음|함|됨|임)\s*,\s")  # 연결어미 · 종결 뒤 쉼표 = 절 잇기
 TITLE_END_BAD = re.compile(r"(했음|었음|였음|있음|없음|됨|함|임|음)$")
 
 LIMIT = {  # 기준값 — 점검표 §4
-    "쉼표 문장 비율 %": 30,      # 사람 글 26 %, LLM 61 % (KatFishNet 2025)
+    "쉼표 문장 비율 %": 30,      # 사람 글 26 %, LLM 61 % (KatFishNet 2025) — 발표자료(pptx)에만 적용
+    "쉼표 절 잇기 문장 %": 10,   # 「~하고, ~」 「~으로, ~」처럼 절과 절을 쉼표로 잇는 문장 — 모든 문서
     "대시(—, –)": 0,
     "가운데점 나열( · )": 3,
     "조사 앞 띄어쓰기": 0,
@@ -92,7 +94,7 @@ LIMIT = {  # 기준값 — 점검표 §4
 def check(items, include_notes=False):
     found = {k: [] for k in LIMIT}
     lines = [(loc, kind, t) for loc, kind, t in items if include_notes or kind != "note"]
-    sent = comma = paren = 0
+    sent = comma = clause = paren = 0
     for loc, kind, t in lines:
         for name, (pat, _) in P.items():
             for m in re.finditer(pat, t):
@@ -108,6 +110,7 @@ def check(items, include_notes=False):
             if len(s) < 8: continue
             sent += 1
             if re.search(r"(?<!\d),|,(?!\d)|，", s): comma += 1  # 숫자 자릿점(10,744)은 제외
+            if CLAUSE_COMMA.search(s + " "): clause += 1; found["쉼표 절 잇기 문장 %"].append((loc, s))
         if kind == "title":
             for w in SUMMARY_WORDS:
                 if w in t: found["제목 요약어"].append((loc, f"「{w}」 {t}"))
@@ -116,6 +119,7 @@ def check(items, include_notes=False):
             if t.count(",") >= 1 and len(t) > 12: found["제목 쉼표 두 마디"].append((loc, t))
     stats = {
         "쉼표 문장 비율 %": round(100 * comma / sent, 1) if sent else 0,
+        "쉼표 절 잇기 문장 %": round(100 * clause / sent, 1) if sent else 0,
         "괄호 줄 비율 %": round(100 * paren / len(lines), 1) if lines else 0,
     }
     return found, stats, len(lines), sent
@@ -125,8 +129,12 @@ def report(path, strict=False, include_notes=False):
     found, stats, n, sent = check(items, include_notes)
     print(f"\n=== {os.path.basename(path)} — 화면 글 {n}줄, 문장 {sent}개" + (" (노트 포함)" if include_notes else " (발표자 노트 제외)"))
     over = 0
+    is_deck = path.lower().endswith(".pptx")
     for k, lim in LIMIT.items():
         v = stats[k] if k in stats else len(found[k])
+        if k == "쉼표 문장 비율 %" and not is_deck:
+            print(f"  [참고] {k}: {v} — 보고서 · 위키는 항목 나열 쉼표가 많아 판정하지 않음(절 잇기만 판정)")
+            continue
         mark = "넘음" if v > lim else "통과"
         if v > lim: over += 1
         print(f"  [{mark}] {k}: {v} (기준 {lim})")
