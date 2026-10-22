@@ -369,6 +369,10 @@
 - **[IND-PLUSAI2026]** Li, D. (2026-07-15). How to Make AI-Generated Slides That Don't Look Like AI Slop. Plus AI blog. https://plusai.com/blog/how-to-make-ai-slides-that-dont-look-like-ai-slop (확인일: 2026-10-21). 업체 블로그 — 5순위 보조. (2026-10-21 등재)
 - **[IND-CHATSLIDE2026]** Li, Q. (2026-06-15). How to Make AI Slides That Don't Look AI-Generated. ChatSlide guide. https://www.chatslide.ai/guides/how-to-make-ai-slides-not-look-ai-generated (확인일: 2026-10-21). 업체 블로그(자사 도구 홍보) — 5순위 보조. (2026-10-21 등재)
 
+- **[VEN-KYOCERA-IR-FY25]** KYOCERA Corporation (2025). *Financial Presentation for the Year Ended March 31, 2025*. https://global.kyocera.com/ir/pdf/FY25_4Q_p_e.pdf (확인일: 2026-10-22). 주제 제목 + 메시지 줄, 1 ~ 4 단원 띠, 단위 · Note 표기 — 발표 형식 참고용(재무 수치 인용 안 함). → [[standards/발표자료-작성-사례]] §5-A (2026-10-22 등재)
+- **[VEN-OSG-IR-FY25]** OSG Corporation (2026-01). *Financial Results For FY2025*. https://osg.co.jp/en/about_us/ir/news/file/OSG_fy2025_4q_financialresultsreport_en.pdf (확인일: 2026-10-22). 공구 제조사 발표 형식 참고 — Agenda, (1/2) 번호, TOPICS 장, 단위 라벨. → [[standards/발표자료-작성-사례]] §5-A (2026-10-22 등재)
+- **[VEN-SANDVIK-CMD2019]** Sandvik (2019). *Sandvik Machining Solutions Capital Markets Day 2019*. https://www.home.sandvik/siteassets/investors/capital-markets-day/2019/sandvik-machining-solutions-cmd-2019.pdf (확인일: 2026-10-22). 반복 그림 진행 표시 · 주제어 제목. → [[standards/발표자료-작성-사례]] §5-A (2026-10-22 등재)
+
 ## 0-O. 정밀 기준점 설정구(Accu-Center/하이센터) 카탈로그 (2026-07-09 등재)
 
 > [[comparisons/아큐센터-비교]] 페이지에서 활용.
