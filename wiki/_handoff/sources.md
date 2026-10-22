@@ -481,6 +481,9 @@
 - **[INT-TOKEN-403-2026]** 사내 사고 이력 — GitHub fine-grained PAT push 403 반복 발생(2026-07-07 · 2026-07-08 · **2026-08-28**). 근본 원인은 **`Repository access`(저장소 선택)와 `Permissions`(권한 종류·수준)가 별개 설정**이라는 점을 놓친 것. 2026-07-08은 `Contents`가 **Read-only**로 남아 있었고, 2026-08-28은 권한 목록이 알파벳순이라 `Contents`(C) 대신 **`Repository security advisories`(R)** 를 체크했다. ⚠️ **진단 함정** — `GET /repos/{owner}/{repo}`의 `permissions.push`는 **토큰 권한이 아니라 계정의 저장소 역할**을 반환하므로 소유자면 항상 `True`가 나온다. 쓰기 권한의 진짜 판정 도구는 **`git push --dry-run origin main`**. 부수 이력: 2026-06-10 `.env` 커밋(토큰 평문, 같은 날 추적 제거·blob 잔존, 해당 classic 토큰은 2026-08-28 삭제 확인), 2026-07-07 run.log 토큰 평문 노출(→ `generate.py` 688~693행 마스킹 함수 추가) 및 credential-manager 프롬프트 멈춤(→ `GIT_TERMINAL_PROMPT=0`·`GCM_INTERACTIVE=never`). 신뢰도: **실측 검증**(오류 메시지·스크린샷·dry-run 대조). [[scripts/github-token-발급-체크리스트]] 본문 출처.
 - **[VEN-GOOGLE-APPSSCRIPT-WEBAPP]** Google — *Apps Script: Web Apps* · *Properties Service* 공식 개발자 문서. https://developers.google.com/apps-script/guides/web · https://developers.google.com/apps-script/guides/properties (2026-10-08 등재). 웹 앱 배포(실행 사용자 · 액세스 권한) · `doGet`/`doPost` · 스크립트 속성 근거. 인용: [[scripts/거래처조회-AppsScript-배포-가이드]]
 
+- **[VEN-BLENDER-LAB-MCP]** Blender Lab (Blender Foundation). *Blender MCP Server* 안내 페이지 · 애드온 v1.0.3. https://www.blender.org/lab/mcp-server/ · 저장소 https://projects.blender.org/lab/blender_mcp (확인일: 2026-10-22). Blender 5.1 이상, 애드온 + MCP 서버 구성, 「LLM 이 만든 코드를 보호장치 없이 실행 — 가상머신이나 민감정보 없는 시스템 권장」 경고. 신뢰도: **제조사 기준**. → [[cadcam/Blender-3D-시각화-MCP-연동]] (2026-10-22 등재)
+- **[VEN-ANTHROPIC-BLENDER-CONNECTOR]** Anthropic (2026-04). *Claude for Creative Work* https://www.anthropic.com/news/claude-for-creative-work · 튜토리얼 *Using the Blender connector in Claude* https://claude.com/resources/tutorials/using-the-blender-connector-in-claude (확인일: 2026-10-22). Blender 개발팀이 만든 커넥터, 데스크톱 앱 전용, 튜토리얼은 Blender 「4.2 이상」 표기(blender.org 5.1 과 엇갈림). 신뢰도: **제조사 기준**. → [[cadcam/Blender-3D-시각화-MCP-연동]] (2026-10-22 등재)
+
 ## 3. 공구 카탈로그 (Tool Catalogs — 보유)
 
 - **[CAT-JJ]** `raw/Catalog/JJ.pdf` — JJ 공구 카탈로그 (사용자 소장)
@@ -527,6 +530,10 @@
 ## 7. 내부 위키 페이지 맵 (역참조)
 
 > 위키 페이지가 외부 출처를 인용할 때, 위 ID로 참조하면 자동으로 역참조 가능.
+
+### Blender 3D 시각화 페이지 매핑 (2026-10-22 등재)
+
+- [[cadcam/Blender-3D-시각화-MCP-연동]] → [VEN-BLENDER-LAB-MCP] · [VEN-ANTHROPIC-BLENDER-CONNECTOR]
 
 ### 넥 지름 기준 페이지 매핑 (2026-10-20 등재)
 

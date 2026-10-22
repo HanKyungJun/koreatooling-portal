@@ -1,3 +1,10 @@
+## [2026-10-22] 신규 — Blender 3D 시각화 (Claude MCP 연동) · 공구 3D · 명판 가공 영상
+
+Blender 5.2.2 + Blender Lab 공식 MCP 애드온 1.0.3 + Claude 커넥터 연동(zip 설치, 도구 26개). 2JJCR 040 010 200 공구 3D v1 ~ v5(v5 = CIM3D 3F_SQ_1 메시 단면을 D4 로 축소), RuRu HOUSE 명판 3D(DXF 음각 31윤곽)와 O1002 → O1003 가공 시뮬레이션 영상(26.8 s · 약 51배속). 백그라운드 방식은 PATH 등록으로 실행되나 Claude 경유 약 2분이라 60 s 제한 — 화면 방식만 실사용. 결과물: `outputs/3D_Blender_20261022/` · `raw/도면 작업/연습 1/05_3D_영상/`
+
+영향받은 페이지: [[cadcam/Blender-3D-시각화-MCP-연동]] (신규), [[index]], [[sources]]
+출처 추가: [VEN-BLENDER-LAB-MCP], [VEN-ANTHROPIC-BLENDER-CONNECTOR]
+
 ## [2026-10-22] 신규 — 문서 작성 AI 티 점검표 · 점검 스크립트 doc_style_check.py · 발표 초안 v1.2
 
 세 작성 원칙 페이지를 작업용 점검표 하나로 모음 + 근거 보강(KatFishNet ACL 2025 한국어 LLM 쉼표 통계, 맞춤법 제41항, 공문서 편람, 김한식 2012 번역투). `scripts/doc_style_check.py`(pptx · docx · md, 13개 항목 계수, 고치지 않음). 시험: v0.4 넘음 5 · v0.6 3 · v1.1 1(쉼표 32.2 %) · v1.2 0 · 넥 보고 v2 docx 1(쉼표 33.6 %). v1.2 = 쉼표로 두 마디 잇던 39곳을 문장으로 다시 씀
