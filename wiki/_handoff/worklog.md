@@ -1,3 +1,12 @@
+## 2026-10-23 (#2) 핸드오프 — Cowork(컴퓨터1 desktop-35ose6p) · FreeCAD 명판 CAM 1·2차 시험 · CADCraft CAM용 DXF · 사내 포스트
+
+- 한 일: (08:20 ~ 10:20 KST) ① 핸드오프 읽기 ② FreeCAD 1차 — v3 음각 좌표(JSON)로 판 · 음각 면 25개 → Job · T01 Ø2 Pocket · T02 Ø1 Profile(O1002 · O1003 과 같은 조건) → fanuc_post 기본 출력 → FreeCAD 밖 shapely 스크립트로 검증: T02 가 「since 2026」 6 접합부 쐐기에서 영역 밖 0.224 mm · 포스트 문제 5건(매크로식 G43 · O번호 · 끝 복귀 · % · Z20 접근) · 잔삭 포켓 대안 폐기 ③ 2차 — 쐐기(0.595 mm²)를 스크립트로 계산 → CADCraft 로 v3 DXF 의 6 윤곽(A7 · A8)을 바꿔 CAM용 사본 저장(원본 v3 그대로) → FreeCAD 로 DXF 가져오기 → 사내 포스트 `qp2040_post.py`(fanuc_post 사본 수정) → O2002 · O2003 → 검증: 영역 밖 최대 0.029 mm · 매크로 0 · 6 모양 = 기존 O1003 ④ 원호 맞춤 오차 · 급송 비교 조사(Fusion 도움말 · Chevalier 사양 급송 36/36/24 m/min) → 연습 판 0.03 mm 허용 · 급송 그대로 결정
+- 결과/산출물: `raw/도면 작업/연습 1/06_FreeCAD_CAM/`(README §1~7 · 1차 FCStd · raw .nc 3개 · `nameplate_RuRuHOUSE_AL_400x200x5_v3_CAM_20261023.dxf` · `qp2040_post.py` · `_fanuc_post_원본_FreeCAD1.1.4.py` · `O2002_명판음각_T01포켓_FreeCAD_2차_20261023.txt` · `O2003_명판음각_T02정삭_FreeCAD_2차_20261023.txt` · 2차 FCStd · `gcheck_독립검증_20261023.py` · 비교 그림 3장 · 검증 결과 txt) · decisions **2026-10-23 (2) · (3)** · tasks(P2 FreeCAD CAM 시험) · sources(`[VEN-CHEVALIER-QP2040L]` 보강 · `[VEN-AUTODESK-FUSION-OUTPUTOPT]` 신규) · 백업 `decisions/tasks/sources/worklog.md.bak_20261023`
+- 미완·블로커: CAMotics 미설치 · 장비 O2002 · O2003 번호 중복 미확인 · 공운전 전(장비 입력 금지) · 오늘 예정이던 발표 숫자 재측정 → PPT v1.4 는 이 세션에서 못 함(10-27 제출) · 1차 폴더에 FreeCAD 자동 백업 `.FCBak` 1개 남김(지우지 않음)
+- 다음 단계 제안: ① **발표 일 먼저**(10-26 연차 · 10-27 제출): `python scripts/pilot_numbers.py` → PPT v1.4 — FreeCAD · CADCraft 2차 사례(1차 0.224 → 2차 0.029 mm, 한글 경로 함정)를 소재표에 넣을지 판단 ② CAMotics 설치 → O2002 · O2003 시뮬레이션 ③ 장비 번호 확인 → 공운전(사이클 타임 O1002/O1003 vs O2002/O2003 기록)
+- 챗으로 가져갈 질문: 발표에 FreeCAD 사례를 넣을지(「도면 → CAM → 사내 포스트 → 독립 검증」 흐름 1장) · 원호 맞춤 허용 기준을 일반 품목에도 정할지(공차별)
+- 🔴 함정(다음 세션 필독): FreeCAD 1.1.4 `importDXF` 는 **한글 경로면 오류 없이 0개** → 영문 임시 경로로 복사 · 첫 DXF 가져오기 때 「DXF Import」 창이 GUI 를 멈춤(「다시 표시 안 함」 체크 완료) · recompute + 출력이 60 s 넘으면 브리지 응답만 끊김 → `get_rpc_status` 로 확인
+
 ## 2026-10-23 (#1) 핸드오프 — Cowork(컴퓨터1 desktop-35ose6p) · CAM 프로그램 조사 · FreeCAD MCP 연결
 
 - 한 일: (10-22 저녁 ~ 10-23 아침) Blender 백그라운드 방식 결론 정정(멈춤 아님, 약 2분) · 영상 .blend 경로 확인 · 위키 정리 커밋(9e60aa8) · 발표 소재에 CADCraft · Blender 사례 표 추가 · CAM 연결 후보 조사(Fusion 공식 MCP · FreeCAD MCP · Fabex · CAMotics) → 한경준님 FreeCAD 선택 → FreeCAD 1.1.4 · uv 0.13.4 · 애드온 설치 · Claude 등록 · 연결 확인(CAM 모듈 · fanuc_post 있음) · Auto-Start 켬
