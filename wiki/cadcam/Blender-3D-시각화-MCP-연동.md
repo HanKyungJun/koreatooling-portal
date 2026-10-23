@@ -76,8 +76,8 @@ updated: 2026-10-22
 
 | 결과물 | 위치 |
 |--------|------|
-| 2JJCR 040 010 200 공구 3D, v5 최종과 이전판 v1 ~ v4 | `outputs/3D_Blender_20261022/2JJCR_040_010_200/` |
-| 3F_SQ_1 CIM3D 변환 메시·반경표 | `outputs/3D_Blender_20261022/3F_SQ_1_CIM3D참조/` |
+| 2JJCR 040 010 200 공구 3D, v5 최종과 이전판 v1 ~ v4 | `outputs/02_도면_3D_CAM/3D_Blender_20261022/2JJCR_040_010_200/` |
+| 3F_SQ_1 CIM3D 변환 메시·반경표 | `outputs/02_도면_3D_CAM/3D_Blender_20261022/3F_SQ_1_CIM3D참조/` |
 | RuRu HOUSE 명판 3D·가공 영상·좌표 | `raw/도면 작업/연습 1/05_3D_영상/` |
 
 ## 7. 문제 해결 기록
