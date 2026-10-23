@@ -31,6 +31,13 @@ ERP 재연마 수주 **품목 상세**(sdb100_jae_g10, @chk_detail=1)에서 미�
   2026-09-30: 형상 비교에서 작업일지 「면취」「NC」 = 드릴 · 날수가 같은 품목이 있으면 날수로도 좁힌다.
   5월 표본: 234코드 중 1건 확정 190 · 모호 0 · 직경 불일치 0 (나머지는 비교 기간 밖).
 
+가공 완료분 차감 — ERP 작업실적 (2026-10-23 추가, 한경준님 확정 — decisions.md 2026-10-23 (5))
+  엑셀 월간생산일지 입력을 10-23 부터 멈췄다. ERP 생산실적의 NC 공정(FG · GX7 구분 없음) 양품 수량을
+  수주번호 + 품목코드 + 코팅 + R값/각도로 품목 행에 바로 붙인다(끝 4자리 추정 매칭이 필요 없다).
+  조회: PPC120_g00(작업지시, 미출하 오더만) → PPC120_g10(공정현황, prc_cd 20 = NC 의 ok_qty).
+  깎은 수량 = max(엑셀 작업일지 배정, ERP NC 양품) — 10-23 이전 엑셀분과 겹쳐 세지 않는다.
+  ERP 조회가 실패하면 엑셀분만으로 계속한다(목록 생성은 멈추지 않는다).
+
 ⚠️ 참고용 목록이다. 실제 투입은 현장 판단이 우선한다(장비 상태·긴급 요청·로더 사용 여부 등).
 ⚠️ 금액 열은 trico_client 기본 차단으로 들어오지 않는다.
 """
@@ -331,7 +338,7 @@ def is_outsourced(so_no, itm_nm, outsource):
     return any(o['so_no'] == str(so_no) and (not o['itm'] or o['itm'] == _i) for o in (outsource or ()))
 
 
-def build_queue(df, holds=None, today=None, near_days=3, worklog=None, holidays=None, fg_cap=None, outsource=None):
+def build_queue(df, holds=None, today=None, near_days=3, worklog=None, holidays=None, fg_cap=None, outsource=None, erp_worked=None):
     """상세 DataFrame → 장비별 정렬 목록 dict. 순수 함수(ERP 호출 없음) — 테스트 가능."""
     import pandas as pd
     holds = holds or {}
@@ -348,6 +355,12 @@ def build_queue(df, holds=None, today=None, near_days=3, worklog=None, holidays=
         d['worked'], wl_equip, wl_stats = apply_worklog(d, worklog, holds)   # 2026-09-30: 보류 오더는 리드타임 상한 예외
     else:
         d['worked'] = 0
+    # 2026-10-23: ERP 작업실적(NC 양품) — 엑셀 배정과 큰 쪽을 쓴다
+    erp_stats = None
+    if erp_worked:
+        _ew, erp_stats = map_erp_worked(d, erp_worked)
+        d['worked_erp'] = _ew
+        d['worked'] = pd.concat([pd.to_numeric(d['worked'], errors='coerce').fillna(0), _ew], axis=1).max(axis=1)
     d['done'] = d[['out_q', 'worked']].max(axis=1)
     d['rest'] = (d['so_q'] - d['done']).clip(lower=0)
     # 가공 꼬리 — 작업일지상 가공했고 남은 게 수주량의 10% 미만이면 연마불가·수량차로 보고 뺀다
@@ -433,7 +446,123 @@ def build_queue(df, holds=None, today=None, near_days=3, worklog=None, holidays=
     ground = d[(d['ship_rest'] > 0) & (d['rest'] <= 0) & ~d['so_no'].isin(holds)]
     out['worklog'] = dict(stats=wl_stats, ground_items=int(len(ground)), ground_qty=int(ground['ship_rest'].sum()),
                           tail_items=int(d['tail'].sum()))
+    out['erp_worked'] = erp_stats   # 2026-10-23
     return out
+
+
+# ── ERP 작업실적 → 품목 행 가공 수량 (2026-10-23 신설) ──────────────────────────────
+def _nz(v):
+    s = '' if v is None else str(v).strip()
+    return '' if s.lower() in ('nan', 'none') else s
+
+
+def map_erp_worked(d, erp_worked):
+    """erp_worked: {(so_no, itm_cd, 코팅, 각도): 양품} → 품목 행(d.index) 가공 수량 Series.
+    같은 키 행이 여럿이면 수주량만큼 차례로 채우고 남으면 마지막 행에 얹는다.
+    키가 정확히 안 맞으면 (so_no, itm_cd) 로 한 번 더 찾는다."""
+    import pandas as pd
+    w = pd.Series(0.0, index=d.index)
+    k4 = list(zip(d['so_no'].astype(str), d['itm_cd'].astype(str), d.get('jae_coating', pd.Series('', index=d.index)).map(_nz),
+                  d.get('jae_angle', pd.Series('', index=d.index)).map(_nz)))
+    st = dict(keys=len(erp_worked), qty=float(sum(erp_worked.values())), exact=0, loose=0, none=0, none_qty=0.0)
+    for key, q in erp_worked.items():
+        idx = [i for i, k in zip(d.index, k4) if k == key]
+        if idx:
+            st['exact'] += 1
+        else:
+            idx = [i for i, k in zip(d.index, k4) if k[:2] == key[:2]]
+            if idx:
+                st['loose'] += 1
+            else:
+                st['none'] += 1; st['none_qty'] += q
+                continue
+        left = q
+        for j, i in enumerate(idx):
+            cap = max(float(d.at[i, 'so_q']) - w[i], 0)
+            take = left if j == len(idx) - 1 else min(left, cap)
+            w[i] += take; left -= take
+            if left <= 0:
+                break
+    st['rows'] = int((w > 0).sum())
+    return w, st
+
+
+def fetch_erp_worked(df, fr, log=print, client=None):
+    """미출하 오더의 ERP NC 양품 수량 {(so_no, itm_cd, 코팅, 각도): 양품}. 실패하면 None."""
+    import time
+    import pandas as pd
+    try:
+        from trico_client import TricoClient
+        c = client or TricoClient()
+        t0 = time.time()
+        def _num(frame, col):   # 2026-10-23: 열이 없으면(값이 모두 비면 ERP 응답에서 열이 빠짐) 0 으로
+            if col not in frame.columns:
+                return pd.Series(0.0, index=frame.index)
+            return pd.to_numeric(frame[col], errors='coerce').fillna(0)
+        rest = _num(df, 'so_qty') - _num(df, 'out_qty')
+        open_so = set(df.loc[rest > 0, 'so_no'].astype(str))
+        g00 = c.생산실적(fr_dt=fr, to_dt=date.today().strftime('%Y-%m-%d'))
+        if not len(g00):
+            log('  ⚠️ ERP 작업지시 0행 — ERP 가공분 차감 없이 진행'); return None
+        g00 = g00[g00['so_no'].astype(str).isin(open_so)]
+        # 2026-10-23 수정: g10 의 NC ok_qty 는 「지금 NC 공정에 남아 있는 양」이라 코팅으로 넘어간 수량이 빠졌다
+        #   (미출하 35건에서 6개만 잡힘 ↔ 작업실적 g20 합은 214개). → NC 공정 줄의 wo_id 로 g20 실적을 읽어 양품을 더한다.
+        #   @wo_id 는 BigInt(long) 로 보내야 해서, 이 함수 안에서만 이 클라이언트의 _param_xml 을 감싼다(끝나면 되돌림).
+        import types
+        _orig_px = c._param_xml
+        def _px(self, name, value, size=0, type_='NVarChar'):
+            if name == '@wo_id' and isinstance(value, int) and not isinstance(value, bool):
+                return (f'<a:SQLArray><a:ParamaterDataTable i:nil="true"/><a:ParamaterDirection>Input</a:ParamaterDirection>'
+                        f'<a:ParamaterName>@wo_id</a:ParamaterName><a:ParamaterPrecision>0</a:ParamaterPrecision>'
+                        f'<a:ParamaterScale>0</a:ParamaterScale><a:ParamaterSize>0</a:ParamaterSize>'
+                        f'<a:ParamaterValue i:type="b:long" xmlns:b="http://www.w3.org/2001/XMLSchema">{value}</a:ParamaterValue>'
+                        f'<a:Paramatertype>BigInt</a:Paramatertype><a:Paramatertypename/></a:SQLArray>')
+            return _orig_px(name, value, size, type_)
+        c._param_xml = types.MethodType(_px, c)
+        res, calls, fail = {}, 0, 0
+        g10_ok = g10_in = 0.0
+        try:
+            for _, r in g00.iterrows():
+                try:
+                    g10 = c.query('PPC120_g10', {'@wo_no': str(r['wo_no']), '@dn_bc': None, '@capsule_mng_no': None, '@co_cd': '01'}, block_price=False)
+                    calls += 1
+                except Exception:
+                    fail += 1; continue
+                if not len(g10) or 'prc_cd' not in g10.columns:
+                    continue
+                nc = g10[g10['prc_cd'].astype(str) == '20']
+                if not len(nc):
+                    continue
+                g10_ok += float(_num(nc, 'ok_qty').sum()); g10_in += float(_num(nc, 'wrk_in_tot').sum())
+                q = 0.0
+                for _, n in nc.iterrows():
+                    if 'wrk_in_tot' in nc.columns:   # 투입 누계가 0 이면 실적 없음 → g20 생략 (열이 아예 없으면 그냥 조회)
+                        _wi = pd.to_numeric(n.get('wrk_in_tot'), errors='coerce')
+                        if pd.isna(_wi) or float(_wi) <= 0:
+                            continue
+                    if pd.isna(pd.to_numeric(n.get('wo_id'), errors='coerce')):
+                        continue
+                    try:
+                        g20 = c.query('PPC120_g20', {'@wo_id': int(float(n['wo_id'])), '@ent_bc': 'PP270100'}, block_price=False)
+                        calls += 1
+                    except Exception:
+                        fail += 1; continue
+                    if len(g20):
+                        if 'prc_cd' in g20.columns:
+                            g20 = g20[g20['prc_cd'].astype(str) == '20']
+                        # 2026-10-23: 불량(bad_in_qty)도 가공 끝난 수량으로 본다 — 양품만 빼면 불량 1개가 「남음」으로 남음(2610120201 사례)
+                        q += float(_num(g20, 'ok_qty').sum()) + float(_num(g20, 'bad_in_qty').sum())
+                if q > 0:
+                    key = (str(r['so_no']), str(r['itm_cd']), _nz(r.get('jae_coating')), _nz(r.get('jae_angle')))
+                    res[key] = res.get(key, 0.0) + q
+        finally:
+            del c._param_xml
+        log(f'  → ERP 작업실적: 미출하 오더 {len(open_so)}건 · 작업지시 {len(g00)}개 · 조회 {calls}회(실패 {fail}) · '
+            f'NC 가공(g20 양품+불량) {sum(res.values()):g}개 · 참고 g10 ok {g10_ok:g} / 투입누계 {g10_in:g} · {time.time() - t0:.0f}s')
+        return res
+    except Exception as e:
+        log(f'  ⚠️ ERP 작업실적 조회 실패 — 엑셀분만으로 진행: {type(e).__name__}: {str(e)[:100]}')
+        return None
 
 
 def pd_to_date(sr):
@@ -539,8 +668,12 @@ def fetch_machine_queue(holds=None, lookback_days=120, log=print):
         except Exception as e:
             _osrc = []
             log(f'  ⚠️ 외주 대장 읽기 실패 — 대장 없이 진행: {type(e).__name__}: {e}')
-        q = build_queue(df, holds, worklog=wl, fg_cap=cap, outsource=_osrc)
+        _ew = fetch_erp_worked(df, fr, log)   # 2026-10-23: 엑셀 입력 중단 → ERP NC 양품으로 가공분 차감
+        q = build_queue(df, holds, worklog=wl, fg_cap=cap, outsource=_osrc, erp_worked=_ew)
         q['since'] = fr
+        if q.get('erp_worked'):
+            _s = q['erp_worked']
+            log(f"  → ERP 가공분 붙임: 키 {_s['keys']}개 중 정확 {_s['exact']} · 느슨 {_s['loose']} · 못 맞춤 {_s['none']}({_s['none_qty']:g}개) → 품목 {_s['rows']}행")
         try:
             n1, n2, n3 = write_unmatched_report(((q.get('worklog') or {}).get('stats') or {}).get('issues', []))
             log(f'  → 작업일지 확인 필요: 최근 14일 {n1}줄 · 그 이전 {n2}줄 (참고 {n3}줄) → erp/worklog_unmatched.txt')

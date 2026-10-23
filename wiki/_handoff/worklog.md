@@ -1,3 +1,24 @@
+## 2026-10-23 (#3) 핸드오프 — Cowork(컴퓨터1 desktop-35ose6p) · 명판 정리 PDF · 발표 v1.4 ~ v1.6 · 생산 실적 ERP 단일화(투입 목록 · 일일보고 · 현황판 전환)
+
+- 한 일: (10:20 ~ 14:10 KST)
+  - 명판 FreeCAD CAM 시험 정리본 PDF(7쪽) 작성
+  - 발표 v1.4(새 장 1 + 공구 3D 캡처 2) → v1.5(RuRu HOUSE 개인 연습 제외 — 한경준님) → v1.6(3장 메시지 A안). 12장 · 노트 9:40 · 문체 점검 0
+  - 생산 실적 기록 방향: 엑셀 + ERP 이중 입력 → ERP 하나(decisions (4) · (5)) · 엑셀 입력 10-23 부터 중단(한경준님)
+  - ERP 작업실적 조회 경로 확인: Fiddler 캡처 → PPC120_g10(공정 현황) · g20(@wo_id BigInt, 작업실적 줄) · `probe_pw_detail.py` 로 10월 NC 176줄 · 양품 947 · 불량 8
+  - 투입 목록(`machine_queue.py`) ERP 가공분 차감: 1차 g10 ok_qty(6개만 잡힘 = 「NC 공정에 남은 양」) → g20 양품 + 불량으로 수정(432개 · 75키 전부 정확). 「ERP만」 비교 = 엑셀만과 FG 0 · GX7 ±3품목 → decisions (6)
+  - 일일보고(`daily_report.py`) 10-23 부터 ERP 기준 · 가공시간 = 표준공수 중앙값 × 수량 추정 · 금액 칸 없음 → PC 실조회 26 s · 10월 972개(≥ 955) → decisions (7)
+  - 현황판 「오늘 실적」 ERP 전환(`generate.py` parse_production · dashboard.js) → `generate.py --local` 확인(오늘 NC 26개 · 이달 972개) → decisions (8)
+- 결과/산출물: `raw/도면 작업/연습 1/06_FreeCAD_CAM/연습1_RuRuHOUSE_명판_FreeCAD_CAM시험_정리_20261023.pdf` · `outputs/파일럿2기_생산팀_발표_초안_v1.4 · v1.5 · v1.6_20261023.pptx` + `pilot_deck_build_v1.4 ~ 1.6.js` · 신규 `erp/erp_worklog.py`(작업실적 조회 · 표준공수 조회) · `erp/probe_prod_result.py` · `erp/probe_pw_detail.py` · `erp/probe_queue_erp.py` · 수정 `erp/machine_queue.py` · `scripts/daily_report.py` · `generate.py` · `dist/dashboard.js` · `internal/dashboard.js` · `wiki/reports/daily/2026-10-23_일일보고.xlsx`(ERP 기준 첫 보고서) · decisions **2026-10-23 (4) ~ (8)** · tasks(P1 「생산 실적 기록을 ERP 하나로」) · 백업 `*.bak_20261023` · `*.bak_20261023b`
+- 미완·블로커:
+  - 16:00 자동 실행 로그 확인(run.log 일일보고 줄 · generate.log 생산 실적 · 투입 목록 줄)
+  - 2610120088 2날/볼/10mm ALTIN 1개 — 엑셀엔 가공, ERP NC 실적 없음 → 한경준님 ERP 화면 확인
+  - 엑셀 ↔ ERP 일별 수량 차이 −18 ~ +12개(월 합 971 ↔ 955) 원인 미확인(입력 날짜 차이로 추정)
+  - ERP 저장 요청이 Fiddler 캡처에 있던 건(불량내역, pw_no 2610230010) — 데이터가 바뀌지 않았는지 한경준님 확인
+  - 🔴 내 실수: device_bash 에서 `git mv -n` 실행 → `.git/index.lock` 남김(11:25, 한경준님이 지움). git 은 device_bash 에서 읽기 전용
+- 다음 단계 제안: ① 16:00 로그 확인 ② 발표 v1.6 검토 → 10-27 제출(「ERP 단일 기록」을 다음 과제에 넣을지) ③ 가공시간 통합본(2022 ~ 엑셀 → 형상 · 지름별 기준표, 장비별 집계 포함) ④ 엑셀을 읽는 분석 스크립트 7개는 쓸 일이 생길 때 ERP 로 ⑤ g10 투입누계 = g20 양품 + 불량(432 = 432)이면 g20 조회를 빼서 조회 수 절반으로
+- 챗으로 가져갈 질문: 표준공수 추정 가공시간이 엑셀 기록보다 크게 나오는 날(10-02 34,286 ↔ 28,100 초)의 원인 — 표준공수 DB 갱신 주기를 정할지
+- 🔴 함정(다음 세션 필독): ERP PPC120_g10 의 NC ok_qty 는 **누적 실적이 아님**(다음 공정으로 넘어가면 0) → 가공 수량은 g20 작업실적 줄 합 또는 g10 투입누계 · g00 기간 = 작업지시일 기준(앞 달 지시를 이번 달 가공한 실적이 빠짐 → LOOKBACK) · 작업(분)은 경과시간이라 사이클 타임 아님
+
 ## 2026-10-23 (#2) 핸드오프 — Cowork(컴퓨터1 desktop-35ose6p) · FreeCAD 명판 CAM 1·2차 시험 · CADCraft CAM용 DXF · 사내 포스트
 
 - 한 일: (08:20 ~ 10:20 KST) ① 핸드오프 읽기 ② FreeCAD 1차 — v3 음각 좌표(JSON)로 판 · 음각 면 25개 → Job · T01 Ø2 Pocket · T02 Ø1 Profile(O1002 · O1003 과 같은 조건) → fanuc_post 기본 출력 → FreeCAD 밖 shapely 스크립트로 검증: T02 가 「since 2026」 6 접합부 쐐기에서 영역 밖 0.224 mm · 포스트 문제 5건(매크로식 G43 · O번호 · 끝 복귀 · % · Z20 접근) · 잔삭 포켓 대안 폐기 ③ 2차 — 쐐기(0.595 mm²)를 스크립트로 계산 → CADCraft 로 v3 DXF 의 6 윤곽(A7 · A8)을 바꿔 CAM용 사본 저장(원본 v3 그대로) → FreeCAD 로 DXF 가져오기 → 사내 포스트 `qp2040_post.py`(fanuc_post 사본 수정) → O2002 · O2003 → 검증: 영역 밖 최대 0.029 mm · 매크로 0 · 6 모양 = 기존 O1003 ④ 원호 맞춤 오차 · 급송 비교 조사(Fusion 도움말 · Chevalier 사양 급송 36/36/24 m/min) → 연습 판 0.03 mm 허용 · 급송 그대로 결정

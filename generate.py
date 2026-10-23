@@ -143,6 +143,60 @@ def parse_worklog():
     }, f'{year}-{month:02d}-{day:02d} 재연마_월간생산일지 ({month}월)'
 
 
+def parse_production():
+    """오늘 · 이달 생산 실적 — ERP NC 작업실적 기준 (2026-10-23 신설, decisions 2026-10-23 (7) · (8))
+
+    엑셀 월간생산일지 입력을 10-23 부터 멈춰서 parse_worklog() 대신 쓴다(parse_worklog 는 지우지 않고 남김).
+    - FG / GX7 구분 없음(ERP 공정 NC 하나) · 수량 = 양품 + 불량
+    - 가동(가공) 시간 = 표준공수 DB 중앙값 × 수량 **추정값** (erp_worklog.StdTime)
+    - 16:00 회차는 바로 앞의 daily_report.py 가 남긴 조회 결과(erp/snapshot/pw_nc_<1일>_<오늘>.csv, 30분 이내)를 다시 쓴다
+    - 실패하면 (None, None) → 현황판 「오늘 실적」 칸만 「데이터 없음」 으로 나온다
+    """
+    try:
+        import pandas as pd
+        sys.path.insert(0, os.path.join(BASE_DIR, 'erp'))
+        import erp_worklog as ew
+        today = date.today()
+        fr = today.replace(day=1)
+        cache = os.path.join(ew.CACHE_DIR, f'pw_nc_{fr}_{today}.csv')
+        if os.path.exists(cache) and time.time() - os.path.getmtime(cache) < 1800:
+            df = pd.read_csv(cache, dtype=str, encoding='utf-8-sig')
+            if len(df):
+                df['work_dt'] = pd.to_datetime(df['work_dt'], errors='coerce').dt.date
+                for k in ('ok', 'bad'):
+                    df[k] = pd.to_numeric(df[k], errors='coerce').fillna(0)
+            src = '조회 결과 재사용(일일보고)'
+        else:
+            df = ew.fetch_nc_results(fr, today, log=_log)
+            ew.save_cache(df, fr, today)
+            src = 'ERP 조회'
+        z = {'qty': 0, 'ok': 0, 'bad': 0, 'time_sec': 0, 'unmatched': 0}
+        if not len(df):
+            return {'date': today.strftime('%Y-%m-%d'), 'source': 'erp', 'nc': dict(z), 'total': {'qty': 0, 'time_sec': 0},
+                    'cumulative': {'total': 0, 'ok': 0, 'bad': 0, 'work_days': 0}}, f'{src} · 이달 실적 0줄'
+        st = ew.StdTime()
+        ang = df['jae_angle'].astype(str) if 'jae_angle' in df else pd.Series('', index=df.index)
+        lk = {}
+        for n, a in zip(df['itm_nm'].astype(str), ang):
+            if (n, a) not in lk:
+                lk[(n, a)] = st.lookup(n, None if a in ('nan', 'None', '') else a)[0]
+        df['std'] = [lk[(n, a)] for n, a in zip(df['itm_nm'].astype(str), ang)]
+        df['qty'] = df['ok'] + df['bad']
+        df['est'] = df['qty'] * pd.to_numeric(df['std'], errors='coerce')
+        t = df[df['work_dt'] == today]
+        m = df[df['work_dt'] <= today]
+        nc = {'qty': int(t['qty'].sum()), 'ok': int(t['ok'].sum()), 'bad': int(t['bad'].sum()),
+              'time_sec': int(round(t['est'].sum())), 'unmatched': int(t['std'].isna().sum())}
+        cum = {'total': int(m['qty'].sum()), 'ok': int(m['ok'].sum()), 'bad': int(m['bad'].sum()),
+               'work_days': int(m.loc[m['qty'] > 0, 'work_dt'].nunique())}
+        return {'date': today.strftime('%Y-%m-%d'), 'source': 'erp', 'nc': nc,
+                'total': {'qty': nc['qty'], 'time_sec': nc['time_sec']}, 'cumulative': cum}, \
+               f'{src} · 오늘 NC {nc["qty"]}개 · 이달 {cum["total"]}개({cum["work_days"]}일)'
+    except Exception as e:
+        _log(f'  ⚠️ ERP 생산 실적 조회 실패 — 「오늘 실적」 칸 생략: {type(e).__name__}: {str(e)[:120]}')
+        return None, None
+
+
 # ── 공통 컴포넌트 ──────────────────────────────────────────────────────────────
 # CSS는 dist/portal.css 에 분리됨 (2026-06-15)
 # GAS URL / 폼 제출 / 인증 로직은 dist/portal.js 에 분리됨 (2026-06-15)
@@ -1695,8 +1749,9 @@ if __name__ == '__main__':
 
     # 2) 월간생산일지 파싱
     _t = time.time()
-    _log('월간생산일지 파싱 중...')
-    daily, worklog_file = parse_worklog()
+    # 2026-10-23: 엑셀 입력 중단 → ERP NC 작업실적(parse_production). 원래 줄: daily, worklog_file = parse_worklog()
+    _log('생산 실적(ERP 작업실적) 조회 중...')
+    daily, worklog_file = parse_production()
     _log(f'  → {worklog_file or "파일 없음"} ({time.time()-_t:.1f}s)')
 
     # 2-B) ERP 「오늘 할 일」 (2026-09-04 신설) — 사내 현황판 전용
@@ -1731,7 +1786,7 @@ if __name__ == '__main__':
     else:
         _log(f'  → 생략 (블록 미표시) ({time.time()-_t:.1f}s)')
 
-    worklog_date = daily['date'] if daily else '-'
+    worklog_date = (daily['date'] + (' · ERP 작업실적 기준' if daily.get('source') == 'erp' else '')) if daily else '-'
     generated_at = datetime.now().strftime('%Y-%m-%d %H:%M')
 
     # 3) 페이지 생성

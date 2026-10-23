@@ -392,19 +392,225 @@ def make_report(target: datetime) -> Path:
     return out_path
 
 
+# ══════════════════════════════════════════════════════════
+#  ERP 작업실적 기준 보고서 (2026-10-23 신설)
+#  엑셀 월간생산일지 입력을 10-23 부터 멈춤 → 10-23 이후 날짜는 ERP NC 작업실적으로 만든다.
+#  decisions 2026-10-23 (4) · (5) · (6) · (7). 원본 스크립트 daily_report.py.bak_20261023
+#  - FG / GX7 구분 없음(ERP 공정 「NC」 하나) · 금액 칸 없음(ERP 가격 정보는 출력하지 않음)
+#  - 가공시간 = 표준공수 DB 중앙값 × (양품 + 불량) — 추정값. ERP 「작업(분)」은 경과시간이라 쓰지 않음
+# ══════════════════════════════════════════════════════════
+ERP_FROM = datetime(2026, 10, 23).date()
+
+
+def erp_month(target: datetime, log=print):
+    """target 이 속한 달 1일 ~ target 의 NC 작업실적(줄)과 일별 요약."""
+    sys.path.insert(0, str(BASE / 'erp'))
+    import erp_worklog as ew
+    fr, to = target.date().replace(day=1), target.date()
+    df = ew.fetch_nc_results(fr, to, log=log)
+    ew.save_cache(df, fr, to)
+    cols = ['일', '양품', '불량', '합수량', '추정시간', '미매칭']
+    if not len(df):
+        return df, pd.DataFrame(columns=cols)
+    st = ew.StdTime()
+    keys = df[['itm_nm', 'jae_angle']].astype(str).drop_duplicates().itertuples(index=False)
+    lk = {(n, a): st.lookup(n, None if a in ('nan', 'None', '') else a) for n, a in keys}
+    kk = list(zip(df['itm_nm'].astype(str), df['jae_angle'].astype(str)))
+    df['std'] = [lk[k][0] for k in kk]
+    df['basis'] = [lk[k][1] for k in kk]
+    df['qty'] = df['ok'] + df['bad']
+    df['est'] = df['qty'] * pd.to_numeric(df['std'], errors='coerce')
+    df['일'] = df['work_dt'].map(lambda x: x.day)
+    g = df.groupby('일').agg(양품=('ok', 'sum'), 불량=('bad', 'sum'), 합수량=('qty', 'sum'),
+                             추정시간=('est', 'sum'), 미매칭=('std', lambda x: int(x.isna().sum())))
+    g = g.reset_index()
+    for k in ('양품', '불량', '합수량', '추정시간'):
+        g[k] = g[k].round().astype(int)
+    return df, g
+
+
+def make_report_erp(target: datetime) -> Path:
+    y, m, d = target.year, target.month, target.day
+    rows, summary = erp_month(target)
+    today_row = summary[summary['일'] == d]
+    if today_row.empty or int(today_row.iloc[0]['합수량']) <= 0:
+        return None  # 당일 ERP 작업실적 없음 — 조용히 스킵(엑셀 기준과 같은 동작)
+
+    td = today_row.iloc[0].to_dict()
+    prev = find_prev(summary, d)
+    work = summary[(summary['일'] < d) & (summary['합수량'] > 0)]
+    keys = ['양품', '불량', '합수량', '추정시간']
+    avg = {k: (work[k].mean() if not work.empty else 0) for k in keys}
+    day_rows = rows[rows['일'] == d].copy()
+
+    OUT.mkdir(parents=True, exist_ok=True)
+    out_path = OUT / f'{y}-{m:02d}-{d:02d}_일일보고.xlsx'
+    wb = Workbook()
+    now = datetime.now().strftime('%Y-%m-%d %H:%M')
+
+    ws1 = wb.active
+    ws1.title = "일일 요약"
+    date_str = target.strftime("%Y년 %m월 %d일")
+    prev_str = f"{m}월 {int(prev['일'])}일" if prev else "없음"
+    n_work = len(summary[(summary['일'] <= d) & (summary['합수량'] > 0)])
+    n_prev = len(work)
+
+    title(ws1, 1, f"재연마 일일생산 보고  ─  {date_str}  ({now} 생성 · 속보값 · ERP 작업실적 기준)", 9)
+    ws1.merge_cells('A2:I2')
+    ws1['A2'] = (f"생성: {now}   |   전일: {prev_str}   |"
+                 f"   월평균 기준: 이전 작업일 {n_prev}일 평균   |   {m}월 누적 작업일: {n_work}일")
+    ws1['A2'].font = Font(name=FONT, size=9, color="555555", italic=True)
+    ws1['A2'].alignment = Alignment(horizontal='left', vertical='center')
+    ws1.row_dimensions[2].height = 15
+
+    hdrs3 = ['항목', '오늘', '전일', '전일대비\n(▲▼수량)', '전일대비\n(%)',
+             '월평균', '월평균대비\n(▲▼수량)', '월평균대비\n(%)', '비고']
+    for ci, h in enumerate(hdrs3, 1):
+        hdr(ws1.cell(3, ci, value=h))
+    ws1.row_dimensions[3].height = 28
+
+    ROWS = [
+        ('NC 양품 (개)',                 '양품',     CGXBG,  False),
+        ('NC 불량 (개)',                 '불량',     CGXBG,  False),
+        ('합계  수량 (개, 양품+불량)',     '합수량',   CTOTBG, False),
+        ('합계  가공시간 (초, 추정)',      '추정시간', CTOTBG, True),
+    ]
+    for ri, (label, key, rowbg, is_time) in enumerate(ROWS):
+        r = ri + 4
+        ws1.row_dimensions[r].height = 22
+        tv = int(td.get(key, 0))
+        pv = int(prev.get(key, 0)) if prev else None
+        av = avg.get(key, 0)
+        d_prev = (tv - pv) if pv is not None else None
+        d_avg = tv - av
+        p_prev = (d_prev / pv) if (pv and pv != 0) else None
+        p_avg = (d_avg / av) if av != 0 else 0
+        bg_prev = (CUPBG if d_prev > 0 else CDNBG) if d_prev is not None and d_prev != 0 else None
+        bg_avg = (CUPBG if d_avg > 0 else CDNBG) if d_avg != 0 else None
+        note = sec_to_hms(tv) + ' (표준공수 추정)' if is_time else ''
+        c = ws1.cell(r, 1, value=label);     s(c, bold=True, bg=rowbg, h='left')
+        c = ws1.cell(r, 2, value=tv);        s(c, bold=True); c.number_format = NUM
+        c = ws1.cell(r, 3, value=pv if pv is not None else '-')
+        s(c); c.number_format = NUM if pv is not None else 'General'
+        c = ws1.cell(r, 4, value=d_prev if d_prev is not None else '-')
+        s(c, bg=bg_prev); c.number_format = DNUM if d_prev is not None else 'General'
+        c = ws1.cell(r, 5, value=p_prev if p_prev is not None else '-')
+        s(c, bg=bg_prev); c.number_format = DPCT if p_prev is not None else 'General'
+        c = ws1.cell(r, 6, value=round(av, 1)); s(c); c.number_format = '#,##0.0'
+        c = ws1.cell(r, 7, value=d_avg);        s(c, bg=bg_avg); c.number_format = DNUM
+        c = ws1.cell(r, 8, value=p_avg);        s(c, bg=bg_avg); c.number_format = DPCT
+        c = ws1.cell(r, 9, value=note);         s(c, fg="444444", sz=9)
+
+    tot_r = len(ROWS) + 4
+    ws1.row_dimensions[tot_r].height = 22
+    mtd = summary[(summary['일'] <= d) & (summary['합수량'] > 0)]
+    ws1.merge_cells(f'A{tot_r}:B{tot_r}')
+    tot_s(ws1.cell(tot_r, 1), f'{m}월 누적  ({n_work}일 / {d}일 중 작업일)')
+    tot_s(ws1.cell(tot_r, 2))
+    for ci, key in enumerate(['양품', '불량', '합수량', '추정시간'], 3):
+        c = ws1.cell(tot_r, ci, value=int(mtd[key].sum()) if not mtd.empty else 0)
+        tot_s(c); c.number_format = NUM
+    for ci in range(7, 10):
+        tot_s(ws1.cell(tot_r, ci))
+    c = ws1.cell(tot_r + 1, 3, value='양품');  s(c, fg="666666", sz=8)
+    c = ws1.cell(tot_r + 1, 4, value='불량');  s(c, fg="666666", sz=8)
+    c = ws1.cell(tot_r + 1, 5, value='합계');  s(c, fg="666666", sz=8)
+    c = ws1.cell(tot_r + 1, 6, value='가공시간(초, 추정)'); s(c, fg="666666", sz=8)
+
+    nm = int(td.get('미매칭', 0))
+    notes = [
+        '※ 기준: ERP 생산실적 「작업실적」 중 공정 NC (FAST GRIND · GX7 합계, 장비 구분 없음 — 2026-10-23 결정)',
+        '※ 가공시간: 품목별 표준공수(재연마_표준공수DB_2022-2026, 개당 중앙값) × 수량으로 낸 추정값입니다. 실측 가공시간이 아닙니다.',
+        '※ 금액 항목은 ERP 가격 정보를 보고서에 싣지 않는 원칙에 따라 뺐습니다. 2026-10-22 까지의 보고서는 엑셀 작업일지 기준입니다.',
+    ]
+    if nm:
+        notes.append(f'※ 표준공수를 찾지 못한 작업 {nm}줄은 가공시간 합계에서 빠져 있습니다(작업 상세의 「기준」 칸 참고).')
+    for i, t in enumerate(notes):
+        r = tot_r + 3 + i
+        ws1.merge_cells(f'A{r}:I{r}')
+        ws1.cell(r, 1, value=t).font = Font(name=FONT, size=9, color="555555")
+        ws1.cell(r, 1).alignment = Alignment(horizontal='left', vertical='center')
+
+    ws1.column_dimensions['A'].width = 30
+    for ci in range(2, 10):
+        ws1.column_dimensions[get_column_letter(ci)].width = 14
+
+    # ── 시트 2: 작업 상세
+    ws2 = wb.create_sheet("작업 상세")
+    DHDR = ['순서', '작업지시', '형상', '날수(F)', '날경(Ø)', '소재', '코팅', '각도/R',
+            '양품', '불량', '표준(초/개)', '기준', '시간합계(초)', '시간(H:M:S)', '관리번호']
+    title(ws2, 1, f"작업 상세  ─  {date_str}  (ERP 작업실적 · 공정 NC)", len(DHDR))
+    r0 = 2
+    ws2.merge_cells(f'A{r0}:{get_column_letter(len(DHDR))}{r0}')
+    c = ws2.cell(r0, 1, value='■ NC (FAST GRIND · GX7)')
+    c.font = Font(name=FONT, bold=True, size=11, color=CFHDR)
+    c.fill = PatternFill("solid", fgColor=CGX_H)
+    c.alignment = Alignment(horizontal='left', vertical='center'); c.border = BORD
+    for ci, h in enumerate(DHDR, 1):
+        hdr(ws2.cell(r0 + 1, ci, value=h), bg=CGX_H)
+    rc = r0 + 2
+    sort_cols = [k for k in ('mdt', 'pw_no', 'pw_sq') if k in day_rows.columns]
+    if sort_cols:
+        day_rows = day_rows.sort_values(sort_cols)
+
+    def _f(nm, i):
+        p = [x.strip() for x in str(nm).split('/')]
+        return p[i] if len(p) > i else ''
+
+    def _txt(v):
+        return '' if v is None or (isinstance(v, float) and pd.isna(v)) or str(v) in ('nan', 'None') else str(v)
+
+    for i, (_, j) in enumerate(day_rows.iterrows(), 1):
+        nmv = j['itm_nm']
+        coat = _txt(j.get('jae_coating')) or _f(nmv, 5)
+        std = j['std'] if pd.notna(j['std']) else None
+        est = int(round(j['est'])) if pd.notna(j['est']) else None
+        vals = [i, _txt(j['wo_no']), _f(nmv, 1), _f(nmv, 0).replace('날', ''), _f(nmv, 2), _f(nmv, 3), coat,
+                _txt(j.get('jae_angle')), int(j['ok']), int(j['bad']),
+                int(round(std)) if std is not None else '-', j['basis'],
+                est if est is not None else '-', sec_to_hms(est) if est is not None else '-', _txt(j.get('mng_no'))]
+        for ci, v in enumerate(vals, 1):
+            c = ws2.cell(rc, ci, value=v)
+            s(c, bg=CGXBG, h='left' if ci in (3, 7, 12) else 'center')
+            if ci in (9, 10, 11, 13):
+                c.number_format = NUM
+        rc += 1
+    ws2.merge_cells(f'A{rc}:H{rc}')
+    tot_s(ws2.cell(rc, 1), 'NC 소계')
+    for ci in range(2, 9):
+        tot_s(ws2.cell(rc, ci))
+    tsum = int(round(day_rows['est'].sum()))
+    for ci, v in [(9, int(day_rows['ok'].sum())), (10, int(day_rows['bad'].sum())), (11, None), (12, None),
+                  (13, tsum), (14, sec_to_hms(tsum)), (15, None)]:
+        c = ws2.cell(rc, ci, value=v); tot_s(c)
+        if ci in (9, 10, 13):
+            c.number_format = NUM
+    widths = [6, 12, 10, 7, 9, 7, 12, 8, 7, 7, 10, 18, 12, 11, 14]
+    for ci, w in enumerate(widths, 1):
+        ws2.column_dimensions[get_column_letter(ci)].width = w
+
+    wb.save(out_path)
+    print(f"✓ 보고서 저장 완료 (ERP 기준): {out_path}")
+    return out_path
+
+
 # ── 메인 ──────────────────────────────────────────────────
 if __name__ == '__main__':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
     parser = argparse.ArgumentParser(description='재연마 일일보고 생성')
     parser.add_argument('date', nargs='?',
                         help='날짜 (YYYY-MM-DD). 생략 시 오늘')
+    parser.add_argument('--source', choices=['auto', 'erp', 'excel'], default='auto',
+                        help='auto = 2026-10-23 부터 ERP, 그 전은 엑셀 작업일지 (2026-10-23 추가)')
     args = parser.parse_args()
 
     target = (datetime.strptime(args.date, '%Y-%m-%d')
               if args.date else datetime.now())
 
     try:
-        result_path = make_report(target)
+        use_erp = args.source == 'erp' or (args.source == 'auto' and target.date() >= ERP_FROM)
+        print(f"[일일보고] {target:%Y-%m-%d} · 기준 {'ERP 작업실적' if use_erp else '엑셀 작업일지'}")
+        result_path = make_report_erp(target) if use_erp else make_report(target)
     except FileNotFoundError as e:
         print(f"[오류] {e}")
         sys.exit(1)
