@@ -52,7 +52,48 @@ def _q(c, ws, params):
         return c.query(ws, params)
 
 
-def fetch_nc_results(fr, to, client=None, log=print, full=False, prc=NC):
+# ── g20 작업실적 캐시 (2026-10-27 신설 — decisions 2026-10-27 (7)) ─────────────────────────
+# g10 NC 공정 줄의 누계(투입 wrk_in_tot · 양품 ok_in_tot · 불량 bad_in_tot)가 지난번과 같으면 그 공정의 g20 실적 줄도
+# 바뀌지 않았다고 보고 저장해 둔 줄을 다시 쓴다 → 새 실적이 들어온 공정만 g20 을 부른다.
+# 한계: 누계는 그대로인데 지난 실적의 날짜 · 설비만 고친 경우는 못 잡는다 → CACHE_DAYS 일이 지난 항목은 새로 읽고,
+#       full=True 또는 use_cache=False 면 캐시를 안 쓴다. 기본값 꺼짐(G20_CACHE=False) — PC 검증(probe_g20_cache.py) 뒤 켠다.
+G20_CACHE = False
+CACHE_DAYS = 7
+G20_CACHE_PATH = os.path.join(CACHE_DIR, 'g20_cache.json')
+_G20_KEEP = ('work_dt', 'prc_cd', 'mc_cd', 'ok_qty', 'bad_in_qty', 'pw_tm', 'mng_no', 'pw_no', 'pw_sq', 'fr_tm', 'to_tm', 'mdt')
+
+
+def _sig(n):
+    """g10 NC 공정 줄의 누계 서명 '투입|양품|불량'."""
+    def f(k):
+        v = pd.to_numeric(n.get(k), errors='coerce')
+        return '' if pd.isna(v) else f'{float(v):g}'
+    return f"{f('wrk_in_tot')}|{f('ok_in_tot')}|{f('bad_in_tot')}"
+
+
+def _load_g20_cache(path):
+    import json
+    try:
+        with open(path, encoding='utf-8') as fp:
+            d = json.load(fp)
+        return d if isinstance(d, dict) else {}
+    except Exception:
+        return {}
+
+
+def _save_g20_cache(path, cache, log=print):
+    import json
+    try:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        tmp = path + '.tmp'
+        with open(tmp, 'w', encoding='utf-8') as fp:
+            json.dump(cache, fp, ensure_ascii=False, default=str)
+        os.replace(tmp, path)
+    except Exception as e:
+        log(f'  ⚠️ g20 캐시 저장 실패(조회 결과는 그대로): {type(e).__name__}: {e}')
+
+
+def fetch_nc_results(fr, to, client=None, log=print, full=False, prc=NC, use_cache=None, cache_path=None):
     """작업일 fr ~ to (date 또는 'YYYY-MM-DD') 의 NC 작업실적 줄 DataFrame.
 
     열: work_dt(date) · wo_no · so_no · itm_cd · itm_nm · jae_coating · jae_angle · prc_cd · mc_cd · ok · bad ·
@@ -64,6 +105,13 @@ def fetch_nc_results(fr, to, client=None, log=print, full=False, prc=NC):
     to = to if isinstance(to, date) else date.fromisoformat(str(to))
     c = client or TricoClient()
     t0 = time.time()
+    if use_cache is None:
+        use_cache = G20_CACHE or os.getenv('ERP_G20_CACHE', '') == '1'
+    use_cache = bool(use_cache) and not full
+    cache_path = cache_path or G20_CACHE_PATH
+    cache = _load_g20_cache(cache_path) if use_cache else {}
+    now = datetime.now()
+    hit = miss = 0
     g00 = c.생산실적(fr_dt=(fr - timedelta(days=LOOKBACK)).isoformat(), to_dt=to.isoformat())
     n_all = len(g00)
     if not n_all:
@@ -105,11 +153,30 @@ def fetch_nc_results(fr, to, client=None, log=print, full=False, prc=NC):
                 wid = pd.to_numeric(n.get('wo_id'), errors='coerce')
                 if pd.isna(wid):
                     continue
-                try:
-                    g20 = _q(c, 'PPC120_g20', {'@wo_id': int(wid), '@ent_bc': 'PP270100'})
-                    calls += 1
-                except Exception:
-                    fail += 1; continue
+                ck, sg = str(int(wid)), _sig(n)
+                ent = cache.get(ck) if use_cache else None
+                fresh = False
+                if ent and ent.get('sig') == sg:
+                    try:
+                        fresh = (now - datetime.fromisoformat(ent.get('at', ''))).days < CACHE_DAYS
+                    except Exception:
+                        fresh = False
+                if fresh:
+                    g20 = pd.DataFrame(ent.get('rows') or [])
+                    hit += 1
+                else:
+                    try:
+                        g20 = _q(c, 'PPC120_g20', {'@wo_id': int(wid), '@ent_bc': 'PP270100'})
+                        calls += 1
+                    except Exception:
+                        fail += 1; continue
+                    if len(g20) and 'prc_cd' in g20.columns:
+                        g20 = g20[g20['prc_cd'].astype(str) == prc]
+                    if use_cache:
+                        keep = [k for k in _G20_KEEP if k in g20.columns]
+                        cache[ck] = {'sig': sg, 'at': now.isoformat(timespec='seconds'),
+                                     'rows': g20[keep].astype(object).where(g20[keep].notna(), None).to_dict('records') if len(g20) else []}
+                        miss += 1
                 if not len(g20):
                     continue
                 if 'prc_cd' in g20.columns:
@@ -132,9 +199,12 @@ def fetch_nc_results(fr, to, client=None, log=print, full=False, prc=NC):
                 rows.append(out)
     finally:
         del c._param_xml
+    if use_cache and miss:
+        _save_g20_cache(cache_path, cache, log)
     df = pd.concat(rows, ignore_index=True) if rows else pd.DataFrame()
     log(f'  → ERP 작업실적(NC) {fr} ~ {to}: 작업지시 {len(g00)}/{n_all}개{" (전체)" if full else ""} · 조회 {calls}회(실패 {fail}) · '
-        f'{len(df)}줄 · 양품 {df["ok"].sum() if len(df) else 0:g} · 불량 {df["bad"].sum() if len(df) else 0:g} · {time.time() - t0:.0f}s')
+        f'{len(df)}줄 · 양품 {df["ok"].sum() if len(df) else 0:g} · 불량 {df["bad"].sum() if len(df) else 0:g} · {time.time() - t0:.0f}s'
+        + (f' · g20 캐시 재사용 {hit} / 새로 읽음 {miss}' if use_cache else ''))
     if fail:
         log(f'  ⚠️ 조회 실패 {fail}회 — 실적이 일부 빠졌을 수 있음')
     return df
