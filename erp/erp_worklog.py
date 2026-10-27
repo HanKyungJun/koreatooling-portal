@@ -56,8 +56,10 @@ def _q(c, ws, params):
 # g10 NC 공정 줄의 누계(투입 wrk_in_tot · 양품 ok_in_tot · 불량 bad_in_tot)가 지난번과 같으면 그 공정의 g20 실적 줄도
 # 바뀌지 않았다고 보고 저장해 둔 줄을 다시 쓴다 → 새 실적이 들어온 공정만 g20 을 부른다.
 # 한계: 누계는 그대로인데 지난 실적의 날짜 · 설비만 고친 경우는 못 잡는다 → CACHE_DAYS 일이 지난 항목은 새로 읽고,
-#       full=True 또는 use_cache=False 면 캐시를 안 쓴다. 기본값 꺼짐(G20_CACHE=False) — PC 검증(probe_g20_cache.py) 뒤 켠다.
-G20_CACHE = False
+#       full=True 또는 use_cache=False 면 캐시를 안 쓴다.
+# ✅ 2026-10-27 13:23 PC 검증(probe_g20_cache.py, 10-01 ~ 10-27): 캐시 없음 ↔ 캐시 재사용 196줄 · 날짜별 양품 1,028 · 불량 8 모두 같음 ·
+#    조회 495 → 250회 · 48 → 15 s → 켬(decisions 2026-10-27 (7)). 끄기 = 아래 값을 False 로.
+G20_CACHE = True
 CACHE_DAYS = 7
 G20_CACHE_PATH = os.path.join(CACHE_DIR, 'g20_cache.json')
 _G20_KEEP = ('work_dt', 'prc_cd', 'mc_cd', 'ok_qty', 'bad_in_qty', 'pw_tm', 'mng_no', 'pw_no', 'pw_sq', 'fr_tm', 'to_tm', 'mdt')
