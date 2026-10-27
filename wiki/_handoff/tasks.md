@@ -26,6 +26,14 @@
 
 ## 진행 중
 
+- [ ] 🔵 **재연마 정가 조회기 — 고객 자동 응답(대표님 지시)** (P1, 2026-10-27 등재)
+  - 담당: 한경준(대표님 보고 · 확인) / Cowork(엔진 · 화면)
+  - ✅ 1단계(10-27): `scripts/price_lookup.py`(CLI: `python scripts\price_lookup.py "10파이 2날 볼 고경도"`) · 시연판 `outputs/price_lookup/정가조회_시연_20261027.html`(더블클릭으로 열림, 인터넷 불필요) — decisions 2026-10-27 (8)
+  - ⬜ 대표님 확인: ① 2단계 공개 범위 — 정가 데이터가 공개 웹(github.io)에 실리는 것 ② 화면 문구(「예상 정가 · 실제 견적은 담당자 확인」) ③ 사업장 파일끼리 정가가 다른 64개 정리 주체
+  - ⬜ 2단계: `estimate.html` 견적 문의에 「예상 정가」 표시 — 대표님 확인 뒤
+  - ⬜ 3단계: ERP 전표 입력 시 자동 응답 — 트리코(ERP 업체)에 화면 기능 · 연동 방법 문의(우리는 조회만 함)
+  - ⬜ (별건, P2) `price_audit.py` 일반코팅 별칭 사각지대 246건 — 검수 범위 보정할지 판단
+  - ⬜ 정가표 개정 시: `python scripts\price_lookup.py --export-html outputs\price_lookup\정가조회_시연_YYYYMMDD.html` 로 다시 만들기
 - [ ] 🔵 **캘린더 아티팩트 ERP 기준 대응 — 16:00 회차 확인 후 종결** (P1, 2026-10-27 등재)
   - 담당: 한경준(16:00 이후 캘린더 화면 확인) / Cowork(run.log 확인)
   - 메모: 10-23 16:00 회차가 PROD 에 파이썬 `None` 을 써서 캘린더 화면 전체가 멈춰 있었음 → `update_calendar_artifact.py` 수정(json · ERP total · None 가드) + 아티팩트 일회성 정정 2건 적용 완료(09:24 · 09:34 KST)
