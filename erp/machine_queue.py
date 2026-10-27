@@ -487,10 +487,25 @@ def map_erp_worked(d, erp_worked):
     return w, st
 
 
-def fetch_erp_worked(df, fr, log=print, client=None):
-    """미출하 오더의 ERP NC 양품 수량 {(so_no, itm_cd, 코팅, 각도): 양품}. 실패하면 None."""
-    import time
+# 2026-10-27: 가공분을 어디서 읽을지 — 'g20'(작업실적 줄 합, 기존) · 'g10'(공정현황 누계, g20 호출 없음) · 'both'(둘 다 읽고 비교)
+#   g10 의 NC 줄 ok_in_tot(양품 누계) + bad_in_tot(불량 누계) 가 g20 양품 + 불량 합과 같다면 g20 호출(약 절반)을 뺄 수 있다.
+#   근거: 투입 목록 로그 4회분 g20 합 = g10 투입누계(441 = 441 · 378 = 378). 작업지시별 일치는 erp/probe_queue_g10_vs_g20.py 로 확인 후
+#   기본값을 'g10' 으로 바꾼다(그 전까지 기본값 'g20'). 환경변수 QUEUE_ERP_MODE 로도 바꿀 수 있다.
+#   ✅ 2026-10-27 11:44 PC 검증(probe_queue_g10_vs_g20.py): 같은 조회에서 키 138개 전부 g10 = g20(합 390 = 390) ·
+#      호출 276 → 138회 · 27 → 10 s. 목록 차이 1줄(2610140156 볼 10mm 2개)은 두 조회 사이에 ERP 입력이 들어온 것(390 → 392).
+#      → 기본값 'g10' (decisions 2026-10-27 (6)). 되돌리기 = 아래 값을 'g20' 으로.
+QUEUE_ERP_MODE = 'g10'
+LAST_COMPARE = {}   # mode='both' 일 때 {key: (g10, g20)} — 검증 스크립트가 읽는다
+
+
+def fetch_erp_worked(df, fr, log=print, client=None, mode=None):
+    """미출하 오더의 ERP NC 가공 수량 {(so_no, itm_cd, 코팅, 각도): 양품+불량}. 실패하면 None."""
+    import os, time
     import pandas as pd
+    mode = (mode or os.getenv('QUEUE_ERP_MODE') or QUEUE_ERP_MODE).lower()
+    if mode not in ('g10', 'g20', 'both'):
+        mode = 'g20'
+    LAST_COMPARE.clear()
     try:
         from trico_client import TricoClient
         c = client or TricoClient()
@@ -520,7 +535,7 @@ def fetch_erp_worked(df, fr, log=print, client=None):
             return _orig_px(name, value, size, type_)
         c._param_xml = types.MethodType(_px, c)
         res, calls, fail = {}, 0, 0
-        g10_ok = g10_in = 0.0
+        g10_ok = g10_in = g10_done = 0.0
         try:
             for _, r in g00.iterrows():
                 try:
@@ -534,8 +549,11 @@ def fetch_erp_worked(df, fr, log=print, client=None):
                 if not len(nc):
                     continue
                 g10_ok += float(_num(nc, 'ok_qty').sum()); g10_in += float(_num(nc, 'wrk_in_tot').sum())
+                q10 = float(_num(nc, 'ok_in_tot').sum()) + float(_num(nc, 'bad_in_tot').sum())
+                g10_done += q10
+                key = (str(r['so_no']), str(r['itm_cd']), _nz(r.get('jae_coating')), _nz(r.get('jae_angle')))
                 q = 0.0
-                for _, n in nc.iterrows():
+                for _, n in (nc.iterrows() if mode != 'g10' else iter(())):
                     if 'wrk_in_tot' in nc.columns:   # 투입 누계가 0 이면 실적 없음 → g20 생략 (열이 아예 없으면 그냥 조회)
                         _wi = pd.to_numeric(n.get('wrk_in_tot'), errors='coerce')
                         if pd.isna(_wi) or float(_wi) <= 0:
@@ -552,13 +570,21 @@ def fetch_erp_worked(df, fr, log=print, client=None):
                             g20 = g20[g20['prc_cd'].astype(str) == '20']
                         # 2026-10-23: 불량(bad_in_qty)도 가공 끝난 수량으로 본다 — 양품만 빼면 불량 1개가 「남음」으로 남음(2610120201 사례)
                         q += float(_num(g20, 'ok_qty').sum()) + float(_num(g20, 'bad_in_qty').sum())
+                if mode == 'both':
+                    a, b = LAST_COMPARE.get(key, (0.0, 0.0))
+                    LAST_COMPARE[key] = (a + q10, b + q)
+                if mode == 'g10':
+                    q = q10
                 if q > 0:
-                    key = (str(r['so_no']), str(r['itm_cd']), _nz(r.get('jae_coating')), _nz(r.get('jae_angle')))
                     res[key] = res.get(key, 0.0) + q
         finally:
             del c._param_xml
-        log(f'  → ERP 작업실적: 미출하 오더 {len(open_so)}건 · 작업지시 {len(g00)}개 · 조회 {calls}회(실패 {fail}) · '
-            f'NC 가공(g20 양품+불량) {sum(res.values()):g}개 · 참고 g10 ok {g10_ok:g} / 투입누계 {g10_in:g} · {time.time() - t0:.0f}s')
+        src = {'g10': 'g10 양품+불량 누계', 'g20': 'g20 양품+불량', 'both': 'g20 양품+불량, g10 비교'}[mode]
+        log(f'  → ERP 작업실적[{mode}]: 미출하 오더 {len(open_so)}건 · 작업지시 {len(g00)}개 · 조회 {calls}회(실패 {fail}) · '
+            f'NC 가공({src}) {sum(res.values()):g}개 · 참고 g10 ok {g10_ok:g} / 투입누계 {g10_in:g} / 양품+불량 누계 {g10_done:g} · {time.time() - t0:.0f}s')
+        if mode == 'both':
+            diff = {k: v for k, v in LAST_COMPARE.items() if abs(v[0] - v[1]) > 1e-9}
+            log(f'  → g10 ↔ g20 비교: 키 {len(LAST_COMPARE)}개 중 다름 {len(diff)}개')
         return res
     except Exception as e:
         log(f'  ⚠️ ERP 작업실적 조회 실패 — 엑셀분만으로 진행: {type(e).__name__}: {str(e)[:100]}')
