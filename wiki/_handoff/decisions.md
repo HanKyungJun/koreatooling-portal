@@ -3,6 +3,19 @@
 > 무엇을(What), 왜(Why), 출처(Where)를 **시간 역순(최신이 맨 위)** 으로 기록합니다.
 > 챗에서 결정된 내용도 반드시 여기로 옮겨야 Code/Cowork가 따라옵니다.
 
+## 2026-10-27 (3): 예약 작업 `CNC_Daily_Report`(평일 16:00)의 **「예약 시간을 놓치면 가능한 빨리 실행」(StartWhenAvailable) 끔** — 놓친 날 다음 아침 OnBoot 와 배치 2개가 동시에 돌던 문제
+
+- 결정: ① `CNC_Daily_Report` StartWhenAvailable = False(10-27 09:55 KST 적용, 한경준님 관리자 PowerShell, 다시 읽어 False 확인) ② 아침 보완 실행은 `CNC_Daily_Report_OnBoot` 하나만 맡는다 ③ 16:00 을 놓친 날의 보고서가 필요하면 `python scripts\daily_report.py YYYY-MM-DD` 로 따로 만든다(어느 작업도 지난 날짜를 채우지 않음)
+- 근거:
+  - 작업 스케줄러 Operational(10-27, 실측): 07:50:28 OnBoot 시작(로그온) → 07:52:51 **이벤트 114**(예약대로 시작 못 한 `CNC_Daily_Report` 를 구성 옵션에 따라 지금 시작) → 07:58:44 16:00 작업 종료 반환 1 · 08:00:07 OnBoot 종료 반환 0. 원인 = 10-26(연차, PC 꺼짐) 16:00 놓침
+  - run.log: step5-start 1줄 · step5-end 2줄(07:58:42.71 rc=1 / 08:00:03.15 rc=0) · overview 1줄(다른 날 2줄) · step5_err.log 무변화 — 두 배치가 run.log · generate.log · step5_err.log 를 번갈아 쥐어 `>>` 리다이렉트가 조용히 실패한 흔적. generate.log 07:57:16 ~ 07:59:53 블록(OnBoot 5단계, 커밋 · push · 사내 배포 성공) — 실제 피해 없음
+  - `daily_report.py` 는 날짜 인자가 없으면 오늘 보고서만 만든다 → 아침 캐치업은 놓친 날 보고서를 만들지 못하고 겹치기만 함
+  - 10-12 아침 「1 ~ 4단계 두 번 · 두 번째 주체 미확인」도 직전 10-09(한글날) 16:00 놓침과 같은 패턴으로 보임 [추정값 — 당시 이벤트 미확인]
+  - 기존 설정: MultipleInstances = IgnoreNew(같은 작업 중복만 막음, 다른 작업과의 겹침은 못 막음) · ExecutionTimeLimit = PT0S
+  - 학술 · 표준 출처: 해당 없음(사내 운영 판단)
+- 출처: 챗(Cowork)
+- 영향: 예약 작업 설정(백업 `outputs/CNC_Daily_Report_backup_20261027.xml`, 원래 값 true 확인) · 되돌리기 = 같은 명령에서 `$true` · `.git/index.lock` 재발 건과의 관련은 미확인(두 배치가 git 을 동시에 만질 수 있었던 구조 — 재발 날짜를 직전 영업일 16:00 놓침과 대조할 후보)
+
 ## 2026-10-27 (2): 캘린더 배지 시간 표시 = **「가공 Hh Mm」**(분 반올림) — 「3:26:39」 가 시계 시각처럼 읽혀서
 
 - 결정: 캘린더 아티팩트 배지 아랫줄을 ERP 기준일 「NC 36 · 가공 3h 27m (추정)」, 엑셀 기준일 「F27·G14 · 가공 4h 23m」 으로 표시한다. PROD 데이터(`time` 값 H:MM:SS)와 월 합계(「⏱ 가공 75h 7m」, 분 버림)는 그대로 둔다

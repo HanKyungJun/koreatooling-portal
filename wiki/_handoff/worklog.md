@@ -9,8 +9,8 @@
 - 결과/산출물: 수정 `scripts/update_calendar_artifact.py`(원본 `.bak_20261027`) · 신규 `scripts/fix_calendar_erp_20261027.py` · `scripts/fix_calendar_timefmt_20261027.py` · 아티팩트 `weekly-calendar-overview/index.html`(백업 `.bak_20261027` · `.bak_20261027b`) · decisions **2026-10-27 (1) · (2)** · tasks(P1 캘린더 항목) · 백업 `decisions/tasks/worklog.md.bak_20261027`
 - 미완·블로커:
   - 10-27 16:00 회차 캘린더 기록 확인(종결 조건, tasks)
-  - 🟡 10-27 아침 run.log `[step5-end] 7:58:42.71 rc=1`(0.01 s) 뒤 start 줄 없이 `8:00:03 rc=0` — 10-20 종결한 generate.log 공유 위반과 비슷한 패턴, 재발 여부 확인 필요
-- 다음 단계 제안: ① 16:00 로그 확인 ② step5 rc=1 진단(onboot-step5 재발 절차) ③ P1 잔여 — 장비별 투입 목록 화면 검수 · ERP 단일화 잔여(2610120088 · 일별 차이)
+  - ✅ (09:55 종결) 10-27 아침 step5 rc=1 = 10-26 놓친 16:00 작업의 캐치업(이벤트 114)과 OnBoot 동시 실행 → `CNC_Daily_Report` StartWhenAvailable 끔(decisions 2026-10-27 (3), 백업 `outputs/CNC_Daily_Report_backup_20261027.xml`) · 커밋 `828cbf8` push 완료(한경준님)
+- 다음 단계 제안: ① 16:00 로그 확인(캘린더 OK 줄 · 이번엔 배치 1개만) ② 다음 휴무 다음 날 아침 run.log 에 배치 1벌만 있는지 확인 ③ P1 잔여 — 장비별 투입 목록 화면 검수 · ERP 단일화 잔여(2610120088 · 일별 차이)
 - 챗으로 가져갈 질문: 없음
 
 ## 2026-10-23 (#4) 핸드오프 — Cowork(컴퓨터1 desktop-35ose6p) · 발표 v1.7 ~ v1.9 확정 · 공지 대조 검수
