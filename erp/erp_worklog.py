@@ -152,7 +152,7 @@ def save_cache(df, fr, to):
 
 
 # ── 표준공수(초/개) 추정 ─────────────────────────────────────────────────────────
-# 출처: wiki/measurements/재연마_표준공수DB_2022-2026.xlsx 「표준 공수 DB」 시트(엑셀 작업일지 2022 ~ 2026 의 개당 가공시간 중앙값)
+# 출처: wiki/measurements/재연마_표준공수DB_2022-2026_통합본_20261023.xlsx 「표준 공수 DB」 시트(엑셀 작업일지 2022-01 ~ 2026-10-23 의 개당 가공시간 중앙값)
 # 신뢰도: 사내 경험값 기반 **추정값** — 그날 실제 가공시간이 아니다. ERP 「작업(분)」(pw_tm)은 시작 ~ 종료 경과시간이라 쓰지 않는다.
 # 맞추는 순서(기준 표기)
 #   ① 일치        : 형상 · 지름 · 날수 · 소재가 같은 줄
@@ -161,7 +161,10 @@ def save_cache(df, fr, to):
 #   ④ 형상 평균   : 형상군 · 소재 전체 표본수 가중 평균
 #   없음          : 형상을 DB 에서 못 찾음 → 시간 합계에서 빼고 줄 수를 따로 표시
 import re as _re
-STD_DB = os.path.join(os.path.dirname(HERE), 'wiki', 'measurements', '재연마_표준공수DB_2022-2026.xlsx')
+# 2026-10-23: 엑셀 작업일지 마지막 판으로 만든 통합본으로 바꿈(옛 파일 재연마_표준공수DB_2022-2026.xlsx 는 그대로 둠) — decisions 2026-10-23 (9)
+STD_DB = os.path.join(os.path.dirname(HERE), 'wiki', 'measurements', '재연마_표준공수DB_2022-2026_통합본_20261023.xlsx')
+if not os.path.exists(STD_DB):   # 통합본이 없으면 옛 파일
+    STD_DB = os.path.join(os.path.dirname(HERE), 'wiki', 'measurements', '재연마_표준공수DB_2022-2026.xlsx')
 
 # ERP 품목명 형상 → DB 형상군(접두어). 라핑 계열은 DB 에 따로 없어 기본 형상으로 근사하고 기준에 「근사」 를 붙인다.
 _SHAPE = {'평': '평', '볼': '볼', '코너': '코너R', '드릴': '드릴', '면취': '면취',

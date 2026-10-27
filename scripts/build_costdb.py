@@ -30,6 +30,11 @@ from pathlib import Path
 BASE = Path(__file__).resolve().parent.parent
 DATA = BASE / 'outputs' / 'worklog_parsed'
 OUTF = BASE / 'wiki' / 'measurements' / '재연마_표준공수DB_2022-2026.xlsx'
+# 2026-10-23: 출력 파일을 인자로 바꿀 수 있게 함 — 통합본(엑셀 작업일지 마지막 판)을 기존 파일과 따로 저장
+#   python scripts/build_costdb.py wiki/measurements/재연마_표준공수DB_2022-2026_통합본_20261023.xlsx
+import sys as _sys
+if len(_sys.argv) > 1:
+    OUTF = (BASE / _sys.argv[1]) if not Path(_sys.argv[1]).is_absolute() else Path(_sys.argv[1])
 
 import pandas as pd, numpy as np
 from openpyxl import Workbook
@@ -138,6 +143,25 @@ eq['합계']=eq['FG']+eq['GX7']
 eq['FG비중%']=(eq['FG']/eq['합계']*100).round(1)
 eq=eq.sort_values('합계',ascending=False)
 
+# 2026-10-23: 설비별(FG · GX7) 표준 공수 — decisions 2026-10-23 (5) ④ 「장비별 기록은 통합본에 장비별 집계로 남긴다」
+def _wmed(g):
+    v=np.repeat(g['단위시간s'].values,g['수량'].values.astype(int))
+    return pd.Series({'표본수':len(v),'중앙값':float(np.median(v)) if len(v) else np.nan})
+_k=['형상','직경','날수','소재']
+_m=clean.groupby(_k+['설비'],dropna=False).apply(_wmed,include_groups=False).reset_index()
+eqdb=db[_k].copy()
+for _eq in ('FG','GX7'):
+    _x=_m[_m['설비']==_eq][_k+['표본수','중앙값']].rename(columns={'표본수':_eq+' 표본수','중앙값':_eq+' 중앙값'})
+    eqdb=eqdb.merge(_x,on=_k,how='left')
+    eqdb.loc[eqdb[_eq+' 표본수'].fillna(0)<10,_eq+' 중앙값']=np.nan   # 설비별로도 표본 10개 이상만
+    eqdb[_eq+' 표본수']=eqdb[_eq+' 표본수'].fillna(0).astype(int)
+eqdb['차이(GX7−FG)']=(eqdb['GX7 중앙값']-eqdb['FG 중앙값'])
+for _c in ['FG 중앙값','GX7 중앙값','차이(GX7−FG)']:
+    eqdb[_c]=eqdb[_c].round(0).astype('Int64')
+_last=clean[['연','월','일']].drop_duplicates().sort_values(['연','월','일']).iloc[-1]
+LAST_DAY=f"{int(_last['연'])}-{int(_last['월']):02d}-{int(_last['일']):02d}"
+N_OUT=int(OUTLIER.sum()); P_OUT=round(N_OUT/len(df)*100,2)
+
 yr=clean.groupby('연').agg(작업건수=('수량','size'),총수량=('수량','sum'),
     총사이클h=('시간합계s',lambda x:round(x.sum()/3600,1))).reset_index()
 yr['조업일수']=clean.groupby('연').apply(lambda g:g[['월','일']].drop_duplicates().shape[0],include_groups=False).values
@@ -200,15 +224,21 @@ rows=[
  ('■ 데이터 범위','',''),
  ('원본','','raw/출하현황/재연마 작업일지(2022~2026)/재연마_월간생산일지 (M월).xls — 60개 파일'),
  ('추출 방식','','각 일자 시트의 FAST GRIND·GX7 블록을 동적 탐지 후 작업 행만 추출 (합계행·계기값행 제외)'),
- ('작업 레코드','',13145),
- ('총 재연마 수량','',84010),
- ('총 사이클 시간','','6,298 시간'),
- ('집계 기준일','','2026-08-28'),
+ ('작업 레코드','',int(len(df))),
+ ('총 재연마 수량','',int(df['수량'].sum())),
+ ('총 사이클 시간','',f"{clean['시간합계s'].sum()/3600:,.0f} 시간"),
+ ('집계 기준일','',LAST_DAY + ' (작업일지 마지막 기록일)'),
+ ('','',''),
+ ('■ 통합본','',''),
+ ('엑셀 입력 종료','','월간생산일지 엑셀 입력은 2026-10-23 오전분까지다. 이후 생산 실적은 ERP 작업실적만 기록한다 (decisions 2026-10-23 (4) · (5)).'),
+ ('이후 가공시간','','ERP 에는 사이클 타임 칸이 없다. 일일보고 · 현황판의 「추정 가공시간」은 이 파일 「표준 공수 DB」 중앙값 × 수량이다 (erp/erp_worklog.py StdTime).'),
+ ('설비별 값','','FG · GX7 따로 본 중앙값은 「설비별 표준 공수」 시트. ERP 에는 장비 구분이 없으므로 설비별 사이클 타임은 이 통합본이 마지막 자료다.'),
+ ('다시 잴 때','','가공시간은 필요할 때만 기간을 정해 기록한다 (decisions 2026-10-23 (4) ②). 새로 잰 값은 이 파일을 지우지 말고 새 판으로 남긴다.'),
  ('','',''),
  ('■ 「사이클 타임」의 성격 — 반드시 확인','',''),
  ('정의','','ANCA 장비가 기록한 개당 사이클 타임 [신뢰도: 사내 확인 — 한경준님, 2026-08-28]'),
  ('포함되지 않는 것','','셋업 시간, 대기 시간, 검사·측정 시간, 휠 드레싱, 공구 교체'),
- ('⚠️ 원가 산정 시','','이 값을 그대로 개당 원가에 쓰면 과소평가된다. 셋업·간접시간 보정계수를 별도로 적용할 것.'),
+ ('⚠️ 원가 산정 시','','이 값을 그대로 개당 원가에 쓰면 과소평가된다. 개당 원가는 「개당 원가 배분」 시트처럼 일 인건비 ÷ 일 생산량으로 낸다(보정계수 불필요). (2026-10-23 통합본: 옛 문구 「보정계수를 별도로 적용할 것」은 같은 파일의 원가 배분 시트와 맞지 않아 고침)'),
  ('','',''),
  ('■ 통계 방법','',''),
  ('가중 방식','','수량 가중 — 1개 작업 행(수량 n개)을 n개 표본으로 전개해 집계'),
@@ -219,7 +249,7 @@ rows=[
  ('■ 신뢰도','','실측 검증 — 원본 작업일지 직접 판독. 단, 입력값 자체의 정확도는 현장 입력에 의존한다.'),
  ('','',''),
  ('■ 제외·주의','',''),
- ('이상치 제외','','단위시간이 정확히 1.0초인 레코드 511건(3.89%)을 집계에서 제외. 전량 단일값 1.0초 — 실제 가공시간이 아니라 미입력 자리표시로 판단.'),
+ ('이상치 제외','',f'단위시간이 1.0초 이하인 레코드 {N_OUT}건({P_OUT}%)을 집계에서 제외. 실제 가공시간이 아니라 미입력 자리표시로 판단.'),
  ('','','  └ 제외해도 중앙값은 변하지 않는다(볼 Ø6 2날: 제외 240초 = 포함 240초). 평균·P80을 보호하기 위해서만 제외한다.'),
  ('금액 미수록','','원본의 가공비·금액 열은 실거래 단가이므로 추출하지 않았다 (CLAUDE.md §4 대외비).'),
  ('계기값 미수록','','일자 시트 하단 계기값 행(741건)은 리셋이 확인됐으나 시간 단위로 해석되지 않아 미수록 — 「설비 계기값」 시트 참조.'),
@@ -253,6 +283,16 @@ ws.freeze_panes='A4'
 for i in range(4,4+len(d)):
     cv=ws.cell(row=i,column=13).value
     if cv is not None and cv>=35: ws.cell(row=i,column=13).fill=PatternFill('solid',fgColor=WARN)
+
+# ── 2-B. 설비별 표준 공수 (2026-10-23 통합본) ──
+ws=wb.create_sheet('설비별 표준 공수')
+title(ws,'설비별 표준 공수 — FG · GX7 따로 본 중앙값',10)
+ws.cell(row=2,column=1,value='단위: 초/개 · 수량 가중 중앙값 · 「표준 공수 DB」 조합 중 설비별 표본 10개 이상만 값 표시(빈 칸 = 표본 부족) · ERP 에는 장비 구분이 없어 이 표가 설비별 마지막 자료').font=Font(name=F,size=11,italic=True)
+ws.merge_cells(start_row=2,start_column=1,end_row=2,end_column=10)
+_e=eqdb.astype(object).where(eqdb.notna(),None)
+put_df(ws,_e,hdr_row=3)
+autow(ws,[14,8,7,7,10,10,10,10,12])
+ws.freeze_panes='A4'
 
 # ── 3. 형상별 요약 ──
 ws=wb.create_sheet('형상별 요약')
@@ -496,7 +536,7 @@ for i,r_ in enumerate(raw.itertuples(index=False),2):
         ws.cell(row=i,column=j,value=v)
 ws.freeze_panes='A2'
 autow(ws,[7,6,6,7,14,8,7,8,10,7,8,10,11,16,11,16,10])
-ws.cell(row=1,column=len(raw.columns)+2,value='이상치(≤1초) 511건 제외 후 %d건'%len(raw)).font=Font(name=F,size=11,italic=True)
+ws.cell(row=1,column=len(raw.columns)+2,value='이상치(≤1초) %d건 제외 후 %d건'%(N_OUT,len(raw))).font=Font(name=F,size=11,italic=True)
 
 OUTF.parent.mkdir(parents=True, exist_ok=True)
 wb.save(OUTF)
