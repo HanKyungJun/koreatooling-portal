@@ -1,6 +1,6 @@
-## 2026-10-27 (#1) 핸드오프 — Cowork(컴퓨터1 desktop-35ose6p) · 세션 시작 요약 · 캘린더 아티팩트 화면 멈춤(None) 정정 · 시간 표시 변경
+## 2026-10-27 (#1) 핸드오프 — Cowork(컴퓨터1 desktop-35ose6p) · 캘린더 None 정정 · 캐치업 배치 끔 · ERP 조회 줄이기(g10 · g20 캐시) · 넥 · 5도 휠 · 정가 조회기 · ERP 정가 점검 · 정가표 정리본
 
-- 한 일: (~ 09:45 KST)
+- 한 일: (08:50 ~ 17:00 KST 무렵)
   - 핸드오프 4종 읽기 · run.log 대조 → 10-23 16:00 ERP 첫 자동 일일보고 정상(양품 974 · 불량 8, step5 rc=0) 확인
   - 발표 v1.9 제출 완료(한경준님)
   - 캘린더 `[calendar] OK - 2026-10-23: FG None, GX7 None, total 0` 추적 → 아티팩트 PROD 에 파이썬 `None` 이 들어가 `const PROD` ReferenceError, 화면 전체가 「불러오는 중」에서 멈춤(Chromium 재현)
@@ -8,7 +8,6 @@
   - 일회성 `fix_calendar_erp_20261027.py`(화면 JS 4곳 + 10-23 줄 → total 36) · `fix_calendar_timefmt_20261027.py`(배지 「가공 3h 27m」) — 둘 다 한경준님 PC `--apply` 완료, 다시 읽어 확인
 - 결과/산출물: 수정 `scripts/update_calendar_artifact.py`(원본 `.bak_20261027`) · 신규 `scripts/fix_calendar_erp_20261027.py` · `scripts/fix_calendar_timefmt_20261027.py` · 아티팩트 `weekly-calendar-overview/index.html`(백업 `.bak_20261027` · `.bak_20261027b`) · decisions **2026-10-27 (1) · (2)** · tasks(P1 캘린더 항목) · 백업 `decisions/tasks/worklog.md.bak_20261027`
 - 미완·블로커:
-  - 10-27 16:00 회차 캘린더 기록 확인(종결 조건, tasks)
   - ✅ (09:55 종결) 10-27 아침 step5 rc=1 = 10-26 놓친 16:00 작업의 캐치업(이벤트 114)과 OnBoot 동시 실행 → `CNC_Daily_Report` StartWhenAvailable 끔(decisions 2026-10-27 (3), 백업 `outputs/CNC_Daily_Report_backup_20261027.xml`) · 커밋 `828cbf8` push 완료(한경준님)
   - ✅ (~10:51) ERP 단일화 잔여 대조: 2610120088 볼 10mm 는 14:59 입력분이라 종결 · 일별 차이 = 엑셀(끝난 날) ↔ ERP(시작일) 날짜 기준 차이(상쇄 100개 / 18건) · 2610210024 드릴 6mm 6개 ERP 미입력 → 한경준님 입력 · decisions 2026-10-27 (4)
   - ✅ 투입 목록 화면 검수: 스냅샷으로 07:59 목록 재현(FG 22 / 113 · GX7 89 / 346) → 111줄 대조, 「가공 기록 있는데 남은 줄」 0건 → 보류(한경준님)
@@ -20,8 +19,13 @@
   - ✅ 5도 휠 갭 RPM 후속 시험 계획 · 기록표 xlsx(수식 112개 · 오류 0)
   - ✅ (~14:15) 정가 조회기 1단계(대표님 지시): `scripts/price_lookup.py` + 시연판(outputs) — 등록 품목 전수 대조 89 % 정가표 일치 · 7.6 % 등록 정가 · Python ↔ 웹 1,517건 일치. 부수 발견 2건(price_audit 일반코팅 246건 사각지대 · 사업장 정가 다름 64개) — decisions 2026-10-27 (8)
   - ✅ (16:30) 16:00 회차 확인 — ① 캘린더 `OK - 2026-10-27: NC(ERP) total 66, 6:04:51` · 아티팩트 10-27 줄 정상 · None 0 ② 일일보고 생성(16:00:40) · 10월 양품 1,050 · 불량 9(+6 반영 포함) ③ step5 1쌍 16:01:32 → 16:02:09 rc=0(배치 1벌) ④ 투입 목록 `[g10]` 조회 145회 = 작업지시 145 · 실패 0 · FG 16품목/84개 · GX7 72품목/296개 ⑤ g20 캐시 첫 실행 재사용 0 / 새로 읽음 256 · 실패 0 · `g20_cache.json` 생성 → 캘린더 항목 종결
-- 다음 단계 제안: ① 16:00 로그 확인(캘린더 OK 줄 · 이번엔 배치 1개만 · 10월 NC 합계 +6 반영 · 투입 목록 로그 `[g10]`) ② 다음 휴무 다음 날 아침 run.log 에 배치 1벌만 있는지 확인 ③ P1 잔여 — 장비별 투입 목록 화면 검수 · ERP 단일화 잔여(2610120088 · 일별 차이)
-- 챗으로 가져갈 질문: 없음
+  - ✅ (~15:40) ERP 품목정보조회 내려받기(`raw/단가표/261027/`) 기준 정가 점검 A ~ E(`outputs/price_lookup/ERP정가_점검_20261027.xlsx`) — 앞선 「64개 · 개정 전 정가」 설명 정정 · 조회기 등록 정가 출처 = ERP 내려받기 — decisions 2026-10-27 (9)
+  - ✅ 정가 공개 허용(한경준님) · 2단계 견적 문의 「예상 정가」 시험판 `outputs/price_web_build/` 완성 — 🔴 정가표 파일이 15:44 에 10-16 저장판으로 바뀌어(블록 3개 없음) dist 반영 보류 — decisions 2026-10-27 (10)
+  - ✅ 정가표 정리본(한 줄 한 규격, 10-16 판 기준) `outputs/price_lookup/정가표_정리본_26.09_20261027.xlsx` — 정가 1,449줄 · 문제점 31 — decisions 2026-10-27 (11)
+  - 미완(한경준님): ① 정가표 원본 정정(HSS 리머 블록 · #VALUE! 2 · AP39 제목 · 마지막 칸 「50」 라벨 · Ø30 ~ 31 빈틈) ② ERP 정가 정정(점검 A 83줄 우선) · 질문 2건(고경도 드릴 ×1.07 의도? · 창성 정가 빈칸 2,195 의도?) ③ 5도 휠 시험표 이송 2칸 · 쿨런트 ④ NS Tool 카탈로그(MHR430 首径)
+- 결과/산출물(오후 추가): 신규 `scripts/price_lookup.py` · `price_lookup_core.js` · `price_lookup_web.html` · `price_list_tidy.py` · 수정 `erp/machine_queue.py`(g10) · `erp/erp_worklog.py`(g20 캐시 켬) · 신규 `erp/probe_queue_g10_vs_g20.py` · `erp/probe_g20_cache.py` · 위키 `standards/넥-지름-기준-굽힘강성표.md` §0-3 · `tools/wheels/휠-5도-Ø125-1-2.md` · `reports/01_연삭조건/5도휠_갭RPM_후속시험_계획·기록표_20261027.xlsx` · sources 3건 · decisions 2026-10-27 (1) ~ (11) · 예약 작업 설정 변경(StartWhenAvailable)
+- 다음 단계 제안: ① 정가표 원본 정정 → `python scripts\price_list_tidy.py` · `python scripts\price_lookup.py --export-web outputs\price_web_build`(블록 다 잡히면) → 시험판을 dist 로 → 2단계 공개 ② ERP 정정 후 새 내려받기를 `raw/단가표/YYMMDD/` 에 → 점검 다시 ③ 내일 아침 run.log: g20 캐시 재사용 수(새로 읽음이 줄었는지) · 배치 1벌 ④ 3단계(ERP 전표 자동 응답) — 트리코 문의 ⑤ 11-04 자동화 효과 지표 재판정 · 11-10 발표 리허설
+- 챗으로 가져갈 질문: 고경도 드릴 정가를 정가표에 넣을지(ERP 는 코팅 × 약 1.07) · 정가표 10-16 판에 HSS 리머가 빠진 이유
 
 ## 2026-10-23 (#4) 핸드오프 — Cowork(컴퓨터1 desktop-35ose6p) · 발표 v1.7 ~ v1.9 확정 · 공지 대조 검수
 
