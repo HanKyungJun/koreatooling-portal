@@ -1,3 +1,18 @@
+## 2026-10-27 (#1) 핸드오프 — Cowork(컴퓨터1 desktop-35ose6p) · 세션 시작 요약 · 캘린더 아티팩트 화면 멈춤(None) 정정 · 시간 표시 변경
+
+- 한 일: (~ 09:45 KST)
+  - 핸드오프 4종 읽기 · run.log 대조 → 10-23 16:00 ERP 첫 자동 일일보고 정상(양품 974 · 불량 8, step5 rc=0) 확인
+  - 발표 v1.9 제출 완료(한경준님)
+  - 캘린더 `[calendar] OK - 2026-10-23: FG None, GX7 None, total 0` 추적 → 아티팩트 PROD 에 파이썬 `None` 이 들어가 `const PROD` ReferenceError, 화면 전체가 「불러오는 중」에서 멈춤(Chromium 재현)
+  - `scripts/update_calendar_artifact.py` 수정: ERP 보고서 「합계 수량」 → total · fg/gx7 null · json.dumps · None 가드 · 시간 H:MM:SS + est. 엑셀 기준일(10-20 ~ 22)은 기존 줄과 글자까지 같음 확인
+  - 일회성 `fix_calendar_erp_20261027.py`(화면 JS 4곳 + 10-23 줄 → total 36) · `fix_calendar_timefmt_20261027.py`(배지 「가공 3h 27m」) — 둘 다 한경준님 PC `--apply` 완료, 다시 읽어 확인
+- 결과/산출물: 수정 `scripts/update_calendar_artifact.py`(원본 `.bak_20261027`) · 신규 `scripts/fix_calendar_erp_20261027.py` · `scripts/fix_calendar_timefmt_20261027.py` · 아티팩트 `weekly-calendar-overview/index.html`(백업 `.bak_20261027` · `.bak_20261027b`) · decisions **2026-10-27 (1) · (2)** · tasks(P1 캘린더 항목) · 백업 `decisions/tasks/worklog.md.bak_20261027`
+- 미완·블로커:
+  - 10-27 16:00 회차 캘린더 기록 확인(종결 조건, tasks)
+  - 🟡 10-27 아침 run.log `[step5-end] 7:58:42.71 rc=1`(0.01 s) 뒤 start 줄 없이 `8:00:03 rc=0` — 10-20 종결한 generate.log 공유 위반과 비슷한 패턴, 재발 여부 확인 필요
+- 다음 단계 제안: ① 16:00 로그 확인 ② step5 rc=1 진단(onboot-step5 재발 절차) ③ P1 잔여 — 장비별 투입 목록 화면 검수 · ERP 단일화 잔여(2610120088 · 일별 차이)
+- 챗으로 가져갈 질문: 없음
+
 ## 2026-10-23 (#4) 핸드오프 — Cowork(컴퓨터1 desktop-35ose6p) · 발표 v1.7 ~ v1.9 확정 · 공지 대조 검수
 
 - 한 일: (14:10 ~ 15:30 KST) 커밋 d94f775 푸시 확인(한경준님) · 한경준님이 v1.5 · v1.7 파일에 직접 고친 것 대조 → v1.7(표지 · 4장 문구 · 5장 = 설계 프로그램 연결 · 11장 = ERP 단일 기록 · 6장 읽는 자료) → v1.8(제목 「단원: 주제」 콜론 · 마지막 단원 「개선 방향」 · 8장 「시연 (질의응답)」 · 9장 「아낀 시간」 뺌 · 11장 「보완할 점」) → 공지(발표 일정 안내) 대조 검수 → v1.9(10장 20 / 20 영업일로 9장과 맞춤 · 6장 노트 「두 번째 필수 항목」) · 내용 확정
