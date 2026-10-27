@@ -8,8 +8,9 @@ r"""재연마 정가 조회 (price_lookup) — 말로 한 품목 → 표준 품�
 정가의 근거 (위에서부터)
   ① 정가표 계산 — raw/단가표/ 최신 「정가표(YY.MM)」 시트. 판독 로직은 price_audit.Blocks.expect 를 그대로 쓴다
      (판독 규칙: wiki/standards/재연마-정가표-읽는법.md). 정가표는 대외비가 아니다(CLAUDE.md §4-1).
-  ② 등록 품목 정가 — 정가표 블록이 없는 형상(드릴 · 챔퍼 · 테이퍼 등)은 ERP 업로드 품목 파일의 「정가」 열(28열)만 읽는다.
-     할인율 · 단가 열(29 ~ 32)은 읽지 않는다.
+  ② 등록 품목 정가 — 정가표 블록이 없는 형상(챔퍼 · 테이퍼 · 원통연삭 등)은 등록 정가를 쓴다.
+     2026-10-27 부터 **ERP 「품목정보조회」 내려받기 파일**(raw/단가표/YYMMDD/*_품목정보조회_*.xlsx — 품목코드 · 품목명 · 정가 열만)을
+     먼저 읽고, 없으면 9월 단가 검수 _완료 파일(28열 정가)을 읽는다. 할인율 · 단가 · 마진 열은 읽지 않는다.
   ③ 두 값이 다르거나, 사업장 파일끼리 정가가 다르면 「확인 필요」로 답한다 — 고객에게 내보내지 않는다.
 
 사용:
@@ -186,25 +187,34 @@ class Lookup:
         return None
 
     def _load_master(self, price_dir):
-        # 가장 최근 「단가 검수」 폴더의 _완료 파일(사업장별). 정가 열만 읽는다.
-        dirs = sorted(d for d in glob.glob(os.path.join(price_dir, '*단가 검수*')) if os.path.isdir(d))
-        files = sorted(glob.glob(os.path.join(dirs[-1], '*_완료.xlsx'))) if dirs else []
+        # ① ERP 품목정보조회 내려받기(가장 최근 폴더) — 열: 1 품목코드 · 2 품목명 · 6 정가 (2026-10-27 실측 머리글)
+        erp = sorted(glob.glob(os.path.join(price_dir, '*', '*_품목정보조회_*.xlsx')))
+        erp = [f for f in erp if not os.path.basename(f).startswith('~$')]
+        if erp:
+            last = os.path.dirname(erp[-1])
+            files = [(f, 0, 1, 2, 6) for f in erp if os.path.dirname(f) == last]
+            self.master_src = 'ERP 품목정보조회 ' + os.path.basename(last)
+        else:   # ② 9월 단가 검수 _완료 파일 — 품목일괄등록 시트 3 품목명 · 2 코드 · 28 정가
+            dirs = sorted(d for d in glob.glob(os.path.join(price_dir, '*단가 검수*')) if os.path.isdir(d))
+            files = [(f, '품목일괄등록', COL_CODE, COL_NAME, COL_PRICE) for f in sorted(glob.glob(os.path.join(dirs[-1], '*_완료.xlsx')))] if dirs else []
+            self.master_src = '단가 검수 _완료 파일'
         vals = collections.defaultdict(set); names = {}
-        for f in files:
+        for f, sh, cc, cn, cp in files:
             if os.path.basename(f).startswith('~$'):
                 continue
             self.master_files.append(os.path.basename(f))
-            ws = openpyxl.load_workbook(f, read_only=True, data_only=True)['품목일괄등록']
+            wb = openpyxl.load_workbook(f, read_only=True, data_only=True)
+            ws = wb.worksheets[sh] if isinstance(sh, int) else wb[sh]
             for r in ws.iter_rows(min_row=3, values_only=True):
-                if not r or len(r) < COL_PRICE or not r[COL_NAME - 1]:
+                if not r or len(r) < cp or not r[cn - 1]:
                     continue
                 try:
-                    pr = float(r[COL_PRICE - 1])
+                    pr = float(r[cp - 1])
                 except (TypeError, ValueError):
                     continue
                 if pr <= 0:
                     continue
-                k = _key(r[COL_NAME - 1]); vals[k].add(pr); names.setdefault(k, (str(r[COL_NAME - 1]).strip(), r[COL_CODE - 1]))
+                k = _key(r[cn - 1]); vals[k].add(pr); names.setdefault(k, (str(r[cn - 1]).strip(), r[cc - 1]))
         std = {'평', '볼', '코너', '라핑평', '라핑볼', '라핑코너', '라핑', '리머', '드릴', '챔퍼', '테이퍼드릴', '테이퍼평', '테이퍼볼', '테이퍼코너',
                '스탭드릴', '카운터보어', '카운터싱크'}
         extra = {k.split('/')[1] for k in vals if k.count('/') >= 5} - std
@@ -220,7 +230,7 @@ class Lookup:
         name = std_name(blade, shape, dia, mat, part, coat)
         k = _key(name)
         calc = None
-        if shape == '드릴' and part == '밑날' and blade == 2:   # 3날 · 4날 초경 드릴은 블록과 다름(등록 정가 14건 불일치, 2026-10-27) → 등록 정가
+        if shape == '드릴' and part == '밑날' and blade == 2 and coat != '고경도코팅':   # 고경도 드릴은 ERP 가 코팅 × 약 1.07(10-27 확인) → 등록 정가   # 3날 · 4날 초경 드릴은 블록과 다름(등록 정가 14건 불일치, 2026-10-27) → 등록 정가
             calc = self.drill_price(dia, coat)
         elif shape in ('평', '볼', '코너', '라핑평', '라핑볼', '라핑코너', '리머'):
             try:
@@ -326,7 +336,7 @@ def export_json(lk, path, step=0.05, dmax=60.0):
                         if runs:
                             combos['|'.join([mat, shape, part, coat, str(blade)])] = runs
     for mat in ('초경', 'HSS'):          # 2날 드릴 — 「드릴/면취/NC 스포팅」 블록
-        for coat in ('비코팅', '일반코팅', '고경도코팅'):
+        for coat in ('비코팅', '일반코팅'):
             runs, last = [], None
             for i in range(1, n + 1):
                 d = round(i * step, 3)
@@ -352,7 +362,7 @@ def export_json(lk, path, step=0.05, dmax=60.0):
             if p[5] in ('비코팅', '일반코팅', '고경도코팅') and p[4] in ('밑날', '밑옆날', '골수리', '옆날'):
                 if lk.price_one(b, sh, d, mat, p[4], p[5])['status'] == '확인 필요':
                     mismatch.append(k)
-    out = dict(made=pa.now_kst().strftime('%Y-%m-%d %H:%M KST'), pricelist=os.path.basename(lk.pl_path), sheet=lk.pl.name,
+    out = dict(made=pa.now_kst().strftime('%Y-%m-%d %H:%M KST'), pricelist=os.path.basename(lk.pl_path), sheet=lk.pl.name, master_src=lk.master_src,
                step=step, combos=combos, registered=reg, conflict=sorted(lk.conflict), mismatch=sorted(mismatch),
                extra_shapes=EXTRA_SHAPES,
                note='정가만 · 할인율/사업장 단가 없음 · 실제 견적은 담당자 확인')
@@ -390,7 +400,7 @@ def main():
     qs = TESTS if a.test else [' '.join(a.query)] if a.query else []
     if not qs:
         ap.print_help(); return 1
-    print(f'정가표: {os.path.basename(lk.pl_path)} [{lk.pl.name}] · 등록 품목 {len(lk.master):,}개(사업장 정가 다름 {len(lk.conflict)}개) · 파일 {", ".join(lk.master_files)}')
+    print(f'정가표: {os.path.basename(lk.pl_path)} [{lk.pl.name}] · 등록 정가 출처 {lk.master_src} · 등록 품목 {len(lk.master):,}개(사업장 정가 다름 {len(lk.conflict)}개) · 파일 {", ".join(lk.master_files)}')
     for q in qs:
         r = lk.answer(q)
         print(json.dumps(r, ensure_ascii=False, default=str) if a.json else fmt(r))
