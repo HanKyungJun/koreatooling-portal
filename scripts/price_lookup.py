@@ -378,19 +378,40 @@ def main():
     ap.add_argument('--json', action='store_true', help='결과를 JSON 으로')
     ap.add_argument('--export-json', default=None)
     ap.add_argument('--export-html', default=None, help='사내 시연 화면(정가 데이터 내장 HTML 한 파일)')
+    ap.add_argument('--force', action='store_true', help='정가표 블록을 못 찾아도 내보내기(공개 웹은 기본 거부)')
+    ap.add_argument('--export-web', default=None, help='공개 웹용 price-data.js · price-lookup.js 를 이 폴더에 쓴다(예: dist)')
     a = ap.parse_args()
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     lk = Lookup()
+    if lk.blocks.missing:   # 🔴 조용한 성공 방지 — 정가표 블록 제목이 바뀌면 그 형상은 정가표 계산이 빠진다
+        print(f"⚠️ 정가표에서 못 찾은 블록 {len(lk.blocks.missing)}개: " + ' · '.join(lk.blocks.missing))
+        print(f"   정가표: {os.path.basename(lk.pl_path)} (수정 {pa.datetime.datetime.fromtimestamp(os.path.getmtime(lk.pl_path), pa.KST):%Y-%m-%d %H:%M} KST)")
+        if a.export_web and not a.force:
+            print('   공개 웹 내보내기를 멈춥니다 — 정가표 확인 뒤 다시 실행하거나 --force')
+            return 2
+    if a.export_web:
+        # 공개 웹(견적 문의 페이지)용 — 정가만. 2026-10-27 한경준님 「정가는 공개해도 됨」(decisions 2026-10-27 (10))
+        import tempfile, shutil
+        tmp = os.path.join(tempfile.gettempdir(), 'price_data_web.json')
+        o = export_json(lk, tmp)
+        os.makedirs(a.export_web, exist_ok=True)
+        with open(os.path.join(a.export_web, 'price-data.js'), 'w', encoding='utf-8') as f:
+            f.write('/* 재연마 공표 정가 데이터 — scripts/price_lookup.py --export-web 로 생성. 직접 고치지 말 것 */\n')
+            f.write('window.PRICE_DATA=' + open(tmp, encoding='utf-8').read() + ';\n')
+        shutil.copyfile(os.path.join(HERE, 'price_lookup_core.js'), os.path.join(a.export_web, 'price-lookup.js'))
+        print(f"공개 웹 파일 저장: {a.export_web}/price-data.js · price-lookup.js · 구간표 {len(o['combos'])}조합 · 등록 품목 {len(o['registered'])}개")
+        return 0
     if a.export_html:
         import tempfile
         tmp = os.path.join(tempfile.gettempdir(), 'price_data_tmp.json')
         o = export_json(lk, tmp)
         tpl = open(os.path.join(HERE, 'price_lookup_web.html'), encoding='utf-8').read()
+        core = open(os.path.join(HERE, 'price_lookup_core.js'), encoding='utf-8').read()
         data = open(tmp, encoding='utf-8').read().replace('</', '<\\/')
-        assert tpl.count('/*__DATA__*/null') == 1
+        assert tpl.count('/*__DATA__*/null') == 1 and tpl.count('/*__CORE__*/') == 1
         with open(a.export_html, 'w', encoding='utf-8') as f:
-            f.write(tpl.replace('/*__DATA__*/null', data))
+            f.write(tpl.replace('/*__DATA__*/null', data).replace('/*__CORE__*/', core.replace('</', '<\\/')))
         print(f"시연 화면 저장: {a.export_html} · 구간표 {len(o['combos'])}조합 · 등록 품목 {len(o['registered'])}개 · 확인 필요 {len(o['conflict']) + len(o['mismatch'])}개")
         return 0
     if a.export_json:
