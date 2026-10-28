@@ -7,6 +7,7 @@
   - 챗봇 논의 → 사내 Claude 프로젝트 「재연마 정가 문의」 지식 파일 · 지시문(`scripts/export_price_project.py`) · 모사 시험 1차 20 / 22 → 2차 22 / 22 — decisions (2)
   - 사내 Claude 프로젝트 「취급 제품 정보」: JJ · COGO 카탈로그 PDF → 제품군 요약 + 품번 치수 CSV(`scripts/catalog/` dump · parse · export) · JJ 274 제품군 / 19,179 품번 · COGO 179 / 14,859(표지의 약 96 %) · 원본 쪽 이미지 6장 대조 · RAG 모사 시험 JJ 12 / 12 · COGO 8 / 8 — decisions (3)
   - 보고서 작성 규칙: 결정 (4) 기록 → 기존 4개 페이지 검수(불일치 6곳 · 기준 없는 곳 3) → 9개 항목 확정 (5) → 공통 규칙 · 양식 A · B · C 초안 → 견본 A(넥 보고 v3) → 사진 규칙 (6) · 운영 4가지 (7) → CLAUDE.md §14 · 프로젝트 메모리 등재
+  - 정가 프로젝트 실제 생성(한경준님) → 3차 시험 22 / 22 · 시험 Claude 가 코드 실행으로 CSV 를 읽은 조건이라 설치 안내 §1 에 「코드 실행 켜짐 확인」 단계 · §3 3차 줄 · §4 구간 빈틈 18곳 추가(엔진도 같은 빈틈 — 정가표 「30 미만 · 31 이상」 정수 구간)
   - 10월 정성 목표표 확인: 납기 「평균 9.6일」 vs ERP 수주(납기일 − 수주일) 10월 59건 평균 10.66일 — 계산 기준 불명, 한경준님 「대충 작성해도 됨」으로 넘어감
 - 결과/산출물:
   - 신규 `scripts/quote_price.py` · `scripts/setup_estimate_tab.py` · `scripts/export_price_project.py` · `scripts/catalog/catalog_dump.py` · `catalog_parse.py` · `catalog_export.py`
