@@ -40,7 +40,7 @@ LOCAL_ROOT       = 'wiki'
 DRIVE_SYNC_ROOT  = 'cnc-wiki'
 DRIVE_LIST_ROOT  = 'cnc-wiki 분석자료'
 FORM_SHEET_ID    = os.getenv('FORM_SHEET_ID')
-FORM_TABS        = ['재연마의뢰', '불량신고', '진행문의', '소모품요청']
+FORM_TABS        = ['재연마의뢰', '불량신고', '진행문의', '소모품요청', '견적문의']  # 2026-10-28 견적문의 추가
 
 if not FORM_SHEET_ID:
     print("⚠️ 경고: FORM_SHEET_ID 환경변수가 없습니다. /api/form-submissions 엔드포인트가 작동하지 않습니다.")
@@ -252,10 +252,15 @@ def api_form_submissions():
 
         result = {}
         for tab in FORM_TABS:
-            res = svc.spreadsheets().values().get(
-                spreadsheetId=FORM_SHEET_ID,
-                range=f'{tab}!A1:Z500'
-            ).execute()
+            try:
+                res = svc.spreadsheets().values().get(
+                    spreadsheetId=FORM_SHEET_ID,
+                    range=f'{tab}!A1:Z500'
+                ).execute()
+            except Exception:
+                # 탭 하나가 없어도 나머지는 보여 준다(2026-10-28)
+                result[tab] = {'headers': [], 'rows': [], 'error': f'시트에 「{tab}」 탭 없음 또는 조회 실패'}
+                continue
             values = res.get('values', [])
             if len(values) > 1:
                 result[tab] = {'headers': values[0], 'rows': list(reversed(values[1:]))}

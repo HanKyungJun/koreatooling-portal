@@ -1251,7 +1251,8 @@ def write_internal_submissions_js() -> bool:
 
     token_path = os.path.join(BASE_DIR, 'token_sheets.json')
     scopes = ['https://www.googleapis.com/auth/spreadsheets']
-    tabs   = ['재연마의뢰', '불량신고', '진행문의', '소모품요청']
+    # 2026-10-28 견적문의 탭 추가 — 견적 문의 웹폼(estimate.html) 접수분. decisions.md 2026-10-28
+    tabs   = ['재연마의뢰', '불량신고', '진행문의', '소모품요청', '견적문의']
     try:
         creds = Credentials.from_authorized_user_file(token_path, scopes)
         if creds.expired and creds.refresh_token:
@@ -1261,8 +1262,14 @@ def write_internal_submissions_js() -> bool:
         svc = _gbuild('sheets', 'v4', credentials=creds)
         data, n_rows = {}, 0
         for tab in tabs:
-            res = svc.spreadsheets().values().get(
-                spreadsheetId=sheet_id, range=f'{tab}!A1:Z500').execute()
+            try:
+                res = svc.spreadsheets().values().get(
+                    spreadsheetId=sheet_id, range=f'{tab}!A1:Z500').execute()
+            except Exception as e:
+                # 탭 하나가 없다고 접수현황 전체를 버리지 않는다(2026-10-28 — 견적문의 탭 신설 전후 대비)
+                _log(f'  ⚠️ 접수현황 「{tab}」 탭 조회 실패 — 이 탭만 생략: {type(e).__name__}: {str(e)[:100]}')
+                data[tab] = {'headers': [], 'rows': [], 'error': f'시트에 「{tab}」 탭 없음 또는 조회 실패'}
+                continue
             values = res.get('values', [])
             if len(values) > 1:
                 data[tab] = {'headers': values[0], 'rows': list(reversed(values[1:]))}
@@ -1272,6 +1279,14 @@ def write_internal_submissions_js() -> bool:
     except Exception as e:
         _log(f'  ⚠️ 접수현황 조회 실패 — 생략: {type(e).__name__}: {str(e)[:120]}')
         return False
+
+    # 2026-10-28 견적문의 규격 줄별 예상 정가(정가만 · 사내 전용). 실패해도 접수현황은 그대로 나간다.
+    try:
+        sys.path.insert(0, os.path.join(BASE_DIR, 'scripts'))
+        import quote_price
+        quote_price.annotate(data, log=_log)
+    except Exception as e:
+        _log(f'  ⚠️ 견적문의 예상 정가 모듈 실패 — 생략: {type(e).__name__}: {str(e)[:120]}')
 
     payload = {'ok': True, 'data': data,
                'fetched_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')}

@@ -34,6 +34,7 @@
   - ⬜ **ERP 정가 점검(10-27, ERP 내려받기 기준)** `outputs/price_lookup/ERP정가_점검_20261027.xlsx` — 한경준님 ERP 정정: A 정가표와 다름 83줄(우선) · B 사업장 간 차이 24 · C 같은 이름 다른 코드 147 · D 정가 빈칸 2,231(창성 2,195 의도 확인) · E 품목명 표기 오류 36. 질문 2건: 고경도 드릴 ×1.07 인상이 의도인지 · 창성 정가 빈칸이 의도인지
   - 🟡 2단계: `estimate.html` 「예상 정가」 — ✅ 공개 허용(한경준님 10-27) · ✅ 시험판 `outputs/price_web_build/` 완성 · ⏸ **정가표 파일이 15:44 에 10-16 저장판으로 바뀜(블록 3개 없음) → 기준 판 확인 뒤** `python scripts\price_lookup.py --export-web dist` + 시험판 estimate.html 을 dist 로 복사(decisions 2026-10-27 (10)) · 문구는 기본안(대표님 확인 전)
   - ✅ 정가표 정리본(10-27): `outputs/price_lookup/정가표_정리본_26.09_20261027.xlsx`(정가 1,449줄 · 문제점 31) — ⬜ 한경준님 원본 정정: HSS 리머 블록 · #VALUE! 2 · AP39 제목 · 마지막 칸 「50」 등 라벨 · Ø30 ~ 31 빈틈 → 정정 뒤 `python scripts\price_list_tidy.py` · `--export-web dist` 다시 실행(decisions 2026-10-27 (11))
+  - 🟡 **견적문의 접수 → 예상 정가(사내 현황판, 10-28)**: `scripts/quote_price.py` · 접수현황 💰 견적문의 탭 · 시험 데이터 화면 확인 완료 — ⬜ 한경준님 PC ① `python scripts\setup_estimate_tab.py --apply`(시트 「견적문의」 탭 생성) ② 웹폼 시험 제출 1건 → 시트 줄 · 알림 메일 확인 ③ 다음 generate 실행 뒤 현황판 💰 탭 확인 · ⬜ 견적서 엑셀 버튼(사내 양식 받은 뒤) · ⬜ 폼에 코팅 · 가공부 선택 칸(「코팅 확인」 줄 줄이기) — decisions 2026-10-28
   - ⬜ 3단계: ERP 전표 입력 시 자동 응답 — 트리코(ERP 업체)에 화면 기능 · 연동 방법 문의(우리는 조회만 함)
   - ⬜ (별건, P2) `price_audit.py` 일반코팅 별칭 사각지대 246건 — 검수 범위 보정할지 판단
   - ⬜ 정가표 개정 시: `python scripts\price_lookup.py --export-html outputs\price_lookup\정가조회_시연_YYYYMMDD.html` 로 다시 만들기
