@@ -1,3 +1,28 @@
+## 2026-10-28 (#1) 핸드오프 — Cowork(컴퓨터1 desktop-35ose6p) · 견적문의 예상 정가 · 사내 Claude 프로젝트 2종(정가 · 취급 제품) · 보고서 작성 규칙 정립 · 사진 규칙
+
+- 한 일: (09:00 ~ 14:10 KST 무렵)
+  - 핸드오프 4종 읽기 · 아침 run.log: g20 캐시 재사용 258 / 새로 읽음 0 · 조회 263회 · 16 s(어제 16:00 517회 · 34 s) · step5 rc=0 1벌
+  - 목요일 이후 작업 정리 · 주간보고 표 작성 도움(기간 목 ~ 수 — 확인 필요)
+  - 견적문의 → 사내 접수현황 💰 탭 + 규격 줄별 예상 정가(`scripts/quote_price.py`) · 접수현황 이스케이프 · 탭 하나 실패해도 나머지 표시 — decisions 2026-10-28 (1). 🔴 「시트에 견적문의 탭 없음」 추정은 틀렸음(탭 이미 있었음, 정정 병기) · 커밋 `f6f6ad0`(한경준님)
+  - 챗봇 논의 → 사내 Claude 프로젝트 「재연마 정가 문의」 지식 파일 · 지시문(`scripts/export_price_project.py`) · 모사 시험 1차 20 / 22 → 2차 22 / 22 — decisions (2)
+  - 사내 Claude 프로젝트 「취급 제품 정보」: JJ · COGO 카탈로그 PDF → 제품군 요약 + 품번 치수 CSV(`scripts/catalog/` dump · parse · export) · JJ 274 제품군 / 19,179 품번 · COGO 179 / 14,859(표지의 약 96 %) · 원본 쪽 이미지 6장 대조 · RAG 모사 시험 JJ 12 / 12 · COGO 8 / 8 — decisions (3)
+  - 보고서 작성 규칙: 결정 (4) 기록 → 기존 4개 페이지 검수(불일치 6곳 · 기준 없는 곳 3) → 9개 항목 확정 (5) → 공통 규칙 · 양식 A · B · C 초안 → 견본 A(넥 보고 v3) → 사진 규칙 (6) · 운영 4가지 (7) → CLAUDE.md §14 · 프로젝트 메모리 등재
+  - 10월 정성 목표표 확인: 납기 「평균 9.6일」 vs ERP 수주(납기일 − 수주일) 10월 59건 평균 10.66일 — 계산 기준 불명, 한경준님 「대충 작성해도 됨」으로 넘어감
+- 결과/산출물:
+  - 신규 `scripts/quote_price.py` · `scripts/setup_estimate_tab.py` · `scripts/export_price_project.py` · `scripts/catalog/catalog_dump.py` · `catalog_parse.py` · `catalog_export.py`
+  - 수정 `generate.py` · `app.py`(원본 `.bak_20261028`) · `internal/dashboard.js`(.gitignore 대상, `.bak_20261028`)
+  - `outputs/claude_project_price_20261028/` · `outputs/claude_project_products_20261028/`(지식 파일 · 지시문 · 설치 안내 및 시험 결과)
+  - 위키 신규 `standards/보고서-작성-규칙.md` · `templates/보고서양식-A-시험개선결과.md` · `보고서양식-B-대외기술자료.md` · `보고서양식-C-정기업무보고.md` · `templates/사진목록-양식.csv` · 보고서 `reports/01_연삭조건/넥_원통연삭_시험결과_보고_20261022_v3.docx`
+  - 수정 `CLAUDE.md` §14(원본 `.bak_20261028`) · `index.md` · `log.md` · `_handoff/decisions.md`(2026-10-28 (1) ~ (7)) · `tasks.md` · `sources.md`(VEN-ANTHROPIC-PROJECTS-SHARING · -RAG) — 백업 `*.bak_20261028`
+- 미완 · 블로커:
+  - 한경준님: 사내 Claude 프로젝트 2개 생성 · 공유(Team 요금제 확인) · 실제 프로젝트에서 시험 5문항 · RAG 표시 확인
+  - 보고서 규칙: 견본 A(v3) 검토 판정 · 견본 C(주간보고 · 일일 3줄) · 견본 B(대외 1건, 대상 시험 미정) · 대외 기술자료 승인자 지정 · 확정 후 기존 페이지 이관 표시 · `daily_report.py` 3줄(1주 병행 후 켬)
+  - 사진: **다음 보고서 작성 때 반영해 보기로 함**(한경준님) — 넥 v3 진입부 사진은 `raw/assets/넥원통연삭_20261020/` 에 넣어 주시면 추가
+  - 이전부터: 정가표 기준 판 확정 · ERP 정가 정정(10-27 미완 그대로)
+  - 임시 파일 `outputs/_jj_all_tmp.json` · `outputs/_cogo_all_tmp.json`(검증용 약 23 MB) — 지워도 됨, 삭제는 한경준님 확인 후
+- 다음 단계 제안: ① 다음 보고서를 새 규칙(CLAUDE.md §14)으로 쓰고 사진 규칙 시험 ② 견본 A 판정 → 견본 C ③ 사내 프로젝트 2종 실제 생성 후 시험 ④ COGO 절삭조건(CUTTING DATA) 추출 여부 판단 ⑤ 11-04 자동화 효과 지표 재판정 · 11-10 발표 리허설
+- 챗으로 가져갈 질문: 대외 기술자료 승인자 · AI 사용 표기 여부(회사 방침) · 10월 납기 9.6일의 계산 기준
+
 ## 2026-10-27 (#1) 핸드오프 — Cowork(컴퓨터1 desktop-35ose6p) · 캘린더 None 정정 · 캐치업 배치 끔 · ERP 조회 줄이기(g10 · g20 캐시) · 넥 · 5도 휠 · 정가 조회기 · ERP 정가 점검 · 정가표 정리본
 
 - 한 일: (08:50 ~ 17:00 KST 무렵)
