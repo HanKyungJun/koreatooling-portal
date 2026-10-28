@@ -1,3 +1,10 @@
+## [2026-10-28] 정리 — cnc-wiki 폴더 정리 (지우지 않고 `_to_delete/정리_20261028/` 로 이동 179건 · 제자리 이동 3건)
+
+옛 백업 155(원본마다 최신 1개 남김) · 임시 · 빈 폴더 7 · 옛 판 사본 9(확인필요_대장 옛 판 7 — 최신 20261019 남김, Claude outputs 중복 2) · Claude Code 작업 폴더 3(브랜치 모두 main 에 합쳐짐) · `cnc-wiki-main.zip` · `_unused_client_secret_gmail.json`. 목록 `_to_delete/정리_20261028/이동목록.csv`. 루트 `회의록/` docx 2 → `reports/09_업무일정/회의록/`, `Claude-프롬프트-작성가이드.docx` → `reports/06_Claude_활용/`. 보관 기록(_handoff 아카이브 · 주간브리핑 · 이 log)의 옛 경로 표기는 기록으로 두고 고치지 않음.
+
+영향받은 페이지: CLAUDE.md §1 폴더 구조(빠진 위키 폴더 7 · `_to_delete/` 규칙 추가)
+출처 추가: 없음
+
 ## [2026-10-28] 업데이트 — 보고서 사진 운영 4가지 확정 · 사진목록 양식
 
 원본은 PC 폴더(raw/assets/{시험명}_YYYYMMDD/)로 · 이름 유지 + 사진목록.csv · 판정 근거는 본문, 나머지는 부록 · ISCapture 길이 측정 불가 → μm 수치 기록 안 함(decisions 2026-10-28 (7))
