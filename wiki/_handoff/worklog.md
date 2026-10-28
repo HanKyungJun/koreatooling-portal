@@ -10,6 +10,7 @@
   - 정가 프로젝트 실제 생성(한경준님) → 3차 시험 22 / 22 · 시험 Claude 가 코드 실행으로 CSV 를 읽은 조건이라 설치 안내 §1 에 「코드 실행 켜짐 확인」 단계 · §3 3차 줄 · §4 구간 빈틈 18곳 추가(엔진도 같은 빈틈 — 정가표 「30 미만 · 31 이상」 정수 구간)
   - 구간 빈틈 18곳 목록 → 「30미만」 3칸(`F23` · `AM26` · `AI48`)이 원인 · `F23` 은 9-02 정정 칸이 10-16 저장판에서 재발 → 「30이하」 재정정 + 사이 지름은 확인 필요 유지(decisions (8)) → 15:14 한경준님 정정 · 엔진 Ø30 확인 · 지식 파일 재생성 `outputs/claude_project_price_20261028_2/`(구간표 10줄만 바뀜)
   - 제품 시험 7문항을 정가 프로젝트에 물음(「자료에 없음」 — 범위 밖 질문을 지어내지 않음 확인) → **두 프로젝트 통합** 결정(decisions (9)) · `scripts/build_integrated_project.py` · `scripts/project_templates/통합_지시문.md` · `outputs/claude_project_integrated_20261028/` · 연결 정답 4문항 엔진 확인 → 실제 통합 프로젝트 1차 시험 **33 / 33** → 「통합으로 제품군 늘려 가기」(decisions (10)) · 묶기 스크립트 · 지시문 메이커 수 일반화
+  - 오늘 생산량 확인: 이 환경에서는 ERP 403 → PC 실행용 `scripts/today_output.py`(읽기 전용, 날짜 인자) · 더블클릭용 `생산량확인.bat`(Enter 새로 고침 · 날짜 입력 · q 종료). 10-28 15:57 속보 67개(양품 67 · 불량 0, 10월 평균 67개의 99 %) · 10-27 은 아침 캐시 87 → 92개(늦은 입력)
   - 10월 정성 목표표 확인: 납기 「평균 9.6일」 vs ERP 수주(납기일 − 수주일) 10월 59건 평균 10.66일 — 계산 기준 불명, 한경준님 「대충 작성해도 됨」으로 넘어감
 - 결과/산출물:
   - 신규 `scripts/quote_price.py` · `scripts/setup_estimate_tab.py` · `scripts/export_price_project.py` · `scripts/catalog/catalog_dump.py` · `catalog_parse.py` · `catalog_export.py`
