@@ -70,8 +70,8 @@ def main():
                         for lo, hi, v in runs_for(lambda d: lk.blocks.expect(mat=mat, shape=shape, part=part, coat=coat, blade=blade, dia=d)):
                             a, b, txt = band(lo, hi)
                             rows1.append([mat, shape, part, pl.COAT_LABEL[coat], '2날' if blade == 2 else '1날·3날 이상', a, b, txt, int(v)])  # price_audit.expect: 2날만 2날 행, 그 밖(1 · 3 · 4 · 6날)은 4날 행
-        for coat in ('비코팅', '일반코팅'):
-            for lo, hi, v in runs_for(lambda d: lk.drill_price(d, coat)):
+        for coat in ('비코팅', '일반코팅', '고경도코팅'):
+            for lo, hi, v in runs_for(lambda d: lk.drill_price(d, coat, mat)):
                 a, b, txt = band(lo, hi)
                 rows1.append([mat, '드릴', '밑날', pl.COAT_LABEL[coat], '2날', a, b, txt, int(v)])
     # 볼 · 코너(라핑볼 · 라핑코너)는 같은 블록을 쓴다 — 줄이 완전히 같으면 「볼/코너」 한 줄로 합친다(파일 크기 ↓)

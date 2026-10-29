@@ -42,7 +42,8 @@ function key(nm){const p=String(nm).split('/').map(s=>s.trim());if(p.length<6)re
 function band(runs,d){const st=DATA.step;for(const [a,b,v] of runs){if(d>a-st+1e-9&&d<=b+1e-9)return v}return null}
 function calcPrice(b,s,d,m,p,c){
  let pk=p;if(['밑골수리','밑옆날','밑골수리날'].includes(pk))pk='밑옆날';
- if(s==='드릴'){if(pk!=='밑날'||b!==2||c==='고경도코팅')return null;const r=DATA.combos[[m,'드릴','밑날',c,'2'].join('|')];return r?band(r,d):null}
+ if(s==='드릴'){if(pk!=='밑날'||b!==2)return null;   /* 2026-10-29: 26.10 정가표부터 드릴 고경도 열 있음 — 값 없으면 combos 에 없어 null */
+ const r=DATA.combos[[m,'드릴','밑날',c,'2'].join('|')];return r?band(r,d):null}
  if(!BLOCK_SHAPES.includes(s))return null;const r=DATA.combos[[m,s,pk,c,b===2?'2':'4'].join('|')];return r?band(r,d):null}
 
 function nearest(k){const p=k.split('/');if(p.length<6)return '';const d=+p[2];const c=[];

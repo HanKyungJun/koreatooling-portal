@@ -159,13 +159,35 @@ class Lookup:
                     rows['일반' + n] = rows['코팅' + n]; self.alias_patched += 1
 
     def _drill_bands(self):
-        """「드릴/면취/NC 스포팅」 블록 — 날경 「a - b」 구간 × (비코팅, 코팅). 표 주석 「HSS/초경 동일가격」.
-        고경도 코팅 = 「코팅」 열(등록 품목 고경도 드릴 10 / 10 일치, 2026-10-27 실측). 날수 구분 없음."""
+        """드릴 블록 → {재질: [(lo, hi, 비코팅, 코팅, 고경도, 구간형식)]}.
+        ① 26.10~ : 「초경_드릴/면취/NC 스포팅」 · 「HSS_드릴/면취/NC 스포팅」 — 날경 「N이하」 × (비코팅, 코팅, 고경도), 재질별 따로
+        ② ~26.09 : 「드릴/면취/NC 스포팅」 — 날경 「a - b」 × (비코팅, 코팅), HSS/초경 동일가격, 고경도 열 없음(고경도 = 등록 정가)
+        (2026-10-29 26.10 정가표 대응 — 제목이 바뀌어 옛 코드가 드릴 블록을 못 읽던 문제)"""
+        out = {}
+        for mat in ('초경', 'HSS'):
+            pos = self.pl.find(rf'^{mat}_드릴/면취/NC 스포팅$')
+            if not pos:
+                continue
+            tr, tc = pos
+            hdr = {str(self.pl.ws.cell(tr + 1, c).value or '').strip(): c for c in range(tc, tc + 5)}
+            cn, cc, ch = hdr.get('비코팅'), hdr.get('코팅'), hdr.get('고경도')
+            rows, lo, r = [], 0.0, tr + 2
+            while r <= self.pl.ws.max_row:
+                m = re.match(r'^\s*([\d.]+)\s*이하\s*$', str(self.pl.ws.cell(r, tc).value or ''))
+                if not m:
+                    break
+                hi = float(m.group(1))
+                val = lambda c: (lambda v: v if isinstance(v, (int, float)) and v > 0 else None)(self.pl.ws.cell(r, c).value) if c else None
+                rows.append((lo, hi, val(cn), val(cc), val(ch), 'upto'))
+                lo, r = hi, r + 1
+            out[mat] = rows
+        if out:
+            return out
         pos = self.pl.find(r'^드릴/면취/NC 스포팅$')
         if not pos:
-            return []
+            return {}
         tr, tc = pos
-        out, r = [], tr + 2
+        rows, r = [], tr + 2
         while r <= self.pl.ws.max_row:
             got = False
             for c0 in (tc, tc + 3):
@@ -173,17 +195,22 @@ class Lookup:
                 if m:
                     got = True
                     nc, co = self.pl.ws.cell(r, c0 + 1).value, self.pl.ws.cell(r, c0 + 2).value
-                    out.append((float(m.group(1)), float(m.group(2)),
-                                nc if isinstance(nc, (int, float)) else None, co if isinstance(co, (int, float)) else None))
+                    rows.append((float(m.group(1)), float(m.group(2)),
+                                 nc if isinstance(nc, (int, float)) else None, co if isinstance(co, (int, float)) else None, None, 'range'))
             if not got:
                 break
             r += 1
-        return sorted(out)
+        rows.sort()
+        return {'초경': rows, 'HSS': rows}
 
-    def drill_price(self, dia, coat):
-        for a, b, nc, co in self.drill:
-            if a - 0.05 - 1e-9 <= dia <= b + 1e-9:     # 구간 사이(예: 4.0 ~ 4.1)는 아래 구간 끝 + 0.05 까지 그 구간
-                return nc if coat == '비코팅' else co
+    def drill_price(self, dia, coat, mat='초경'):
+        for a, b, nc, co, hc, kind in self.drill.get(mat, []):
+            if kind == 'upto':
+                hit = a + 1e-9 < dia <= b + 1e-9 if a > 0 else dia <= b + 1e-9
+            else:
+                hit = a - 0.05 - 1e-9 <= dia <= b + 1e-9     # 구간 사이(예: 4.0 ~ 4.1)는 아래 구간 끝 + 0.05 까지 그 구간
+            if hit:
+                return nc if coat == '비코팅' else (hc if '고경도' in coat else co)
         return None
 
     def _load_master(self, price_dir):
@@ -215,6 +242,33 @@ class Lookup:
                 if pr <= 0:
                     continue
                 k = _key(r[cn - 1]); vals[k].add(pr); names.setdefault(k, (str(r[cn - 1]).strip(), r[cc - 1]))
+        # ③ 덮어쓰기(2026-10-29): 위 조회 폴더보다 새 폴더의 「품목일괄등록」 파일(ERP 올리기 전 · 일부 품목만, 예 261030 드릴)이 있으면
+        #    그 품목의 정가는 이 파일 값으로 바꾼다. 열: 2 품목코드 · 3 품목명 · 28 정가.
+        #    창성 파일은 제외 — 창성 정가 칸은 매입 기준이라 코툴 · 코고 정가와 다를 수 있음(한경준님 10-29 「창성 매입 금액이 맞음」)
+        if erp:
+            newer = sorted(d for d in glob.glob(os.path.join(price_dir, '*')) if os.path.isdir(d) and os.path.basename(d) > os.path.basename(last)
+                           and glob.glob(os.path.join(d, '*_품목일괄등록_*.xlsx')))
+            over = collections.defaultdict(set)
+            for d in newer:
+                for f in sorted(glob.glob(os.path.join(d, '*_품목일괄등록_*.xlsx'))):
+                    b = os.path.basename(f)
+                    if b.startswith('~$') or b.startswith('창성'):
+                        continue
+                    self.master_files.append(b)
+                    ws = openpyxl.load_workbook(f, read_only=True, data_only=True)['품목일괄등록']
+                    for r in ws.iter_rows(min_row=3, values_only=True):
+                        if not r or len(r) < 28 or not r[2]:
+                            continue
+                        try:
+                            pr = float(r[27])
+                        except (TypeError, ValueError):
+                            continue
+                        if pr > 0:
+                            k = _key(r[2]); over[k].add(pr); names.setdefault(k, (str(r[2]).strip(), r[1]))
+            for k, v in over.items():
+                vals[k] = v
+            if over:
+                self.master_src += ' + 품목일괄등록 ' + ' · '.join(os.path.basename(d) for d in newer) + f' ({len(over)}품목 덮어씀)'
         std = {'평', '볼', '코너', '라핑평', '라핑볼', '라핑코너', '라핑', '리머', '드릴', '챔퍼', '테이퍼드릴', '테이퍼평', '테이퍼볼', '테이퍼코너',
                '스탭드릴', '카운터보어', '카운터싱크'}
         extra = {k.split('/')[1] for k in vals if k.count('/') >= 5} - std
@@ -230,8 +284,8 @@ class Lookup:
         name = std_name(blade, shape, dia, mat, part, coat)
         k = _key(name)
         calc = None
-        if shape == '드릴' and part == '밑날' and blade == 2 and coat != '고경도코팅':   # 고경도 드릴은 ERP 가 코팅 × 약 1.07(10-27 확인) → 등록 정가   # 3날 · 4날 초경 드릴은 블록과 다름(등록 정가 14건 불일치, 2026-10-27) → 등록 정가
-            calc = self.drill_price(dia, coat)
+        if shape == '드릴' and part == '밑날' and blade == 2:   # 3날 · 4날 초경 드릴은 블록과 다름(등록 정가 14건 불일치, 2026-10-27) → 등록 정가
+            calc = self.drill_price(dia, coat, mat)   # 고경도: 26.10~ 정가표 고경도 열, 옛 표(열 없음)면 None → 등록 정가
         elif shape in ('평', '볼', '코너', '라핑평', '라핑볼', '라핑코너', '리머'):
             try:
                 calc = self.blocks.expect(mat=mat, shape=shape, part=part, coat=coat, blade=blade, dia=dia)
@@ -335,12 +389,12 @@ def export_json(lk, path, step=0.05, dmax=60.0):
                         runs = [r for r in runs if r[2] is not None]
                         if runs:
                             combos['|'.join([mat, shape, part, coat, str(blade)])] = runs
-    for mat in ('초경', 'HSS'):          # 2날 드릴 — 「드릴/면취/NC 스포팅」 블록
-        for coat in ('비코팅', '일반코팅'):
+    for mat in ('초경', 'HSS'):          # 2날 드릴 — 드릴 블록(26.10~ 재질별 「초경_ · HSS_드릴/면취/NC 스포팅」)
+        for coat in ('비코팅', '일반코팅', '고경도코팅'):
             runs, last = [], None
             for i in range(1, n + 1):
                 d = round(i * step, 3)
-                v = lk.drill_price(d, coat)
+                v = lk.drill_price(d, coat, mat)
                 if runs and v == last:
                     runs[-1][1] = d
                 else:

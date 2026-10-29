@@ -51,8 +51,9 @@ def main():
             flags[pos] = '제목이 「(일반코팅)」 으로 왼쪽 블록과 같음 — 위치(오른쪽)와 값 크기로 고경도 블록으로 읽음 [추정 · 확인 필요]'
     # 블록 제목 위치 목록(셀 → 블록 제목 찾기용)
     tpos = sorted({p for p in bl.at.values()})
-    if pl.find(r'^드릴/면취/NC 스포팅$'):
-        tpos.append(pl.find(r'^드릴/면취/NC 스포팅$'))
+    for _pat in (r'^드릴/면취/NC 스포팅$', r'^초경_드릴/면취/NC 스포팅$', r'^HSS_드릴/면취/NC 스포팅$'):   # 26.10~ 재질별 제목(2026-10-29)
+        if pl.find(_pat):
+            tpos.append(pl.find(_pat))
 
     def title_of(r, c):
         cand = [(tr, tc) for tr, tc in tpos if tr <= r and tc <= c and r - tr <= 20 and c - tc <= 20]
@@ -119,8 +120,31 @@ def main():
                                              note=' · '.join(note), est=bool(fl)))
                             lo = r['to']
     pl.gv, pl.gh = og_gv, og_gh
-    # 드릴 — 「드릴/면취/NC 스포팅」 블록(날경 a - b · 비코팅 / 코팅 · HSS/초경 동일 · 날수 구분 없음)
-    dpos = pl.find(r'^드릴/면취/NC 스포팅$')
+    # 드릴 ① 26.10~ — 「초경_ · HSS_드릴/면취/NC 스포팅」 재질별 블록(날경 「N이하」 · 비코팅 / 코팅 / 고경도) (2026-10-29)
+    for _mat in ('초경', 'HSS'):
+        mpos = pl.find(rf'^{_mat}_드릴/면취/NC 스포팅$')
+        if not mpos:
+            continue
+        tr, tc = mpos
+        hdr = {str(pl.ws.cell(tr + 1, c).value or '').strip(): c for c in range(tc, tc + 5)}
+        lo, r = 0.0, tr + 2
+        while r <= pl.ws.max_row:
+            m = re.match(r'^\s*([\d.]+)\s*이하\s*$', str(pl.ws.cell(r, tc).value or ''))
+            if not m:
+                break
+            hi = float(m.group(1))
+            for lab_c, coat in (('비코팅', '비코팅'), ('코팅', '일반 코팅'), ('고경도', '고경도 코팅')):
+                ci = hdr.get(lab_c)
+                if not ci:
+                    continue
+                v = pl.ws.cell(r, ci).value
+                rows.append(dict(mat=_mat, fam='드릴(면취 · NC 스포팅)', part='밑날', coat=coat, blade='2날',
+                                 lo=lo, hi=hi, lab=str(pl.ws.cell(r, tc).value).strip(),
+                                 v=v if isinstance(v, (int, float)) and v > 0 else None, cell=addr(r, ci),
+                                 title=f'{_mat}_드릴/면취/NC 스포팅', note='날경 「N이하」 구간(앞 구간 초과 ~ N 이하)'))
+            lo, r = hi, r + 1
+    # 드릴 ② ~26.09 — 「드릴/면취/NC 스포팅」 블록(날경 a - b · 비코팅 / 코팅 · HSS/초경 동일 · 날수 구분 없음)
+    dpos = None if pl.find(r'^초경_드릴/면취/NC 스포팅$') else pl.find(r'^드릴/면취/NC 스포팅$')
     if dpos:
         tr, tc = dpos; r = tr + 2
         while r <= pl.ws.max_row:

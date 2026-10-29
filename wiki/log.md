@@ -1,3 +1,31 @@
+## [2026-10-29] 신규 — 재연마 정가 조회 사내 창 프로그램 시험판
+
+Windows 창 프로그램(tkinter) — 항목 선택 / 문장 입력 · 결과 표(규격 · 정가 · 상태 · 근거) · 결과 복사. 조회 규칙 `scripts/price_app/price_core.py`(웹 `price_lookup_core.js` 를 Python 으로 옮김 — 11,616 조합 · 문장 12개 대조 결과 같음, 드릴 표 밖만 「확인 필요」로 의도적 차이) · 화면 `scripts/price_app/정가조회.pyw` · 묶음 `scripts/build_price_app.py` → `outputs/price_app_20261029/`(price_data.json · 실행 bat · exe만들기.bat · 설정 ini 예시 · 설치안내.md). 정가만. 데이터 경로는 설정 ini 로 공유 폴더 지정 가능
+
+영향받은 페이지: 없음(스크립트 · 산출물)
+출처 추가: 없음
+
+## [2026-10-29] 신규 — 재연마 예상 정가 위젯 시험판
+
+웹폼 · 쇼핑몰에 붙일 정가 검색 위젯 기본 틀. 항목 선택(재질 · 형상 · 날 수 · 날경 · 작업 부위 · 코팅) / 문장 입력 두 방식, 정가만 표시, 확인 필요 · 표 밖 규격은 「담당자 확인」, 「이 규격으로 견적 문의」 버튼(?spec=). 소스 `scripts/price_widget/price-widget.js` · 묶음 만들기 `scripts/build_price_widget.py` → `outputs/price_widget_20261029/`(price-data.js · price-lookup.js · price-widget.js · demo.html · 미리보기_단일파일.html · 설치안내.md). `scripts/price_lookup_core.js` 드릴 고경도 계산 허용(백업 `.bak_20261029`). 공개 전 대표님 확인 필요
+
+영향받은 페이지: 없음(스크립트 · 산출물)
+출처 추가: 없음
+
+## [2026-10-29] 업데이트 — 정가 조회 엔진 26.10 드릴 표 대응
+
+`scripts/price_lookup.py`: 드릴 블록을 26.10 양식(「초경_ · HSS_드릴/면취/NC 스포팅」 재질별 · 날경 「N이하」 · 비코팅 / 코팅 / 고경도)으로 읽음 — 옛 양식(「드릴/면취/NC 스포팅」 a - b · HSS/초경 동일)도 그대로 읽음(26.09 파일로 확인). 고경도 드릴도 정가표 값으로 계산. 등록 정가는 ERP 품목정보조회(261027)에 더 새 폴더의 「품목일괄등록」(261030, 코툴 · 코고 544품목)을 덮어씀 — 창성 파일은 매입 기준이라 제외. `export_price_project.py` · `price_list_tidy.py` 같은 방식으로 수정. 백업 `*.bak_20261029`. 시연판 `outputs/price_lookup/정가조회_시연_20261029.html` · 정리본 `outputs/price_lookup/정가표_정리본_26.10_20261029.xlsx`
+
+영향받은 페이지: 없음(스크립트) — 관련 [[standards/재연마-정가표-읽는법]]
+출처 추가: 없음
+
+## [2026-10-29] 업데이트 — 넥 원통연삭 시험 결과 보고 제4판(양식 A 견본 합격)
+
+요약을 2쪽으로 옮김(표지 분리) · 진입부 비교 사진(그림 3) · 부록 「마. 사진 자료」(부록 그림 1 · 2, 사진 원본 목록) · 기존 그림 3 → 그림 4. 사진 원본 `raw/캡쳐/목업 테스트/` + `사진목록.csv`. 한경준님 합격 판정(decisions 2026-10-29 (1))
+
+영향받은 페이지: reports/01_연삭조건/넥_원통연삭_시험결과_보고_20261022_v4.docx (신규), [[standards/보고서-작성-규칙]](견본 1/3 확정)
+출처 추가: 없음
+
 ## [2026-10-28] 정리 — cnc-wiki 폴더 정리 (지우지 않고 `_to_delete/정리_20261028/` 로 이동 179건 · 제자리 이동 3건)
 
 옛 백업 155(원본마다 최신 1개 남김) · 임시 · 빈 폴더 7 · 옛 판 사본 9(확인필요_대장 옛 판 7 — 최신 20261019 남김, Claude outputs 중복 2) · Claude Code 작업 폴더 3(브랜치 모두 main 에 합쳐짐) · `cnc-wiki-main.zip` · `_unused_client_secret_gmail.json`. 목록 `_to_delete/정리_20261028/이동목록.csv`. 루트 `회의록/` docx 2 → `reports/09_업무일정/회의록/`, `Claude-프롬프트-작성가이드.docx` → `reports/06_Claude_활용/`. 보관 기록(_handoff 아카이브 · 주간브리핑 · 이 log)의 옛 경로 표기는 기록으로 두고 고치지 않음.
