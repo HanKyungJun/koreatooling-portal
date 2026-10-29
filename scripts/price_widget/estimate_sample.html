@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>견적 문의 — 코리아툴링</title>
+<link rel="stylesheet" href="portal.css">
+<style>
+/* 2026-10-27 예상 정가 확인 (price-lookup.js · price-data.js) */
+.pl-row{display:flex;gap:8px}
+.pl-row input{flex:1;min-width:0;padding:11px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.95rem;outline:none;font-family:inherit}
+.pl-row input:focus{border-color:#1A3A6B}
+.pl-row button{flex:none;white-space:nowrap;padding:0 18px;background:#1A3A6B;color:#fff;border:0;border-radius:8px;font-size:0.9rem;font-weight:600;cursor:pointer}
+#pl-out{margin-top:12px;font-size:0.88rem}
+.pl-parsed{color:#777;font-size:0.78rem;margin-bottom:6px}
+.pl-assume{color:#b26a00;font-size:0.78rem}
+.pl-table{width:100%;border-collapse:collapse;margin-top:6px}
+.pl-table td{padding:7px 4px;border-bottom:1px solid #eee;font-size:0.85rem}
+.pl-table td.p{text-align:right;font-weight:700;white-space:nowrap;color:#1A3A6B}
+.pl-table td.c{text-align:right;white-space:nowrap;color:#b26a00;font-size:0.8rem}
+.pl-ask{color:#b26a00}
+.pl-note{margin-top:10px;font-size:0.75rem;color:#999;line-height:1.5}
+.pl-hint{margin:-4px 0 8px 2px;font-size:0.78rem;color:#1A3A6B}
+.pl-hint .c{color:#b26a00}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>💰 견적 문의</h1>
+  <a href="index.html" class="back-link">← 메인으로</a>
+</header>
+<main>
+  <div id="price-card" class="card">
+    <div class="card-title">🔎 재연마 예상 정가 바로 확인</div>
+    <div class="card-sub" style="margin-bottom:14px">공구를 말하듯 입력하세요. 예) 10파이 2날 볼 고경도 · D6 4날 평 밑옆날 일반코팅 · 하이스 드릴 8.5</div>
+    <div class="pl-row"><input id="pl-q" type="text" placeholder="날수 · 형상 · 직경 · 재질 · 코팅" autocomplete="off"><button id="pl-go" type="button">확인</button></div>
+    <div id="pl-out"></div>
+    <div class="pl-note">공표 정가 기준의 예상 금액입니다. 실제 견적 금액은 거래 조건에 따라 담당자가 안내해 드립니다.<br>「담당자 확인」으로 나오는 품목은 아래 견적 문의로 보내 주시면 확인 후 안내해 드립니다.</div>
+  </div>
+  <div id="form-wrap" class="card">
+    <div class="card-title">💰 견적 문의</div>
+    <div class="card-sub">규격·수량을 알려주시면 담당자가 확인 후 견적을 안내해 드립니다. ＊ 표시는 필수 입력 항목입니다.</div>
+    <form name="estimate-form" method="POST">
+      <input type="hidden" name="form-name" value="estimate-form">
+
+      <div class="row2">
+        <div class="field">
+          <label>회사명 <span class="req">＊</span></label>
+          <input type="text" name="company" placeholder="예) 코리아툴링" required>
+        </div>
+        <div class="field">
+          <label>담당자 <span class="req">＊</span></label>
+          <input type="text" name="contact" placeholder="이름" required>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>연락처 <span class="req">＊</span></label>
+          <input type="tel" name="phone" placeholder="010-0000-0000" required>
+        </div>
+        <div class="field">
+          <label>이메일</label>
+          <input type="email" name="email" placeholder="example@email.com">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>구분 <span class="req">＊</span></label>
+          <select name="category" required>
+            <option value="">선택하세요</option>
+            <option>재연마</option>
+            <option>신품 구매</option>
+            <option>기타</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>재질</label>
+          <select name="material">
+            <option value="">선택하세요</option>
+            <option>초경</option>
+            <option>HSS</option>
+            <option>SKD</option>
+            <option>기타</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>규격 / 수량 <span class="req">＊</span>
+          <span style="font-weight:400;color:#aaa;font-size:0.75rem;margin-left:6px;">품종이 여러 개면 행 추가</span>
+        </label>
+        <div id="spec-rows">
+          <div class="spec-row" style="display:grid;grid-template-columns:1fr 90px 32px;gap:8px;margin-bottom:8px;">
+            <input type="text" name="spec[]" placeholder="규격 (예: Ø10 4날, R0.5)" required
+              style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;">
+            <input type="number" name="quantity[]" placeholder="수량" min="1" required
+              style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;text-align:center;">
+            <button type="button" onclick="removeRow(this)"
+              style="background:#fff0f0;color:#e53935;border:1.5px solid #ffd0d0;border-radius:8px;font-size:1.1rem;cursor:pointer;display:none;">✕</button>
+          </div>
+        </div>
+        <button type="button" onclick="addSpecRow()"
+          style="margin-top:4px;padding:8px 16px;background:#f0f4ff;color:#1A3A6B;border:1.5px dashed #b0c4f0;border-radius:8px;font-size:0.82rem;font-weight:600;cursor:pointer;">
+          + 규격 추가
+        </button>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>희망 납기</label>
+          <input type="text" name="due_date" placeholder="예) 2026-11-15 또는 '2주 이내'">
+        </div>
+        <div class="field">
+          <label>예상 수량대(월 정기 발주 시)</label>
+          <input type="text" name="monthly_volume" placeholder="예) 월 200개 정도(선택)">
+        </div>
+      </div>
+      <div class="field">
+        <label>참고사항</label>
+        <textarea name="notes" placeholder="도면 스펙, 코팅 여부, 기존 거래 이력 등 참고할 내용을 적어주세요."></textarea>
+      </div>
+      <div class="field">
+        <label>도면 / 사진 첨부 <span style="font-weight:400;color:#aaa;font-size:0.75rem">(선택 · 최대 5MB)</span></label>
+        <label class="file-drop" for="attach-input" id="file-drop-zone">
+          <span id="file-drop-text">📎 클릭하거나 파일을 드래그하세요<br>
+          <span style="font-size:0.75rem;color:#bbb">JPG · PNG · PDF · DWG · DXF</span></span>
+        </label>
+        <input type="file" id="attach-input" accept="image/*,.pdf,.dwg,.dxf" style="display:none">
+        <input type="hidden" name="file-data" id="file-data">
+        <input type="hidden" name="file-name" id="file-name">
+        <input type="hidden" name="file-type" id="file-type">
+      </div>
+      <button type="submit" class="submit-btn">견적 요청하기 →</button>
+    </form>
+  </div>
+  <div id="success" style="display:none" class="card">
+    <div class="success-box">
+      <div class="icon">✅</div>
+      <h2>견적 요청이 접수되었습니다</h2>
+      <p>담당자가 확인 후 견적을 안내해 드리겠습니다.<br>감사합니다.</p>
+      <a href="index.html" class="home-btn">메인으로 돌아가기</a>
+    </div>
+  </div>
+</main>
+<footer>© 2026 코리아툴링 | Korea Tooling Co., Ltd.</footer>
+<iframe name="hidden-target" style="display:none;"></iframe>
+<script src="portal.js"></script>
+<script src="price-data.js"></script>
+<script src="price-lookup.js"></script>
+<script>
+/* 2026-10-27 예상 정가 — 정가만 표시, 확인 필요 · 없음은 「담당자 확인」 */
+(function(){
+  if(!window.PriceLookup||!window.PRICE_DATA){var c=document.getElementById('price-card');if(c)c.style.display='none';return;}
+  var PL=window.PriceLookup;
+  var esc=function(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
+  var won=function(v){return Number(v).toLocaleString('ko-KR')+'원';};
+  function withMat(text){
+    var m=(document.querySelector('select[name=material]')||{}).value||'';
+    if((m==='초경'||m==='HSS')&&!/초경|카바이드|carbide|hss|하이스/i.test(text))return text+' '+m;
+    return text;
+  }
+  function show(){
+    var v=document.getElementById('pl-q').value.trim(),o=document.getElementById('pl-out');
+    if(!v){o.innerHTML='';return;}
+    var r=PL.answer(withMat(v)),q=r.q;
+    if(q.missing.length){o.innerHTML='<div class="pl-ask">❓ '+q.missing.map(function(m){return {shape:'형상(평 · 볼 · 코너 · 라핑 · 드릴 …)',dia:'직경(mm)'}[m];}).join(', ')+'을(를) 함께 입력해 주세요.</div>';return;}
+    var h='';q.assumed.forEach(function(a){h+='<div class="pl-assume">※ '+esc(a)+'</div>';});
+    h+='<table class="pl-table">';
+    r.rows.forEach(function(x){h+='<tr><td>'+esc(x.name)+'</td>'+(x.status==='OK'?'<td class="p">'+won(x.price)+'</td>':'<td class="c">담당자 확인</td>')+'</tr>';});
+    o.innerHTML=h+'</table>';
+  }
+  document.getElementById('pl-go').onclick=show;
+  document.getElementById('pl-q').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();show();}});
+  // 견적 문의 「규격」 칸에 입력하면 그 줄 아래에 예상 정가를 작게 보여 준다(재연마일 때만)
+  var t=null;
+  document.getElementById('spec-rows').addEventListener('input',function(e){
+    if(!e.target||e.target.name!=='spec[]')return;
+    var row=e.target.closest('.spec-row');clearTimeout(t);
+    t=setTimeout(function(){
+      var hint=row.nextElementSibling&&row.nextElementSibling.classList.contains('pl-hint')?row.nextElementSibling:null;
+      var cat=(document.querySelector('select[name=category]')||{}).value||'';
+      var v=e.target.value.trim(),txt='';
+      if(v&&cat!=='신품 구매'&&cat!=='기타'){
+        var r=PL.answer(withMat(v));
+        if(!r.q.missing.length){
+          var ok=r.rows.filter(function(x){return x.status==='OK';});
+          if(r.rows.length===1)txt=ok.length?'예상 정가 '+won(ok[0].price)+' · '+esc(r.rows[0].name):'<span class="c">담당자 확인</span> · '+esc(r.rows[0].name);
+          else if(ok.length){var ps=ok.map(function(x){return x.price;});txt='예상 정가 '+won(Math.min.apply(null,ps))+' ~ '+won(Math.max.apply(null,ps))+' (날수 · 코팅에 따라 — 위 「바로 확인」에서 자세히)';}
+        }
+      }
+      if(txt){if(!hint){hint=document.createElement('div');hint.className='pl-hint';row.parentNode.insertBefore(hint,row.nextSibling);}hint.innerHTML=txt;}
+      else if(hint){hint.remove();}
+    },300);
+  });
+})();
+</script>
+<script>
+function addSpecRow() {
+  var container = document.getElementById('spec-rows');
+  var row = document.createElement('div');
+  row.className = 'spec-row';
+  row.style.cssText = 'display:grid;grid-template-columns:1fr 90px 32px;gap:8px;margin-bottom:8px;';
+  row.innerHTML = '<input type="text" name="spec[]" placeholder="규격 (예: Ø10 4날, R0.5)"'
+    + ' style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;">'
+    + '<input type="number" name="quantity[]" placeholder="수량" min="1"'
+    + ' style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;text-align:center;">'
+    + '<button type="button" onclick="removeRow(this)"'
+    + ' style="background:#fff0f0;color:#e53935;border:1.5px solid #ffd0d0;border-radius:8px;font-size:1.1rem;cursor:pointer;">✕</button>';
+  container.appendChild(row);
+  updateRemoveButtons();
+  row.querySelector('input').focus();
+}
+function removeRow(btn) {
+  var r = btn.closest('.spec-row');
+  if (r.nextElementSibling && r.nextElementSibling.classList.contains('pl-hint')) r.nextElementSibling.remove();
+  r.remove();
+  updateRemoveButtons();
+}
+function updateRemoveButtons() {
+  var rows = document.querySelectorAll('.spec-row');
+  rows.forEach(function(r, i) {
+    r.querySelector('button').style.display = rows.length > 1 ? '' : 'none';
+  });
+}
+var dropZone = document.getElementById('file-drop-zone');
+document.getElementById('attach-input').addEventListener('change', function(e) {
+  handleAttach(e.target.files[0]);
+});
+dropZone.addEventListener('dragover', function(e) {
+  e.preventDefault(); dropZone.style.borderColor = '#1A3A6B';
+});
+dropZone.addEventListener('dragleave', function() {
+  dropZone.style.borderColor = '';
+});
+dropZone.addEventListener('drop', function(e) {
+  e.preventDefault(); dropZone.style.borderColor = '';
+  handleAttach(e.dataTransfer.files[0]);
+});
+function handleAttach(file) {
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    alert('파일 크기는 5MB 이하로 첨부해 주세요.');
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    document.getElementById('file-data').value = ev.target.result;
+    document.getElementById('file-name').value = file.name;
+    document.getElementById('file-type').value = file.type;
+    document.getElementById('file-drop-text').innerHTML =
+      '✅ ' + file.name + '<br><span style="font-size:0.75rem;color:#888">'
+      + (file.size/1024).toFixed(0) + 'KB · 클릭해서 변경</span>';
+    dropZone.classList.add('has-file');
+  };
+  reader.readAsDataURL(file);
+}
+</script>
+<script>
+/* 2026-10-30 위젯 → 견적 폼 연결: 주소 ?spec=규격1, 규격2 … 를 읽어 「규격」 칸을 채운다(시험판).
+   위젯(price-widget.js)의 「이 규격으로 견적 문의」 버튼이 spec 을 붙여 이 페이지로 보낸다. */
+(function(){
+  var sp=new URLSearchParams(location.search).get('spec');
+  if(!sp)return;
+  var specs=sp.split(/\s*,\s*/).map(function(x){return x.trim();}).filter(Boolean).slice(0,10);
+  if(!specs.length)return;
+  var cat=document.querySelector('select[name=category]');if(cat&&!cat.value)cat.value='재연마';
+  var mats=specs.map(function(x){return /\/초경\//.test(x)?'초경':(/\/hss\//i.test(x)?'HSS':'');});
+  var mat=document.querySelector('select[name=material]');
+  if(mat&&!mat.value&&mats[0]&&mats.every(function(m){return m===mats[0];}))mat.value=mats[0];
+  specs.forEach(function(x,i){
+    if(i>0&&typeof addSpecRow==='function')addSpecRow();
+    var inputs=document.querySelectorAll('#spec-rows input[name="spec[]"]');
+    var el=inputs[inputs.length-1];if(!el)return;
+    el.value=x;
+    setTimeout(function(){el.dispatchEvent(new Event('input',{bubbles:true}));},i*400);   // 예상 정가 안내 — 안내 쪽 300 ms 지연 타이머가 하나라 줄마다 400 ms 간격으로
+  });
+  var q=document.querySelectorAll('#spec-rows input[name="quantity[]"]');if(q[0])q[0].focus();
+  var f=document.getElementById('form-wrap');if(f&&f.scrollIntoView)f.scrollIntoView({behavior:'smooth',block:'start'});
+})();
+</script>
+</body>
+</html>

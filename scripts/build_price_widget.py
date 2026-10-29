@@ -21,6 +21,11 @@ print(r.stdout.strip().splitlines()[-1] if r.stdout.strip() else r.stderr[-500:]
 if r.returncode != 0:
     sys.exit('price_lookup.py --export-web 실패')
 shutil.copyfile(os.path.join(HERE, 'price_widget', 'price-widget.js'), os.path.join(out, 'price-widget.js'))
+# 견적 폼 예시(위젯 「이 규격으로 견적 문의」 → ?spec= 를 받아 규격 칸 채움, 2026-10-30) — 공개 사이트(dist) 와는 별도 사본
+for n, dst in (('estimate_sample.html', 'estimate.html'), ('portal.css', 'portal.css'), ('portal.js', 'portal.js')):
+    p = os.path.join(HERE, 'price_widget', n)
+    if os.path.exists(p):
+        shutil.copyfile(p, os.path.join(out, dst))
 
 DEMO_HEAD = '''<!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -54,7 +59,7 @@ GUIDE = f'''# 재연마 예상 정가 위젯 — 시험판 ({today})
 <script src="price-widget.js"></script>
 ```
 
-- `data-inquiry-url`: 「이 규격으로 견적 문의」 버튼이 갈 주소. 비우면 버튼이 안 나온다. 주소 뒤에 `?spec=규격` 이 붙는다(받는 폼에서 읽어 채우는 것은 아직 안 함)
+- `data-inquiry-url`: 「이 규격으로 견적 문의」 버튼이 갈 주소. 비우면 버튼이 안 나온다. 주소 뒤에 `?spec=규격` 이 붙는다\n- 받는 쪽 예시: 이 폴더의 `estimate.html` — `?spec=` 을 읽어 구분 「재연마」 · 재질 · 규격 칸을 채우고 예상 정가 안내까지 띄운다(공개 사이트 `dist/estimate.html` 에 넣을 때는 맨 아래 `<script>` 한 덩어리만 옮기면 됨)
 - 한 페이지에 여러 개: `<div data-kt-price-widget></div>`
 
 ## 보여 주는 것 · 안 보여 주는 것

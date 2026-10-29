@@ -1,3 +1,10 @@
+## [2026-10-30] 업데이트 — 보고서 양식 C 견본 2건 · 정가 재검수 도구 · 프로젝트 지식 26.10
+
+양식 C §4 견본: 주간 업무 보고 xlsx(10. 22. ~ 10. 28.) · 일일보고 3줄 계산 시안(`scripts/daily_summary3.py`, 미연결). `scripts/price_erp_check.py`(ERP 정가 재검수) · `scripts/export_price_project.py` 드릴 표 밖 → 확인 필요 · 위젯 견적 폼 `?spec=` 시험판
+
+영향받은 페이지: [[templates/보고서양식-C-정기업무보고]]
+출처 추가: 없음
+
 ## [2026-10-29] 신규 — 재연마 정가 조회 사내 창 프로그램 시험판
 
 Windows 창 프로그램(tkinter) — 항목 선택 / 문장 입력 · 결과 표(규격 · 정가 · 상태 · 근거) · 결과 복사. 조회 규칙 `scripts/price_app/price_core.py`(웹 `price_lookup_core.js` 를 Python 으로 옮김 — 11,616 조합 · 문장 12개 대조 결과 같음, 드릴 표 밖만 「확인 필요」로 의도적 차이) · 화면 `scripts/price_app/정가조회.pyw` · 묶음 `scripts/build_price_app.py` → `outputs/price_app_20261029/`(price_data.json · 실행 bat · exe만들기.bat · 설정 ini 예시 · 설치안내.md). 정가만. 데이터 경로는 설정 ini 로 공유 폴더 지정 가능

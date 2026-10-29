@@ -1,0 +1,211 @@
+/* =====================================================
+   portal.css — 코리아툴링 포털 공통 스타일
+   적용 페이지: defect / inquiry / request / supplies
+   최종 수정: 2026-06-15
+   ===================================================== */
+
+/* ── 리셋 ──────────────────────────────────────────── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── 기본 ──────────────────────────────────────────── */
+body {
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  background: #f0f2f5;
+  color: #1a1a2e;
+  min-height: 100vh;
+}
+
+/* ── 헤더 ──────────────────────────────────────────── */
+header {
+  background: #1A3A6B;
+  color: white;
+  padding: 16px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+header h1 { font-size: 1.1rem; font-weight: 700; }
+.back-link { color: rgba(255,255,255,0.7); font-size: 0.82rem; text-decoration: none; }
+.back-link:hover { color: white; }
+
+/* ── 레이아웃 ─────────────────────────────────────── */
+main { max-width: 680px; margin: 32px auto; padding: 0 20px 40px; }
+
+/* ── 카드 ──────────────────────────────────────────── */
+.card {
+  background: white;
+  border-radius: 14px;
+  padding: 32px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+.card-title { font-size: 1.1rem; font-weight: 700; color: #1A3A6B; margin-bottom: 4px; }
+.card-sub   { font-size: 0.8rem; color: #999; margin-bottom: 28px; }
+
+/* ── 폼 필드 ──────────────────────────────────────── */
+.field { margin-bottom: 18px; }
+.field label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 6px;
+}
+.req { color: #ea4335; }
+
+.field input[type=text],
+.field input[type=tel],
+.field input[type=email],
+.field input[type=number],
+.field input[type=date],
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 10px 13px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus { border-color: #1A3A6B; }
+.field textarea { resize: vertical; min-height: 90px; }
+
+/* ── 2열 그리드 ───────────────────────────────────── */
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+/* ── 체크박스 그룹 ────────────────────────────────── */
+.check-group { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 4px; }
+.check-item  { display: flex; align-items: center; gap: 6px; font-size: 0.88rem; cursor: pointer; }
+.check-item input[type=checkbox] { width: auto; accent-color: #1A3A6B; }
+
+/* ── 버튼 ──────────────────────────────────────────── */
+.submit-btn {
+  width: 100%;
+  padding: 13px;
+  background: #1A3A6B;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background 0.15s;
+}
+.submit-btn:hover    { background: #152d55; }
+.submit-btn:disabled { background: #aaa; cursor: default; }
+
+/* ── 성공 화면 ────────────────────────────────────── */
+.success-box { text-align: center; padding: 48px 20px; }
+.success-box .icon  { font-size: 3rem; margin-bottom: 16px; }
+.success-box h2     { color: #1A3A6B; font-size: 1.2rem; margin-bottom: 8px; }
+.success-box p      { color: #666; font-size: 0.88rem; line-height: 1.6; margin-bottom: 24px; }
+
+.home-btn {
+  display: inline-block;
+  padding: 11px 28px;
+  background: #f0f2f5;
+  color: #1A3A6B;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+/* ── 파일 드롭 영역 ───────────────────────────────── */
+.file-drop {
+  display: block;
+  border: 2px dashed #d0d8f0;
+  border-radius: 10px;
+  padding: 22px;
+  text-align: center;
+  cursor: pointer;
+  color: #888;
+  font-size: 0.85rem;
+  line-height: 1.7;
+  transition: border-color 0.15s, background 0.15s;
+}
+.file-drop:hover      { border-color: #1A3A6B; background: #f5f8ff; }
+.file-drop.has-file   { border-color: #34a853; background: #f0faf3; color: #2d7a3a; }
+
+/* ── 인증 오버레이 (직원 전용 페이지) ─────────────── */
+.auth-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26,58,107,0.96);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  font-family: 'Segoe UI', sans-serif;
+}
+.auth-box {
+  background: white;
+  border-radius: 18px;
+  padding: 44px 36px;
+  width: 320px;
+  max-width: 90vw;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+}
+.auth-box .auth-icon  { font-size: 2.2rem; margin-bottom: 12px; }
+.auth-box h2          { color: #1A3A6B; font-size: 1.1rem; margin-bottom: 6px; }
+.auth-box .auth-desc  { color: #999; font-size: 0.8rem; margin-bottom: 22px; }
+.auth-box input[type=password] {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 9px;
+  font-size: 1rem;
+  text-align: center;
+  margin-bottom: 12px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.auth-box input[type=password]:focus { border-color: #1A3A6B; }
+.auth-box .auth-btn {
+  width: 100%;
+  padding: 12px;
+  background: #1A3A6B;
+  color: white;
+  border: none;
+  border-radius: 9px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.auth-box .auth-err   { color: #ea4335; font-size: 0.8rem; margin-top: 10px; min-height: 16px; }
+.auth-box .auth-back  { display: block; margin-top: 14px; color: #bbb; font-size: 0.78rem; text-decoration: none; }
+
+/* ── 퀵 네비 ──────────────────────────────────────── */
+.quick-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 18px;
+  background: #1a3a6b;
+  justify-content: center;
+}
+.quick-nav a {
+  color: rgba(255,255,255,0.8);
+  font-size: 0.78rem;
+  text-decoration: none;
+  padding: 5px 12px;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 20px;
+  transition: background 0.15s;
+}
+.quick-nav a:hover,
+.quick-nav a.active { background: rgba(255,255,255,0.2); color: white; }
+
+/* ── 푸터 ──────────────────────────────────────────── */
+footer { text-align: center; padding: 20px; color: #bbb; font-size: 0.75rem; }
+
+/* ── 반응형 ───────────────────────────────────────── */
+@media (max-width: 560px) {
+  .row2 { grid-template-columns: 1fr; }
+  main  { margin: 16px auto; }
+}

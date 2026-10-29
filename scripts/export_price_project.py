@@ -124,11 +124,17 @@ def main():
                 res = None
         if res is None:
             if '/' in str(nm):                   # 품목명 자리에 숫자만 있는 오류 줄(예: 「0.57」)은 뺀다 — ERP 정가 점검 E 분류. 5칸 품목명(날붙이 · 절단 등)은 정상
-                rows2.append([nm, code, int(pr)])
+                if str(nm).split('/')[1:2] in (['드릴'], ['드릴.2.5MM']):   # 2026-10-30: 표기가 깨진 드릴 품목(「//」 · 가공부 없음 등)은 26.10 개정에서 빠져 옛 정가 — 확인 필요로
+                    rows3.append([nm, code, f'드릴 품목명 표기 이상(「//」 · 가공부 없음 등) — ERP 등록 정가 {int(pr):,}원, 26.10 개정 반영 여부 담당자 확인'])
+                else:
+                    rows2.append([nm, code, int(pr)])
         elif res['status'] == '확인 필요':
             rows3.append([nm, code, res['note']])
         elif res['status'] == 'OK' and res['source'].startswith('등록 품목'):
-            rows2.append([nm, code, int(pr)])
+            if len(p) >= 6 and p[1] == '드릴':   # 2026-10-30: 정가표(26.10) 드릴 표 밖(초경 20 mm 초과 · 3 · 4날 · 밑날 외)은 ERP 에 옛 정가가 남아 있음 — 한경준님 10-29 보류
+                rows3.append([nm, code, f'정가표 드릴 구간 밖(가격표 없음 · 보류) — ERP 등록 정가 {int(pr):,}원은 옛 값일 수 있음, 담당자 확인'])
+            else:
+                rows2.append([nm, code, int(pr)])
         # 정가표 계산과 같은 품목(OK · 정가표)은 구간표로 답하므로 넣지 않는다
     h2 = ['품목명', '품목코드', '정가_원']
     h3 = ['품목명', '품목코드', '사유']
