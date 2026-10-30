@@ -125,14 +125,14 @@ def main():
         if res is None:
             if '/' in str(nm):                   # 품목명 자리에 숫자만 있는 오류 줄(예: 「0.57」)은 뺀다 — ERP 정가 점검 E 분류. 5칸 품목명(날붙이 · 절단 등)은 정상
                 if str(nm).split('/')[1:2] in (['드릴'], ['드릴.2.5MM']):   # 2026-10-30: 표기가 깨진 드릴 품목(「//」 · 가공부 없음 등)은 26.10 개정에서 빠져 옛 정가 — 확인 필요로
-                    rows3.append([nm, code, f'드릴 품목명 표기 이상(「//」 · 가공부 없음 등) — ERP 등록 정가 {int(pr):,}원, 26.10 개정 반영 여부 담당자 확인'])
+                    rows3.append([nm, code, '드릴 품목명 표기 이상(「//」 · 가공부 없음 등) — 26.10 개정 반영 여부 담당자 확인'])
                 else:
                     rows2.append([nm, code, int(pr)])
         elif res['status'] == '확인 필요':
             rows3.append([nm, code, res['note']])
         elif res['status'] == 'OK' and res['source'].startswith('등록 품목'):
             if len(p) >= 6 and p[1] == '드릴':   # 2026-10-30: 정가표(26.10) 드릴 표 밖(초경 20 mm 초과 · 3 · 4날 · 밑날 외)은 ERP 에 옛 정가가 남아 있음 — 한경준님 10-29 보류
-                rows3.append([nm, code, f'정가표 드릴 구간 밖(가격표 없음 · 보류) — ERP 등록 정가 {int(pr):,}원은 옛 값일 수 있음, 담당자 확인'])
+                rows3.append([nm, code, '정가표 드릴 구간 밖(가격표 없음 · 보류) — 담당자 확인'])
             else:
                 rows2.append([nm, code, int(pr)])
         # 정가표 계산과 같은 품목(OK · 정가표)은 구간표로 답하므로 넣지 않는다
@@ -144,6 +144,12 @@ def main():
             cw = csv.writer(f); cw.writerow(head); cw.writerows(rows)
     w('1_정가표_구간표.csv', h1, rows1)
     w('2_등록품목_정가.csv', h2, rows2)
+    # 2026-10-30: 확인 필요 사유에 금액(ERP 옛 정가 등)을 남기지 않는다 — 프로젝트가 「사유만 답」할 때 옛 금액이 새지 않게(한경준님 테스트 검수)
+    for r in rows3:
+        r[2] = re.sub(r'ERP 등록 정가 [\d,]+원(은 옛 값일 수 있음)?,?\s*', '', str(r[2]))
+    left = [r for r in rows3 if re.search(r'\d[\d,]*\s*원', str(r[2]))]
+    if left:
+        sys.exit(f'확인 필요 사유에 금액이 남음 {len(left)}줄 — 예: {left[0]}')
     w('3_확인필요_품목.csv', h3, rows3)
     made = pa.now_kst().strftime('%Y-%m-%d %H:%M KST')
     mtime = pa.datetime.datetime.fromtimestamp(os.path.getmtime(lk.pl_path), pa.KST).strftime('%Y-%m-%d %H:%M KST')

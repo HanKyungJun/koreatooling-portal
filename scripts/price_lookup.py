@@ -293,6 +293,9 @@ class Lookup:
                 calc = None
         reg = self.master.get(k)
         out = dict(name=name, price=None, source='', status='', note='', code=reg[2] if reg else None)
+        if shape == '리머' and '고경도' in str(coat):   # 2026-10-30: 정가표 리머 블록에 고경도 칸 없음 — 일반 코팅 값으로 답하지 않음(한경준님)
+            out.update(status='확인 필요', note='리머 고경도 코팅은 정가표에 가격 칸 없음 — 담당자 확인')
+            return out
         if k in self.conflict:
             out.update(status='확인 필요', note='사업장 파일끼리 등록 정가가 다름', price=calc)
             out['source'] = '정가표 계산(참고)' if calc else ''
@@ -304,6 +307,9 @@ class Lookup:
             out.update(price=calc, source=f'{self.pl.name}' + (' · 등록 품목 일치' if reg else ' · 미등록 규격'), status='OK')
             return out
         if reg:
+            if shape == '드릴':   # 2026-10-30: 정가표(26.10) 드릴 표 밖(초경 20 mm 초과 · 3 · 4날 · 밑날 외)은 ERP 에 옛 정가 — 프로젝트 지식 · 사내 프로그램과 같은 판정(한경준님 10-29 보류)
+                out.update(status='확인 필요', note=f'정가표 드릴 구간 밖(가격표 없음 · 보류) — ERP 등록 정가 {reg[0]:,.0f}원은 옛 값일 수 있음, 담당자 확인')
+                return out
             out.update(price=reg[0], source='등록 품목 정가(정가표 블록 없는 형상)', status='OK')
             return out
         near = self.nearest(k)

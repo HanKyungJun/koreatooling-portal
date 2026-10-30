@@ -50,9 +50,11 @@ function nearest(k){const p=k.split('/');if(p.length<6)return '';const d=+p[2];c
  for(const kk in DATA.registered){const q=kk.split('/');if(q.length>=6&&q[0]===p[0]&&q[1]===p[1]&&q.slice(3).join('/')===p.slice(3).join('/'))c.push([Math.abs(+q[2]-d),+q[2]])}
  return c.sort((a,b)=>a[0]-b[0]).slice(0,2).map(x=>'Ø'+g(x[1])).join(' · ')}
 function priceOne(b,s,d,m,p,c){const name=stdName(b,s,d,m,p,c),k=key(name);const calc=calcPrice(b,s,d,m,p,c);const reg=DATA.registered[k];
+ if(s==='리머'&&String(c).indexOf('고경도')>=0)return{name,status:'확인 필요',price:null,src:'리머 고경도 코팅은 정가표에 가격 칸 없음 — 담당자 확인'};// 2026-10-30
  if(conf().has(k))return{name,status:'확인 필요',price:null,src:'사업장 파일끼리 등록 정가가 다름'};
  if(calc!=null&&reg!=null&&Math.abs(calc-reg)>0.5)return{name,status:'확인 필요',price:null,src:'정가표 계산값과 등록 정가가 다름'};
  if(calc!=null)return{name,status:'OK',price:calc,src:`${DATA.sheet}`+(reg!=null?' · 등록 품목':' · 미등록 규격')};
+ if(reg!=null&&s==='드릴')return{name,status:'확인 필요',price:null,src:'정가표 드릴 구간 밖(가격표 없음) — 담당자 확인'};// 2026-10-30: 26.10 드릴 표 밖은 ERP 옛 정가
  if(reg!=null)return{name,status:'OK',price:reg,src:'등록 품목 정가'};
  const n=nearest(k);return{name,status:'없음',price:null,src:'정가표·등록 품목에 없음 — 담당자 확인'+(n?` (가까운 등록 규격: ${n})`:'')}}
 function answer(text){const q=parseQuery(text);const res={query:text,q,rows:[]};if(q.missing.length)return res;

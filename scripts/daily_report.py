@@ -401,6 +401,11 @@ def make_report(target: datetime) -> Path:
 # ══════════════════════════════════════════════════════════
 ERP_FROM = datetime(2026, 10, 23).date()
 
+# 맨 위 요약 3줄(① 결론 · ② 근거 · ③ 요청) — 양식 C §1 · scripts/daily_summary3.py (2026-10-30 연결)
+#   False = 지금 보고서와 똑같이 만든다(3줄 없음). True = 「일일 요약」 제목 바로 아래 3줄을 넣고 나머지를 3행 내린다.
+#   환경변수 DAILY_SUMMARY3=1 / 0 이 있으면 그 값을 따른다(시험용). 켜기 전 결정: 한경준님 판정
+SUMMARY3 = True    # 2026-10-30 켬(한경준님 「3줄로 진행」) — 끄려면 False
+
 
 def erp_month(target: datetime, log=print):
     """target 이 속한 달 1일 ~ target 의 NC 작업실적(줄)과 일별 요약."""
@@ -456,18 +461,38 @@ def make_report_erp(target: datetime) -> Path:
     n_prev = len(work)
 
     title(ws1, 1, f"재연마 일일생산 보고  ─  {date_str}  ({now} 생성 · 속보값 · ERP 작업실적 기준)", 9)
-    ws1.merge_cells('A2:I2')
-    ws1['A2'] = (f"생성: {now}   |   전일: {prev_str}   |"
-                 f"   월평균 기준: 이전 작업일 {n_prev}일 평균   |   {m}월 누적 작업일: {n_work}일")
-    ws1['A2'].font = Font(name=FONT, size=9, color="555555", italic=True)
-    ws1['A2'].alignment = Alignment(horizontal='left', vertical='center')
-    ws1.row_dimensions[2].height = 15
+    # 요약 3줄 — 스위치 SUMMARY3(위). 꺼져 있으면 off = 0 이라 아래 행 번호가 예전과 같다
+    import os
+    on3 = os.environ.get('DAILY_SUMMARY3', '1' if SUMMARY3 else '0') == '1'
+    lines3 = []
+    if on3:
+        try:
+            sys.path.insert(0, str(Path(__file__).resolve().parent))
+            import daily_summary3 as ds3
+            lines3 = ds3.summary3(summary, day_rows, d, m)
+        except Exception as e:   # 3줄 실패가 보고서 생성을 막지 않게
+            print(f'[요약 3줄] 생성 실패 — 3줄 없이 진행: {e}')
+            lines3 = []
+    off = len(lines3)
+    for i, t in enumerate(lines3):
+        ws1.merge_cells(f'A{2 + i}:I{2 + i}')
+        c = ws1.cell(2 + i, 1, value=t)
+        c.font = Font(name=FONT, size=11, bold=(i == 0))
+        c.alignment = Alignment(horizontal='left', vertical='center')
+        ws1.row_dimensions[2 + i].height = 18
+    r2 = 2 + off
+    ws1.merge_cells(f'A{r2}:I{r2}')
+    ws1.cell(r2, 1, value=(f"생성: {now}   |   전일: {prev_str}   |"
+                           f"   월평균 기준: 이전 작업일 {n_prev}일 평균   |   {m}월 누적 작업일: {n_work}일"))
+    ws1.cell(r2, 1).font = Font(name=FONT, size=9, color="555555", italic=True)
+    ws1.cell(r2, 1).alignment = Alignment(horizontal='left', vertical='center')
+    ws1.row_dimensions[r2].height = 15
 
     hdrs3 = ['항목', '오늘', '전일', '전일대비\n(▲▼수량)', '전일대비\n(%)',
              '월평균', '월평균대비\n(▲▼수량)', '월평균대비\n(%)', '비고']
     for ci, h in enumerate(hdrs3, 1):
-        hdr(ws1.cell(3, ci, value=h))
-    ws1.row_dimensions[3].height = 28
+        hdr(ws1.cell(3 + off, ci, value=h))
+    ws1.row_dimensions[3 + off].height = 28
 
     ROWS = [
         ('NC 양품 (개)',                 '양품',     CGXBG,  False),
@@ -476,7 +501,7 @@ def make_report_erp(target: datetime) -> Path:
         ('합계  가공시간 (초, 추정)',      '추정시간', CTOTBG, True),
     ]
     for ri, (label, key, rowbg, is_time) in enumerate(ROWS):
-        r = ri + 4
+        r = ri + 4 + off
         ws1.row_dimensions[r].height = 22
         tv = int(td.get(key, 0))
         pv = int(prev.get(key, 0)) if prev else None
@@ -501,7 +526,7 @@ def make_report_erp(target: datetime) -> Path:
         c = ws1.cell(r, 8, value=p_avg);        s(c, bg=bg_avg); c.number_format = DPCT
         c = ws1.cell(r, 9, value=note);         s(c, fg="444444", sz=9)
 
-    tot_r = len(ROWS) + 4
+    tot_r = len(ROWS) + 4 + off
     ws1.row_dimensions[tot_r].height = 22
     mtd = summary[(summary['일'] <= d) & (summary['합수량'] > 0)]
     ws1.merge_cells(f'A{tot_r}:B{tot_r}')

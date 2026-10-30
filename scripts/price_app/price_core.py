@@ -150,6 +150,8 @@ class PriceCore:
         k = key(name)
         calc = self.calc(b, s, d, m, p, c)
         reg = self.data['registered'].get(k)
+        if s == '리머' and '고경도' in str(c):   # 2026-10-30: 정가표 리머 블록에 고경도 칸 없음(한경준님 「확인 필요」)
+            return dict(name=name, status='확인 필요', price=None, src='리머 고경도 코팅은 정가표에 가격 칸 없음 — 담당자 확인')
         if k in self.conflict:
             return dict(name=name, status='확인 필요', price=None, src='사업장 파일끼리 등록 정가가 다름')
         if calc is not None and reg is not None and abs(calc - reg) > 0.5:

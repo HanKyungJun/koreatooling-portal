@@ -6,8 +6,7 @@
   ③ 요청 : 기본 「요청 없음」. 불량 1개 이상 또는 합계가 월평균 ±20 % 초과면 「확인 요청, (사유)」
 월평균 = 그날 이전 작업일(합계 > 0) 평균 — scripts/daily_report.py make_report_erp 와 같은 기준.
 
-⚠️ 아직 daily_report.py 에 연결하지 않았다(양식 C: 1주 나란히 확인한 뒤 켠다). 연결할 때는
-   make_report_erp() 안에서 summary3(summary, rows, d, m) 결과 3줄을 「일일 요약」 시트 제목 아래에 쓰면 된다.
+2026-10-30: daily_report.py make_report_erp() 에 연결함 — 스위치 SUMMARY3(기본 False = 3줄 없음). 켜면 「일일 요약」 제목 아래 3줄.
 
 시험(PC 또는 Cowork): python scripts/daily_summary3.py 2026-10-27 2026-10-28
   → erp/snapshot/pw_nc_*.csv(가장 최근) 로 계산해 3줄을 출력한다(ERP 직접 조회 없음).
@@ -60,7 +59,7 @@ def summary3(summary: pd.DataFrame, rows: pd.DataFrame, d: int, m: int) -> list:
         why.append(f'불량 {bad:,}개 발생' + (f'(작업지시 {", ".join(wos[:3])}' + (f' 외 {len(wos) - 3}건' if len(wos) > 3 else '') + ')' if wos else ''))
     if avg > 0 and abs(diff) > BAND:
         why.append(f'합계가 월평균 대비 {diff * 100:+.0f} %')
-    l3 = '③ 요청 : ' + ('확인 요청, ' + ' · '.join(why) if why else '요청 없음')
+    l3 = '③ 요청 : ' + ('확인 요청, ' + ', '.join(why) if why else '요청 없음')   # 공통 규칙 §8 — 가운데점 나열 대신 쉼표
     return [l1, l2, l3]
 
 
