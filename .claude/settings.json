@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(C:\\Users\\TOOLKOREA\\Desktop\\cnc-wiki\\**)",
+      "Write(C:\\Users\\TOOLKOREA\\Desktop\\cnc-wiki\\**)",
+      "Edit(C:\\Users\\TOOLKOREA\\Desktop\\cnc-wiki\\**)",
+      "Glob(C:\\Users\\TOOLKOREA\\Desktop\\cnc-wiki\\**)",
+      "Grep(C:\\Users\\TOOLKOREA\\Desktop\\cnc-wiki\\**)"
+    ]
+  }
+}

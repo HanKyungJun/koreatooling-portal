@@ -1,0 +1,1927 @@
+import sys, io, os, json, hashlib, subprocess, time
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
+import openpyxl, xlrd, requests
+from datetime import datetime, date, timedelta
+
+# 2026-07-07: 16:00 정기 실행만 30분+ 소요되는 병목 조사용 타임스탬프 로깅.
+# run.log에 단계별 시각(HH:MM:SS)과 시작 시점부터의 누적 경과(+Ns)를 남겨
+# 어느 단계(파싱/페이지생성/git add/commit/push)가 느려지는지 다음 16:00 실행에서 특정한다.
+# 관련: wiki/_handoff/tasks.md "16:00 정기 실행만 30분+ 소요되는 원인 조사" (P1)
+_START_TS = time.time()
+
+
+def _log(msg):
+    elapsed = time.time() - _START_TS
+    print(f'[{datetime.now().strftime("%H:%M:%S")} +{elapsed:7.1f}s] {msg}')
+
+# .env 파일 로드 (python-dotenv 설치된 경우. 없으면 시스템 환경변수 사용)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
+# ── 설정 ──────────────────────────────────────────────────────────────────────
+# 2026-05-11 보안 정리: 하드코딩되어 있던 토큰·비밀번호를 환경변수로 분리.
+# 값은 .env 파일 또는 시스템 환경변수에서 로드. (.env.example 참조)
+# 관련: SECURITY_NOTES.md, wiki/_handoff/decisions.md 2026-05-11 항목
+GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
+GITHUB_USER  = os.getenv('GITHUB_USER', 'HanKyungJun')
+GITHUB_REPO  = os.getenv('GITHUB_REPO', 'koreatooling-portal')
+STAFF_PASS   = os.getenv('STAFF_PASS', '')
+# 2026-09-08: 하드코딩 기본값을 제거했다. 이 파일은 공개 저장소에 있으므로
+#   기본값을 두면 그것이 곧 공개된 비밀번호가 된다. .env 의 STAFF_PASS 로만 주입한다.
+#   미설정 시 게이트 블록 자체를 생성하지 않는다(가짜 보안을 남기지 않기 위함).
+#   ⚠️ 클라이언트 사이드 게이트는 실제 인증·권한이 아니다 — 사내 LAN 화면 보호용.
+SHOW_STAFF   = os.getenv('SHOW_STAFF', 'True').lower() == 'true'
+
+# 필수 환경변수 체크 (--local 모드가 아닐 때만 GitHub 토큰 필요)
+if '--local' not in sys.argv and not GITHUB_TOKEN:
+    raise SystemExit(
+        "⚠️ GITHUB_TOKEN 환경변수가 필요합니다.\n"
+        "   .env 파일을 만들어 GITHUB_TOKEN=... 형식으로 설정하세요.\n"
+        "   템플릿: .env.example 참조.\n"
+        "   GitHub 업로드 없이 로컬 파일만 생성하려면 --local 플래그를 사용하세요."
+    )
+
+BASE_DIR    = os.path.dirname(os.path.abspath(__file__))
+COMP_DIR    = os.path.join(BASE_DIR, 'wiki', 'comparisons')
+WORKLOG_DIR = os.path.join(BASE_DIR, 'raw', '출하현황')
+DIST_DIR    = os.path.join(BASE_DIR, 'dist')
+
+# ── 사내 전용 출력 (2026-09-04 신설) ──────────────────────────────────────────
+#   공개(GitHub Pages)와 사내(LAN 공유폴더)를 분리하기 위한 두 번째 출력 경로.
+#   LAN 안에 있다는 것 자체가 접근 통제이므로 별도 인증이 필요 없다.
+#   ⚠️ 서버가 꺼져 있거나 권한이 없어도 전체 파이프라인은 계속 진행해야 한다.
+#      (매일 16:00 자동 실행이 이 한 줄 때문에 멈추면 안 된다)
+INTERNAL_DIR = os.getenv(
+    'INTERNAL_DIR',
+    r'\\192.168.0.252\ToolKorea\생산팀\4.AI 자료실\현황판')
+INTERNAL_ENABLED = os.getenv('INTERNAL_ENABLED', 'True').lower() == 'true'
+
+# 사내 전용 정적 자산(css/js/html). dist/ 에 두지 않는다 = GitHub Pages 로 안 나간다.
+INTERNAL_ASSET_DIR = os.path.join(BASE_DIR, 'internal')
+
+# 사내 전용 파일명. dist/ 나 루트로 내보내지 않는다(= GitHub Pages 로 안 나감).
+INTERNAL_ONLY = {
+    'dashboard.html', 'dashboard.css', 'dashboard.js',
+    'field-record.html', 'field-record.css', 'field-record.js',
+    'supplies.html',          # 2026-09-04 미사용 확인 — 생성 중단
+    'portal-auth.js',         # 2026-09-08 신설 — 직원 게이트. 사내 전용, 공개 배포 금지
+    'field-record-config.js', # 2026-09-08 신설 — 현장기록 GAS URL·토큰. 사내 전용
+    'submissions-data.js',    # 2026-09-14 신설 — 접수현황(회사명·담당자·연락처 포함). 사내 전용, 공개 금지
+    'order-status.html',      # 2026-10-08 신설 — 거래처 조회 화면(워크숍 범위 ③). 사내 검토 단계라 공개 금지
+}
+
+# 거래처 조회 화면 원본 (2026-10-08) — 사내 검토 동안 현황판으로만 내보낸다. decisions.md 2026-10-08 (4)
+CUSTOMER_PORTAL_PAGE = os.path.join(BASE_DIR, 'scripts', 'customer_portal', 'order-status.html')
+
+YEARS = [2026, 2025, 2024, 2023, 2022]
+
+
+# ── 파싱 ──────────────────────────────────────────────────────────────────────
+def parse_shipping(filepath):
+    wb = openpyxl.load_workbook(filepath, data_only=True)
+    ws = wb['요약']
+    months = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월']
+    customers = []
+    for row in ws.iter_rows(min_row=3, values_only=True):
+        if not row[1]:
+            break
+        monthly = [row[i + 2] or 0 for i in range(12)]
+        customers.append({'name': row[1], 'monthly': monthly, 'total': sum(monthly)})
+    customers.sort(key=lambda x: x['total'], reverse=True)
+    return {'months': months, 'customers': customers}
+
+
+def parse_worklog():
+    today = datetime.now()
+    year, month, day = today.year, today.month, today.day
+    path = os.path.join(WORKLOG_DIR,
+                        f'재연마 작업일지({year})',
+                        f'재연마_월간생산일지 ({month}월).xls')
+    if not os.path.exists(path):
+        return None, None
+
+    wb = xlrd.open_workbook(path)
+    ws = wb.sheet_by_index(0)
+
+    today_row = None
+    fast_cum = gx7_cum = fast_t_cum = gx7_t_cum = work_days = 0
+
+    for i in range(2, ws.nrows):
+        row = ws.row_values(i)
+        try:
+            d = int(row[0])
+        except (ValueError, TypeError):
+            break
+        fast_qty  = int(row[1] or 0)
+        fast_time = int(row[3] or 0)
+        gx7_qty   = int(row[7] or 0)
+        gx7_time  = int(row[9] or 0)
+        if d <= day:
+            fast_cum   += fast_qty;  gx7_cum    += gx7_qty
+            fast_t_cum += fast_time; gx7_t_cum  += gx7_time
+            if fast_qty > 0 or gx7_qty > 0:
+                work_days += 1
+        if d == day:
+            today_row = {'fast_qty': fast_qty, 'fast_time': fast_time,
+                         'gx7_qty': gx7_qty,   'gx7_time': gx7_time}
+
+    if today_row is None:
+        today_row = {'fast_qty': 0, 'fast_time': 0, 'gx7_qty': 0, 'gx7_time': 0}
+
+    return {
+        'date':       today.strftime('%Y-%m-%d'),
+        'fast':       {'qty': today_row['fast_qty'],  'time_sec': today_row['fast_time']},
+        'gx7':        {'qty': today_row['gx7_qty'],   'time_sec': today_row['gx7_time']},
+        'total':      {'qty': today_row['fast_qty'] + today_row['gx7_qty'],
+                       'time_sec': today_row['fast_time'] + today_row['gx7_time']},
+        'cumulative': {'fast': fast_cum, 'gx7': gx7_cum,
+                       'total': fast_cum + gx7_cum, 'work_days': work_days},
+    }, f'{year}-{month:02d}-{day:02d} 재연마_월간생산일지 ({month}월)'
+
+
+def parse_production():
+    """오늘 · 이달 생산 실적 — ERP NC 작업실적 기준 (2026-10-23 신설, decisions 2026-10-23 (7) · (8))
+
+    엑셀 월간생산일지 입력을 10-23 부터 멈춰서 parse_worklog() 대신 쓴다(parse_worklog 는 지우지 않고 남김).
+    - FG / GX7 구분 없음(ERP 공정 NC 하나) · 수량 = 양품 + 불량
+    - 가동(가공) 시간 = 표준공수 DB 중앙값 × 수량 **추정값** (erp_worklog.StdTime)
+    - 16:00 회차는 바로 앞의 daily_report.py 가 남긴 조회 결과(erp/snapshot/pw_nc_<1일>_<오늘>.csv, 30분 이내)를 다시 쓴다
+    - 실패하면 (None, None) → 현황판 「오늘 실적」 칸만 「데이터 없음」 으로 나온다
+    """
+    try:
+        import pandas as pd
+        sys.path.insert(0, os.path.join(BASE_DIR, 'erp'))
+        import erp_worklog as ew
+        today = date.today()
+        fr = today.replace(day=1)
+        cache = os.path.join(ew.CACHE_DIR, f'pw_nc_{fr}_{today}.csv')
+        if os.path.exists(cache) and time.time() - os.path.getmtime(cache) < 1800:
+            df = pd.read_csv(cache, dtype=str, encoding='utf-8-sig')
+            if len(df):
+                df['work_dt'] = pd.to_datetime(df['work_dt'], errors='coerce').dt.date
+                for k in ('ok', 'bad'):
+                    df[k] = pd.to_numeric(df[k], errors='coerce').fillna(0)
+            src = '조회 결과 재사용(일일보고)'
+        else:
+            df = ew.fetch_nc_results(fr, today, log=_log)
+            ew.save_cache(df, fr, today)
+            src = 'ERP 조회'
+        z = {'qty': 0, 'ok': 0, 'bad': 0, 'time_sec': 0, 'unmatched': 0}
+        if not len(df):
+            return {'date': today.strftime('%Y-%m-%d'), 'source': 'erp', 'nc': dict(z), 'total': {'qty': 0, 'time_sec': 0},
+                    'cumulative': {'total': 0, 'ok': 0, 'bad': 0, 'work_days': 0}}, f'{src} · 이달 실적 0줄'
+        st = ew.StdTime()
+        ang = df['jae_angle'].astype(str) if 'jae_angle' in df else pd.Series('', index=df.index)
+        lk = {}
+        for n, a in zip(df['itm_nm'].astype(str), ang):
+            if (n, a) not in lk:
+                lk[(n, a)] = st.lookup(n, None if a in ('nan', 'None', '') else a)[0]
+        df['std'] = [lk[(n, a)] for n, a in zip(df['itm_nm'].astype(str), ang)]
+        df['qty'] = df['ok'] + df['bad']
+        df['est'] = df['qty'] * pd.to_numeric(df['std'], errors='coerce')
+        t = df[df['work_dt'] == today]
+        m = df[df['work_dt'] <= today]
+        nc = {'qty': int(t['qty'].sum()), 'ok': int(t['ok'].sum()), 'bad': int(t['bad'].sum()),
+              'time_sec': int(round(t['est'].sum())), 'unmatched': int(t['std'].isna().sum())}
+        cum = {'total': int(m['qty'].sum()), 'ok': int(m['ok'].sum()), 'bad': int(m['bad'].sum()),
+               'work_days': int(m.loc[m['qty'] > 0, 'work_dt'].nunique())}
+        return {'date': today.strftime('%Y-%m-%d'), 'source': 'erp', 'nc': nc,
+                'total': {'qty': nc['qty'], 'time_sec': nc['time_sec']}, 'cumulative': cum}, \
+               f'{src} · 오늘 NC {nc["qty"]}개 · 이달 {cum["total"]}개({cum["work_days"]}일)'
+    except Exception as e:
+        _log(f'  ⚠️ ERP 생산 실적 조회 실패 — 「오늘 실적」 칸 생략: {type(e).__name__}: {str(e)[:120]}')
+        return None, None
+
+
+# ── 공통 컴포넌트 ──────────────────────────────────────────────────────────────
+# CSS는 dist/portal.css 에 분리됨 (2026-06-15)
+# GAS URL / 폼 제출 / 인증 로직은 dist/portal.js 에 분리됨 (2026-06-15)
+
+# 인증 오버레이 HTML — CSS 클래스는 portal.css 에 정의되어 있음
+_AUTH_HTML = """<div id="auth-overlay" class="auth-overlay">
+  <div class="auth-box">
+    <div class="auth-icon">🔒</div>
+    <h2>직원 전용</h2>
+    <p class="auth-desc">비밀번호를 입력하세요.</p>
+    <input id="pass-input" type="password" placeholder="비밀번호">
+    <button class="auth-btn" onclick="checkPass()">확인</button>
+    <div id="pass-err" class="auth-err"></div>
+    <a href="index.html" class="auth-back">← 메인으로 돌아가기</a>
+  </div>
+</div>"""
+
+
+def _form_page(page_title, form_name, icon, header_title, fields_html, success_msg, protected=False):
+    # CSS → portal.css, 폼 제출 + 인증 → portal.js (2026-06-15 분리)
+    auth_block = _AUTH_HTML if protected else ''
+    return ('<!DOCTYPE html>\n<html lang="ko">\n<head>\n'
+            '<meta charset="UTF-8">\n'
+            '<meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
+            '<title>' + page_title + ' — 코리아툴링</title>\n'
+            '<link rel="stylesheet" href="portal.css">\n'
+            '</head>\n<body>\n'
+            + auth_block + '\n'
+            '<header>\n'
+            '  <h1>' + icon + ' ' + header_title + '</h1>\n'
+            '  <a href="index.html" class="back-link">← 메인으로</a>\n'
+            '</header>\n'
+            '<main>\n'
+            '  <div id="form-wrap" class="card">\n'
+            '    <div class="card-title">' + icon + ' ' + header_title + '</div>\n'
+            '    <div class="card-sub">＊ 표시는 필수 입력 항목입니다.</div>\n'
+            '    <form name="' + form_name + '" method="POST">\n'
+            '      <input type="hidden" name="form-name" value="' + form_name + '">\n'
+            + fields_html + '\n'
+            '      <button type="submit" class="submit-btn">제출하기 →</button>\n'
+            '    </form>\n'
+            '  </div>\n'
+            '  <div id="success" style="display:none" class="card">\n'
+            '    <div class="success-box">\n'
+            '      <div class="icon">✅</div>\n'
+            '      <h2>제출이 완료되었습니다</h2>\n'
+            '      <p>' + success_msg + '</p>\n'
+            '      <a href="index.html" class="home-btn">메인으로 돌아가기</a>\n'
+            '    </div>\n'
+            '  </div>\n'
+            '</main>\n'
+            '<footer>© 2026 코리아툴링 | Korea Tooling Co., Ltd.</footer>\n'
+            '<iframe name="hidden-target" style="display:none;"></iframe>\n'
+            '<script src="portal.js"></script>\n'
+            + ('<script src="portal-auth.js"></script>\n' if protected else '')
+            + ('</body>\n</html>'))
+
+
+# ── 포털 메인 ──────────────────────────────────────────────────────────────────
+def build_portal_html(show_staff: bool = None):
+    """포털 index. show_staff=False 면 직원 전용 구역이 통째로 빠진다.
+
+    2026-09-04: 공개(GitHub Pages) / 사내(LAN) 분리를 위해 인자화.
+      공개용 → show_staff=False   사내용 → show_staff=True
+    """
+    if show_staff is None:
+        show_staff = SHOW_STAFF
+    staff_section = ("""
+  <button class="staff-toggle" onclick="showStaffAuth()">🔒 직원 전용</button>
+
+  <!-- 비밀번호 모달 -->
+  <div id="staff-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:100;display:none;align-items:center;justify-content:center;">
+    <div style="background:white;border-radius:16px;padding:32px 28px;width:320px;max-width:90vw;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+      <div style="font-size:2rem;margin-bottom:10px;">🔒</div>
+      <h2 style="color:#1A3A6B;font-size:1rem;margin-bottom:6px;">직원 전용</h2>
+      <p style="color:#999;font-size:0.78rem;margin-bottom:18px;">비밀번호를 입력하세요.</p>
+      <input id="staff-pass-input" type="password" placeholder="비밀번호"
+        style="width:100%;padding:10px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:0.95rem;margin-bottom:10px;outline:none;text-align:center;"
+        onkeydown="if(event.key==='Enter') checkStaffPass()">
+      <p id="staff-pass-error" style="color:#e53935;font-size:0.78rem;min-height:18px;margin-bottom:8px;"></p>
+      <button onclick="checkStaffPass()"
+        style="width:100%;padding:11px;background:#1A3A6B;color:white;border:none;border-radius:8px;font-size:0.9rem;font-weight:700;cursor:pointer;margin-bottom:8px;">
+        확인
+      </button>
+      <button onclick="closeStaffModal()"
+        style="width:100%;padding:9px;background:none;border:1px solid #ddd;border-radius:8px;font-size:0.85rem;color:#aaa;cursor:pointer;">
+        취소
+      </button>
+    </div>
+  </div>
+
+  <div id="staff-section" style="display:none">
+    <div class="sec-label" style="margin-top:16px">🔒 직원 전용 <span class="staff-badge">PASSWORD</span></div>
+    <div class="grid">
+      <a class="card staff" href="dashboard.html">
+        <div class="card-icon">📊</div>
+        <div class="card-title">재연마 현황판</div>
+        <div class="card-desc">출하현황 및 일일 생산 실적을 확인합니다.</div>
+      </a>
+      <a class="card staff" href="field-record.html">
+        <div class="card-icon">📝</div>
+        <div class="card-title">현장 기록</div>
+        <div class="card-desc">가공 테스트 결과 및 불량 현황을 현장에서 바로 기록합니다.</div>
+      </a>
+      <a class="card staff" href="order-status.html">
+        <div class="card-icon">📦</div>
+        <div class="card-title">거래처 조회 (사내 검토)</div>
+        <div class="card-desc">거래처가 보게 될 발주·진행 현황 화면입니다. 접속 코드로 확인합니다.</div>
+      </a>
+    </div>
+  </div>
+  <script>
+  function showStaffAuth() {
+    var modal = document.getElementById('staff-modal');
+    modal.style.display = 'flex';
+    setTimeout(function(){ document.getElementById('staff-pass-input').focus(); }, 50);
+  }
+  function closeStaffModal() {
+    document.getElementById('staff-modal').style.display = 'none';
+    document.getElementById('staff-pass-input').value = '';
+    document.getElementById('staff-pass-error').textContent = '';
+  }
+  function checkStaffPass() {
+    var val = document.getElementById('staff-pass-input').value;
+    if (val === '""" + STAFF_PASS + """') {
+      closeStaffModal();
+      document.getElementById('staff-section').style.display = 'block';
+      document.querySelector('.staff-toggle').style.display = 'none';
+    } else {
+      document.getElementById('staff-pass-error').textContent = '비밀번호가 올바르지 않습니다.';
+      document.getElementById('staff-pass-input').value = '';
+      document.getElementById('staff-pass-input').focus();
+    }
+  }
+  </script>""") if (show_staff and STAFF_PASS) else ''
+
+    return """<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>코리아툴링 생산팀 포털</title>
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+<header>
+  <div class="co-name">Korea Tooling Co., Ltd.</div>
+  <h1>생산팀 포털</h1>
+  <p>서비스를 선택해 주세요</p>
+</header>
+<main>
+  <div class="sec-label">🌐 고객 서비스</div>
+  <div class="grid">
+    <a class="card" href="request.html">
+      <div class="card-icon">🔧</div>
+      <div class="card-title">재연마 의뢰 접수</div>
+      <div class="card-desc">공구 재연마를 의뢰하고 수량·납기를 등록합니다.</div>
+    </a>
+    <a class="card" href="defect.html">
+      <div class="card-icon">⚠️</div>
+      <div class="card-title">공구 불량 신고</div>
+      <div class="card-desc">불량 공구의 증상 및 발생 현황을 신고합니다.</div>
+    </a>
+    <a class="card" href="inquiry.html">
+      <div class="card-icon">📋</div>
+      <div class="card-title">작업 진행 문의</div>
+      <div class="card-desc">의뢰한 공구의 진행 현황을 문의합니다.</div>
+    </a>
+    <a class="card" href="절삭조건-검색.html">
+      <div class="card-icon">⚙️</div>
+      <div class="card-title">절삭 조건 검색</div>
+      <div class="card-desc">JJ · COGO 카탈로그 기준 절삭 조건을 검색합니다.</div>
+    </a>
+    <a class="card" href="estimate.html">
+      <div class="card-icon">💰</div>
+      <div class="card-title">견적 문의</div>
+      <div class="card-desc">규격·수량을 알려주시면 담당자가 견적을 안내해 드립니다.</div>
+    </a>
+  </div>
+  <div class="sec-label" style="margin-top:24px">🏢 회사 소개</div>
+  <div class="grid">
+    <a class="card" href="about.html">
+      <div class="card-icon">🏭</div>
+      <div class="card-title">회사 소개</div>
+      <div class="card-desc">코리아툴링 소개 및 서비스 안내를 확인합니다.</div>
+    </a>
+  </div>
+""" + staff_section + """
+</main>
+<footer>© 2026 코리아툴링 생산팀 포털 | Korea Tooling Co., Ltd.</footer>
+</body>
+</html>"""
+
+
+# ── 폼 페이지들 ────────────────────────────────────────────────────────────────
+def build_request_html():
+    fields = """
+      <div class="row2">
+        <div class="field">
+          <label>회사명 <span class="req">＊</span></label>
+          <input type="text" name="company" placeholder="예) 코리아툴링" required>
+        </div>
+        <div class="field">
+          <label>담당자 <span class="req">＊</span></label>
+          <input type="text" name="contact" placeholder="이름" required>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>연락처 <span class="req">＊</span></label>
+          <input type="tel" name="phone" placeholder="010-0000-0000" required>
+        </div>
+        <div class="field">
+          <label>이메일</label>
+          <input type="email" name="email" placeholder="example@email.com">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>공구 종류 <span class="req">＊</span></label>
+          <select name="tool_type" required>
+            <option value="">선택하세요</option>
+            <option>엔드밀</option>
+            <option>드릴</option>
+            <option>리머</option>
+            <option>탭</option>
+            <option>기타</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>재질</label>
+          <select name="material">
+            <option value="">선택하세요</option>
+            <option>초경</option>
+            <option>HSS</option>
+            <option>SKD</option>
+            <option>기타</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>규격 / 수량 <span class="req">＊</span>
+          <span style="font-weight:400;color:#aaa;font-size:0.75rem;margin-left:6px;">품종이 여러 개면 행 추가</span>
+        </label>
+        <div id="spec-rows">
+          <div class="spec-row" style="display:grid;grid-template-columns:1fr 90px 32px;gap:8px;margin-bottom:8px;">
+            <input type="text" name="spec[]" placeholder="규격 (예: Ø10 4날, R0.5)" required
+              style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;">
+            <input type="number" name="quantity[]" placeholder="수량" min="1" required
+              style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;text-align:center;">
+            <button type="button" onclick="removeRow(this)"
+              style="background:#fff0f0;color:#e53935;border:1.5px solid #ffd0d0;border-radius:8px;font-size:1.1rem;cursor:pointer;display:none;">✕</button>
+          </div>
+        </div>
+        <button type="button" onclick="addSpecRow()"
+          style="margin-top:4px;padding:8px 16px;background:#f0f4ff;color:#1A3A6B;border:1.5px dashed #b0c4f0;border-radius:8px;font-size:0.82rem;font-weight:600;cursor:pointer;">
+          + 규격 추가
+        </button>
+      </div>
+      <div class="field">
+        <label>특이사항 / 요청사항</label>
+        <textarea name="notes" placeholder="재연마 특이사항, 요청사항을 입력해주세요."></textarea>
+      </div>
+      <div class="field">
+        <label>도면 / 사진 첨부 <span style="font-weight:400;color:#aaa;font-size:0.75rem">(선택 · 최대 5MB)</span></label>
+        <label class="file-drop" for="attach-input" id="file-drop-zone">
+          <span id="file-drop-text">📎 클릭하거나 파일을 드래그하세요<br>
+          <span style="font-size:0.75rem;color:#bbb">JPG · PNG · PDF · DWG · DXF</span></span>
+        </label>
+        <input type="file" id="attach-input" accept="image/*,.pdf,.dwg,.dxf" style="display:none">
+        <input type="hidden" name="file-data" id="file-data">
+        <input type="hidden" name="file-name" id="file-name">
+        <input type="hidden" name="file-type" id="file-type">
+      </div>"""
+    return (_form_page(
+        '재연마 의뢰 접수', 'request-form', '🔧', '재연마 의뢰 접수',
+        fields,
+        '담당자가 확인 후 연락드리겠습니다.<br>감사합니다.')
+    + """<script>
+function addSpecRow() {
+  var container = document.getElementById('spec-rows');
+  var row = document.createElement('div');
+  row.className = 'spec-row';
+  row.style.cssText = 'display:grid;grid-template-columns:1fr 90px 32px;gap:8px;margin-bottom:8px;';
+  row.innerHTML = '<input type="text" name="spec[]" placeholder="규격 (예: Ø10 4날, R0.5)"'
+    + ' style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;">'
+    + '<input type="number" name="quantity[]" placeholder="수량" min="1"'
+    + ' style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;text-align:center;">'
+    + '<button type="button" onclick="removeRow(this)"'
+    + ' style="background:#fff0f0;color:#e53935;border:1.5px solid #ffd0d0;border-radius:8px;font-size:1.1rem;cursor:pointer;">✕</button>';
+  container.appendChild(row);
+  updateRemoveButtons();
+  row.querySelector('input').focus();
+}
+function removeRow(btn) {
+  btn.closest('.spec-row').remove();
+  updateRemoveButtons();
+}
+function updateRemoveButtons() {
+  var rows = document.querySelectorAll('.spec-row');
+  rows.forEach(function(r, i) {
+    r.querySelector('button').style.display = rows.length > 1 ? '' : 'none';
+  });
+}
+
+// ── 파일 첨부 ─────────────────────────────────────────────────────────────────
+var dropZone = document.getElementById('file-drop-zone');
+document.getElementById('attach-input').addEventListener('change', function(e) {
+  handleAttach(e.target.files[0]);
+});
+dropZone.addEventListener('dragover', function(e) {
+  e.preventDefault(); dropZone.style.borderColor = '#1A3A6B';
+});
+dropZone.addEventListener('dragleave', function() {
+  dropZone.style.borderColor = '';
+});
+dropZone.addEventListener('drop', function(e) {
+  e.preventDefault(); dropZone.style.borderColor = '';
+  handleAttach(e.dataTransfer.files[0]);
+});
+function handleAttach(file) {
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    alert('파일 크기는 5MB 이하로 첨부해 주세요.');
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    document.getElementById('file-data').value = ev.target.result;
+    document.getElementById('file-name').value = file.name;
+    document.getElementById('file-type').value = file.type;
+    document.getElementById('file-drop-text').innerHTML =
+      '✅ ' + file.name + '<br><span style="font-size:0.75rem;color:#888">'
+      + (file.size/1024).toFixed(0) + 'KB · 클릭해서 변경</span>';
+    dropZone.classList.add('has-file');
+  };
+  reader.readAsDataURL(file);
+}
+</script>"""
+    )
+
+
+def build_defect_html():
+    fields = """
+      <div class="row2">
+        <div class="field">
+          <label>회사명 <span class="req">＊</span></label>
+          <input type="text" name="company" placeholder="예) 코리아툴링" required>
+        </div>
+        <div class="field">
+          <label>담당자 <span class="req">＊</span></label>
+          <input type="text" name="contact" placeholder="이름" required>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>연락처 <span class="req">＊</span></label>
+          <input type="tel" name="phone" placeholder="010-0000-0000" required>
+        </div>
+        <div class="field">
+          <label>발생 일자 <span class="req">＊</span></label>
+          <input type="date" name="defect_date" required>
+        </div>
+      </div>
+      <div class="field">
+        <label>공구명 / 규격 <span class="req">＊</span>
+          <span style="font-weight:400;color:#aaa;font-size:0.75rem;margin-left:6px;">품종이 여러 개면 행 추가</span>
+        </label>
+        <div id="defect-rows">
+          <div class="defect-row" style="display:grid;grid-template-columns:1fr 90px 32px;gap:8px;margin-bottom:8px;">
+            <input type="text" name="tool_spec[]" placeholder="공구명/규격 (예: 초경 엔드밀 Ø10, 4날)" required
+              style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;">
+            <input type="number" name="defect_qty[]" placeholder="수량" min="1" required
+              style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;text-align:center;">
+            <button type="button" onclick="removeDefectRow(this)"
+              style="background:#fff0f0;color:#e53935;border:1.5px solid #ffd0d0;border-radius:8px;font-size:1.1rem;cursor:pointer;display:none;">✕</button>
+          </div>
+        </div>
+        <button type="button" onclick="addDefectRow()"
+          style="margin-top:4px;padding:8px 16px;background:#f0f4ff;color:#1A3A6B;border:1.5px dashed #b0c4f0;border-radius:8px;font-size:0.82rem;font-weight:600;cursor:pointer;">
+          + 규격 추가
+        </button>
+      </div>
+      <div class="field">
+        <label>불량 증상 <span class="req">＊</span></label>
+        <div class="check-group">
+          <label class="check-item"><input type="checkbox" name="symptom" value="치핑"> 치핑</label>
+          <label class="check-item"><input type="checkbox" name="symptom" value="파손"> 파손</label>
+          <label class="check-item"><input type="checkbox" name="symptom" value="치수불량"> 치수 불량</label>
+          <label class="check-item"><input type="checkbox" name="symptom" value="코팅불량"> 코팅 불량</label>
+          <label class="check-item"><input type="checkbox" name="symptom" value="수명단축"> 수명 단축</label>
+          <label class="check-item"><input type="checkbox" name="symptom" value="기타"> 기타</label>
+        </div>
+      </div>
+      <div class="field">
+        <label>피삭재 / 사용 환경</label>
+        <input type="text" name="workpiece" placeholder="예) SUS304, 건식">
+      </div>
+      <div class="field">
+        <label>불량 상세 내용 <span class="req">＊</span></label>
+        <textarea name="detail" placeholder="불량 발생 경위, 사용 조건(회전수/이송) 등 상세히 기재해주세요." required></textarea>
+      </div>"""
+    return (_form_page(
+        '공구 불량 신고', 'defect-form', '⚠️', '공구 불량 신고',
+        fields,
+        '불량 내용을 접수하였습니다.<br>빠른 시일 내에 확인 후 연락드리겠습니다.')
+    + """<script>
+function addDefectRow() {
+  var container = document.getElementById('defect-rows');
+  var row = document.createElement('div');
+  row.className = 'defect-row';
+  row.style.cssText = 'display:grid;grid-template-columns:1fr 90px 32px;gap:8px;margin-bottom:8px;';
+  row.innerHTML = '<input type="text" name="tool_spec[]" placeholder="공구명/규격 (예: 초경 엔드밀 Ø10, 4날)"'
+    + ' style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;">'
+    + '<input type="number" name="defect_qty[]" placeholder="수량" min="1"'
+    + ' style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;text-align:center;">'
+    + '<button type="button" onclick="removeDefectRow(this)"'
+    + ' style="background:#fff0f0;color:#e53935;border:1.5px solid #ffd0d0;border-radius:8px;font-size:1.1rem;cursor:pointer;">✕</button>';
+  container.appendChild(row);
+  updateDefectButtons();
+  row.querySelector('input').focus();
+}
+function removeDefectRow(btn) {
+  btn.closest('.defect-row').remove();
+  updateDefectButtons();
+}
+function updateDefectButtons() {
+  var rows = document.querySelectorAll('.defect-row');
+  rows.forEach(function(r) {
+    r.querySelector('button').style.display = rows.length > 1 ? '' : 'none';
+  });
+}
+</script>"""
+    )
+
+
+def build_inquiry_html():
+    fields = """
+      <div class="row2">
+        <div class="field">
+          <label>회사명 <span class="req">＊</span></label>
+          <input type="text" name="company" placeholder="예) 코리아툴링" required>
+        </div>
+        <div class="field">
+          <label>담당자 <span class="req">＊</span></label>
+          <input type="text" name="contact" placeholder="이름" required>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>연락처 <span class="req">＊</span></label>
+          <input type="tel" name="phone" placeholder="010-0000-0000" required>
+        </div>
+        <div class="field">
+          <label>의뢰 납기 / 참고 일자</label>
+          <input type="text" name="ref_date" placeholder="예) 2026-04-30">
+        </div>
+      </div>
+      <div class="field">
+        <label>문의 내용 <span class="req">＊</span></label>
+        <textarea name="inquiry" placeholder="공구명·수량·납기 등 진행 현황을 문의할 내용을 입력해주세요." style="min-height:120px;" required></textarea>
+      </div>"""
+    return _form_page(
+        '작업 진행 문의', 'inquiry-form', '📋', '작업 진행 문의',
+        fields,
+        '문의를 접수하였습니다.<br>담당자가 확인 후 신속히 연락드리겠습니다.')
+
+
+def build_supplies_html():
+    fields = """
+      <div class="row2">
+        <div class="field">
+          <label>요청자 <span class="req">＊</span></label>
+          <input type="text" name="requester" placeholder="이름" required>
+        </div>
+        <div class="field">
+          <label>부서 <span class="req">＊</span></label>
+          <select name="department" required>
+            <option value="">선택하세요</option>
+            <option>생산팀</option>
+            <option>품질팀</option>
+            <option>관리팀</option>
+            <option>기타</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>품목명 <span class="req">＊</span></label>
+        <input type="text" name="item_name" placeholder="예) 절삭유, 연마석, 측정기" required>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>규격 / 사양</label>
+          <input type="text" name="item_spec" placeholder="예) 100L, #120">
+        </div>
+        <div class="field">
+          <label>수량 <span class="req">＊</span></label>
+          <input type="number" name="quantity" placeholder="개/L/m" min="1" required>
+        </div>
+      </div>
+      <div class="field">
+        <label>희망 납기</label>
+        <input type="date" name="due_date">
+      </div>
+      <div class="field">
+        <label>용도 / 사유 <span class="req">＊</span></label>
+        <textarea name="reason" placeholder="구매가 필요한 이유와 용도를 기재해주세요." required></textarea>
+      </div>
+      <div class="field">
+        <label class="check-item" style="font-size:0.88rem;cursor:pointer;">
+          <input type="checkbox" name="urgent" value="Y" style="width:auto;accent-color:#c0392b;">
+          &nbsp;긴급 요청 (즉시 처리 필요)
+        </label>
+      </div>"""
+    return _form_page(
+        '소모품 구매 요청', 'supplies-form', '🛒', '소모품 구매 요청',
+        fields,
+        '구매 요청이 접수되었습니다.<br>확인 후 처리하겠습니다.',
+        protected=True)
+
+
+# ── 장비별 투입 목록 블록 (2026-09-28 신설 — erp/machine_queue.py) ─────────────
+def build_machine_queue_html(queue, max_rows=30):
+    """FG / GX7 두 칸. queue=None(ERP 실패)이면 빈 문자열 — 블록을 그리지 않는다."""
+    if not queue:
+        return ''
+    import html as _h
+    esc = lambda x: _h.escape(str(x))
+    names = {'FG': 'FG (FAST GRIND)', 'GX7': 'GX7'}
+    cards = ''
+    for m in ('FG', 'GX7'):
+        q = queue[m]
+        rows = ''
+        for it in q['items'][:max_rows]:
+            if it['bucket'] == 0:
+                tag = f'<span style="color:#e53935;font-weight:700">{esc(it["tag"])}</span>'
+            elif it['bucket'] == 1:
+                tag = f'<span style="color:#f57c00;font-weight:700">{esc(it["tag"])}</span>'
+            else:
+                tag = esc(it['tag'])
+            top = 'border-top:3px solid #1A3A6B;' if it['new_setup'] and it['seq'] > 1 else ''
+            edge = ' <span title="Ø8 경계 — FG·GX7 모두 가능" style="color:#8e24aa">◆</span>' if it['edge'] else ''
+            fh = it.get('fg_hint')   # 2026-09-29 — GX7 품목의 FG 실적 표시 (참고용)
+            if fh and fh.get('grade') in ('ok', 'cond'):
+                _ok = fh['grade'] == 'ok'
+                _r = f"{fh['ratio']:.2f}배" if fh.get('ratio') else '-'
+                edge += (f' <span title="FG 실적 {fh["fg_qty"]}개/{fh["fg_days"]}일 · 가공시간 FG {fh.get("ct_fg")}s / GX7 {fh.get("ct_gx")}s = {_r} (2025~ 작업일지 실측, 참고용 — 투입은 현장 판단)" '
+                         f'style="font-size:0.72rem;border-radius:4px;padding:1px 5px;white-space:nowrap;'
+                         + ('background:#e8f5e9;color:#2e7d32' if _ok else 'background:#fff8e1;color:#b26a00')
+                         + f'">{"🟢 FG 실적" if _ok else "🟡 FG 조건부"} {_r}</span>')
+            if it.get('partial'):
+                edge += (f' <span title="작업일지 기준 일부 가공됨 ({esc(it.get("wl_equip", ""))})" '
+                         f'style="font-size:0.72rem;background:#e3f2fd;color:#1565c0;border-radius:4px;padding:1px 5px;white-space:nowrap">'
+                         f'가공 {it["worked"]}/{it["worked"] + it["rest"]}</span>')
+            rows += (f'<tr style="{top}"><td style="text-align:right">{it["seq"]}</td>'
+                     f'<td style="white-space:nowrap">{tag}<br><span style="font-size:0.75rem;color:#888">{esc(it["dlv"][5:])}</span></td>'
+                     f'<td style="white-space:normal;max-width:110px;font-size:0.85rem">{esc(it["cust"])}</td>'
+                     f'<td style="white-space:normal;max-width:none">{esc(it["itm"])}{edge}</td>'
+                     f'<td style="text-align:right">{it["rest"]:,}</td></tr>')
+        if not rows:
+            rows = ('<tr><td colspan="5" style="text-align:center;color:#999;padding:14px">'
+                    '투입 대기 품목 없음</td></tr>')
+        more = (f'<div style="font-size:0.78rem;color:#888;margin-top:6px">외 {q["n"] - max_rows}품목 (납기 늦은 순서라 생략)</div>'
+                if q['n'] > max_rows else '')
+        cards += f'''
+    <div class="section-card" style="margin:0">
+      <div class="chart-title">{names[m]} <span style="font-size:0.8rem;color:#666;font-weight:400">
+        {q["n"]}품목 · {q["qty"]:,}개 · 셋업 {q["setups"]}회 · 지연 {q["late"]} · 임박 {q["near"]}{(f' · <span style="color:#2e7d32">🟢 FG 실적 {q.get("fg_ok", 0)}품목/{q.get("fg_ok_qty", 0):,}개</span>' + (f' · 🟡 {q["fg_cond"]}' if q.get("fg_cond") else '')) if m == 'GX7' and (q.get('fg_ok') or q.get('fg_cond')) else ''}</span></div>
+      <div style="overflow-x:auto">
+        <table class="form-table">
+          <thead><tr><th>순서</th><th>납기</th><th>거래처</th><th>품목</th><th style="text-align:right">잔량</th></tr></thead>
+          <tbody>{rows}</tbody>
+        </table>
+      </div>{more}
+    </div>'''
+    etc = queue['etc']; ex = queue['excluded']
+    wlq = queue.get('worklog') or {}
+    st = wlq.get('stats')
+    if st:
+        wl_txt = (f'작업일지 반영: 특이사항 코드 {st["codes"]}개 중 오더 매칭 {st["matched"]}'
+                  f'(모호 {st["ambiguous"]} — 남은 잔량으로 가린 것 {st.get("amb_resolved", 0)}) · 미매칭 {st["unmatched"]} · '
+                  f'가공 끝나 목록에서 뺀 품목 {wlq.get("ground_items", 0)}개({wlq.get("ground_qty", 0):,}개, 출하 전 · '
+                  f'그중 잔량 10% 미만 꼬리 {wlq.get("tail_items", 0)}개 — 연마불가 추정)')
+    else:
+        wl_txt = '⚠️ 작업일지 미반영(읽기 실패) — 수주·출하 기준으로만 계산'
+
+    etc_txt = (f'기타(장비 배정 제외) {etc["n"]}품목 · {etc["qty"]:,}개 ({esc(", ".join(etc["names"]))})'
+               + (f' — 그중 외주 {etc["out_n"]}품목 · {etc["out_qty"]:,}개' if etc.get('out_n') else '')   # 2026-10-19
+               if etc['n'] else '기타(장비 배정 제외) 없음')
+    return f'''
+  <div class="section-title-row">
+    <span class="section-title">장비별 투입 목록</span>
+    <span class="section-date">ERP 수주 품목 − 작업일지 가공분 · {queue['since']} 이후 · 참고용(현장 판단 우선)</span>
+  </div>
+  <div style="font-size:0.8rem;color:#666;margin:-4px 0 10px">
+    배정: 드릴·HSS·라핑·Ø8 초과 → GX7 / Ø8 이하 → FG (2025~2026 작업일지 실측) ·
+    순서: 지연(영업일 — 주말·휴무일 제외) → 임박(D-3) → 납기일별, 같은 구간 안에서는 형상·직경이 같은 품목끼리 묶음(굵은 선 = 셋업 전환) ·
+    ◆ = Ø8 경계 · 🟢 FG 실적 / 🟡 FG 조건부 = GX7 품목 중 FG 에서 깎아 본 실적이 있는 것(가공시간 FG/GX7 비 ≤1.5 / ≤2.0, 참고용) · 출하 보류 {ex['hold']}건·자투리 {ex['minor']}건 제외 · {etc_txt}<br>
+    잔량 = 수주량 − max(작업일지 가공 수량, 출하 수량) · {wl_txt}
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(460px,1fr));gap:16px;margin-bottom:20px">{cards}
+  </div>
+'''
+
+
+# ── 현황판 ─────────────────────────────────────────────────────────────────────
+def build_dashboard_html(shippings, daily, worklog_date, generated_at, todo=None, queue=None):
+    shipping_js = ',\n'.join(
+        f'  [{y}, {json.dumps(d, ensure_ascii=False)}]' for y, d in shippings
+    )
+    daily_json = json.dumps(daily, ensure_ascii=False)
+
+    # ── 「오늘 할 일」 블록 (2026-09-04 신설) ─────────────────────────────────
+    #   현 화면은 이미 끝난 숫자만 보여준다. 앞을 보는 숫자를 맨 위에 둔다.
+    #   ERP 조회 실패 시 todo=None → 블록 자체를 그리지 않는다(빈 값 표시 안 함).
+    if todo:
+        # 2026-09-29 개정 — 지연 N일(영업일) 배지 · 왼쪽 정렬 · 「외 N종」 꼬리표 · 가려진 건수 표시
+        import html as _h, re as _re
+        rows, prev_grp = '', None
+        for it in todo['detail']:
+            if it['late']:
+                n = it.get('bd', 0)
+                cls = 'l5' if n >= 5 else ('l2' if n >= 2 else 'l1')
+                label = f'지연 {n}일' if n > 0 else '지연(휴무 중)'
+                grp = ('L', n)
+            else:
+                n = -it.get('bd', 0)
+                cls, label, grp = 'near', ('오늘' if n == 0 else f'임박 D-{n}'), ('N', 0)
+            tag = f'<span class="late-badge {cls}">{label}</span>'
+            m = _re.match(r'^(.*?)(?:\s*외\s*(\d+)종)?$', it['itm'])
+            itm = _h.escape(m.group(1)) + (f' <span class="more">+{m.group(2)}종</span>' if m.group(2) else '')
+            sep = ' class="grp"' if prev_grp is not None and grp != prev_grp else ''
+            prev_grp = grp
+            dlv = it['dlv'][5:] + (f" ({it['wd']})" if it.get('wd') else '')
+            rows += (f"<tr{sep}><td>{tag}</td><td class=\"dt\">{dlv}</td>"
+                     f"<td class=\"cu\">{_h.escape(it['cust'])}</td><td style=\"white-space:normal;max-width:none\">{itm}</td>"
+                     f"<td class=\"q\" style=\"text-align:right\">{it['rest']:,}</td></tr>")
+        _hl, _hn = todo.get('detail_hidden_late', 0), todo.get('detail_hidden_near', 0)
+        if _hl or _hn:
+            _parts = ([f'지연 {_hl}건'] if _hl else []) + ([f'임박 {_hn}건'] if _hn else [])
+            todo_foot = (f'<div class="todo-foot">⚠ 전체 {todo.get("detail_total", 0)}건 중 12건만 표시 — '
+                         f'나머지 {" · ".join(_parts)}은 아래 「장비별 투입 목록」 참고</div>')
+        else:
+            todo_foot = ''
+        if not rows:
+            rows = ('<tr><td colspan="5" style="text-align:center;color:#999;padding:14px">'
+                    '납기 임박·지연 건 없음</td></tr>')
+
+        # 출하 보류 상세 — 있을 때만 그린다 (2026-09-07)
+        if todo.get('hold_detail'):
+            hrows = ''.join(
+                f"<tr><td>{h['dlv']}</td><td>{h['cust']}</td>"
+                f"<td>{h['reason']}</td>"
+                f"<td style=\"text-align:right\">{h['rest']:,}</td></tr>"
+                for h in todo['hold_detail'])
+            hold_html = f'''
+  <div class="section-card">
+    <div class="chart-title">⏸ 출하 보류 상세 <span style="font-size:0.78rem;color:#aaa;font-weight:400">(사유 해소 전까지 지연으로 세지 않는다)</span></div>
+    <div style="overflow-x:auto">
+      <table class="form-table">
+        <thead><tr><th>납기</th><th>거래처</th><th>사유</th><th style="text-align:right">잔량</th></tr></thead>
+        <tbody>{hrows}</tbody>
+      </table>
+    </div>
+  </div>
+'''
+        else:
+            hold_html = ''
+
+        todo_html = f'''
+  <div class="section-title-row">
+    <span class="section-title">오늘 할 일</span>
+    <span class="section-date">ERP 수주 기준 · {todo['since']} 이후</span>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card" style="border-left:4px solid #e53935">
+      <div class="kpi-label">🔴 납기 지연 — 미출하</div>
+      <div class="kpi-value">{todo['late_cases']}<span class="kpi-unit">건</span></div>
+      <div class="kpi-sub">{todo['late_qty']:,}개</div>
+    </div>
+    <div class="kpi-card" style="border-left:4px solid #f57c00">
+      <div class="kpi-label">🟡 납기 임박 (D-3 이내)</div>
+      <div class="kpi-value">{todo['near_cases']}<span class="kpi-unit">건</span></div>
+      <div class="kpi-sub">{todo['near_qty']:,}개</div>
+    </div>
+    <div class="kpi-card" style="border-left:4px solid #78909c">
+      <div class="kpi-label">⏸ 출하 보류 — 생산팀 소관 밖</div>
+      <div class="kpi-value">{todo['hold_cases']}<span class="kpi-unit">건</span></div>
+      <div class="kpi-sub">{todo['hold_qty']:,}개</div>
+    </div>
+    <div class="kpi-card" style="border-left:4px solid #1A3A6B">
+      <div class="kpi-label">📦 미출하 잔량 전체</div>
+      <div class="kpi-value">{todo['open_qty']:,}<span class="kpi-unit">개</span></div>
+      <div class="kpi-sub">{todo['open_cases']}건</div>
+    </div>
+  </div>
+  <div class="section-card">
+    <div class="chart-title">납기 임박·지연 상세 <span style="font-size:0.78rem;color:#888;font-weight:400">밀린 날 많은 순 · 지연 일수 = 영업일(주말·휴무 제외) · 출하 보류 {todo['hold_cases']}건과 부분출하 잔여 {todo['minor_cases']}건 제외</span></div>
+    <div style="overflow-x:auto">
+      <table class="form-table todo-t">
+        <thead><tr><th style="width:96px">상태</th><th style="width:92px">납기</th><th style="width:190px">거래처</th><th>품목 (대표 1종)</th><th style="text-align:right;width:60px">잔량</th></tr></thead>
+        <tbody>{rows}</tbody>
+      </table>
+    </div>{todo_foot}
+  </div>
+{hold_html}
+'''
+    else:
+        todo_html = ''
+
+    queue_html = build_machine_queue_html(queue)
+
+    return f"""<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>재연마 현황판 — 코리아툴링</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="portal.css">
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+
+{_AUTH_HTML}
+
+<header>
+  <a href="index.html" class="back-link">← 포털</a>
+  <div>
+    <h1>📊 재연마 현황판</h1>
+  </div>
+  <div class="header-meta">
+    <span>생성: {generated_at}</span>
+  </div>
+</header>
+
+<main>
+{todo_html}
+{queue_html}
+  <div class="section-title-row">
+    <span class="section-title">오늘 실적</span>
+    <span class="section-date">📅 {worklog_date}</span>
+  </div>
+  <div class="kpi-grid" id="kpi-grid"></div>
+
+  <div class="chart-card">
+    <div class="chart-title">업체별 월간 출하현황</div>
+    <div class="tab-bar" id="tab-bar"></div>
+    <div id="tab-panels"></div>
+  </div>
+
+  <div class="section-card">
+    <div class="chart-title">📋 접수현황 <span style="font-size:0.78rem;color:#aaa;font-weight:400">(최신순)</span></div>
+    <div class="refresh-row">
+      <button class="refresh-btn" id="refresh-btn" onclick="loadSubmissions()">🔄 새로고침</button>
+      <span class="refresh-info" id="refresh-info">—</span>
+    </div>
+    <div class="sub-tab-bar" id="form-tab-bar"></div>
+    <div id="form-tab-panels"></div>
+  </div>
+</main>
+
+<script src="portal.js"></script>
+<script src="portal-auth.js"></script>
+<script>
+// ── 동적 데이터 (generate.py 주입) ───────────────────
+var SHIPPINGS = [
+{shipping_js}
+];
+var daily = {daily_json};
+// 2026-09-14 — 화면 자가 진단용. 배포가 실패하면 옛 파일이 그대로 남으므로
+// 화면 스스로 "내 생성 시각이 오늘이 아니다"를 감지해 경고한다.
+var DASHBOARD_GENERATED_AT = "{generated_at}";
+</script>
+<script src="submissions-data.js"></script>
+<script src="dashboard.js"></script>
+</body>
+</html>"""
+
+
+# ── ERP 「오늘 할 일」 데이터 (2026-09-04 신설) ────────────────────────────────
+# ── 출하 보류 대장 ────────────────────────────────────────────────────────────
+HOLD_PATH = os.path.join(BASE_DIR, 'erp', 'hold_orders.json')
+
+
+def load_hold_orders() -> dict:
+    """출하 보류 수주번호 → 사유 매핑을 읽는다.
+
+    2026-09-07 신설. 납기가 지났지만 **생산팀이 조치할 수 없는 건**(입금대기 등)을
+    「지연」에서 분리하기 위한 수동 대장이다.
+
+    ★ 왜 수동인가 [실측 검증, 2026-09-07]
+      미입금 보류 3건의 ERP 상태코드가 SD200100(2건) / SD200000(1건) 으로 갈리고,
+      같은 SD200100 인 다른 2건은 미입금이 아니다. 포함관계도 교집합도 아니므로
+      **상태코드로는 자동 식별이 불가능하다.** 코드 의미가 확인되지 않은 상태에서
+      코드 기반 필터를 넣는 것은 @stat_bc 사고(2026-09-04 (2))의 반복이 된다.
+
+    ★ 파일이 없거나 깨져도 예외를 던지지 않는다 — 보류 0건으로 동작한다.
+    ⚠️ 거래처 신용 정보가 들어가므로 .gitignore 제외 대상이다.
+    """
+    try:
+        with open(HOLD_PATH, encoding='utf-8') as f:
+            data = json.load(f)
+        return {str(h['so_no']): str(h.get('reason', '보류'))
+                for h in data.get('holds', []) if h.get('so_no')}
+    except FileNotFoundError:
+        return {}
+    except Exception as e:
+        _log(f'  ⚠️ 보류 대장 읽기 실패 — 보류 0건으로 진행: {type(e).__name__}: {e}')
+        return {}
+
+
+def fetch_erp_todo(lookback_days: int = 120):
+    """재연마 수주에서 미출하 잔량·납기 임박을 계산한다.
+
+    사내 현황판 전용. 현재 화면은 「이미 끝난 숫자」만 보여주므로
+    「앞으로 할 일」을 더한다.
+
+    [신뢰도: 실측 검증] 2026-09-04 ERP(sdb100_jae_g10) 값을 엑셀 export 와 대조:
+      엑셀 08-05~09-02  68행 / 1,164개   ERP 08-01~09-04  69행 / 1,174개
+      차이 10개 = 09-03~09-04 신규 수주분과 정확히 일치. 소스 신뢰 가능.
+      @f_so_bs 필터도 '01'(61건) + '10'(8건) = 69건 = 전체라 무해함을 확인.
+
+    잔량 = so_qty - out_qty(미출하면 NaN → 0). 부분출하도 반영된다.
+
+    ★ ERP 에 닿지 않아도(사무실 밖·서버 점검) 예외를 던지지 않는다.
+      현황판 나머지와 GitHub 업로드는 그대로 진행되어야 한다.
+    반환: dict 또는 None(조회 실패)
+    """
+    try:
+        sys.path.insert(0, os.path.join(BASE_DIR, 'erp'))
+        from trico_client import TricoClient
+        import pandas as pd
+    except Exception as e:
+        _log(f'  ⚠️ ERP 모듈 로드 실패 — 「오늘 할 일」 생략: {type(e).__name__}: {e}')
+        return None
+
+    try:
+        fr = (date.today() - timedelta(days=lookback_days)).strftime('%Y-%m-%d')
+        df = TricoClient().수주(fr_dt=fr)
+    except Exception as e:
+        _log(f'  ⚠️ ERP 수주 조회 실패 — 「오늘 할 일」 생략: {str(e)[:120]}')
+        _log('     (사무실 네트워크가 아니거나 ERP 점검 중일 수 있습니다)')
+        return None
+
+    if len(df) == 0:
+        _log('  ⚠️ ERP 수주 0행 — 「오늘 할 일」 생략 (파라미터 확인 필요)')
+        return None
+
+    try:
+        d = df.copy()
+        d['so_q']  = pd.to_numeric(d['so_qty'],  errors='coerce').fillna(0)
+        d['out_q'] = pd.to_numeric(d['out_qty'], errors='coerce').fillna(0)
+        d['rest']  = (d['so_q'] - d['out_q']).clip(lower=0)
+        d['dlv']   = pd.to_datetime(d['dlv_dt'], errors='coerce', utc=True) \
+                       .dt.tz_convert('Asia/Seoul').dt.date
+
+        open_rows = d[d['rest'] > 0]
+        today     = date.today()
+        d3        = today + timedelta(days=3)
+
+        # 출하 보류 — 생산팀이 조치할 수 없는 건. 지연에서 뺀다 (2026-09-07)
+        holds = load_hold_orders()
+        open_rows = open_rows.copy()
+        open_rows['hold_rs'] = open_rows['so_no'].astype(str).map(holds)
+        is_hold = open_rows['hold_rs'].notna()
+
+        # 부분출하 자투리 — 거의 다 나가고 꼬리만 남은 건. 지연에서 뺀다 (2026-09-07)
+        #   조건: 출하 이력이 있고 잔량이 수주량의 10% 미만.
+        #   [실측 검증] 2026-09-07 이 조건에 걸린 3건은 경과 44~90일 · 잔량 2~3개였다.
+        is_minor = (open_rows['out_q'] > 0) & (open_rows['rest'] < open_rows['so_q'] * 0.1)
+
+        active = open_rows[~is_hold & ~is_minor]
+        hold_rows  = open_rows[is_hold]
+        minor_rows = open_rows[~is_hold & is_minor]
+
+        late  = active[active['dlv'].notna() & (active['dlv'] <  today)]
+        near  = active[active['dlv'].notna() &
+                       (active['dlv'] >= today) & (active['dlv'] <= d3)]
+
+        # 임박·지연 상세 — 2026-09-29 개정 (한경준님 「그림2」 안)
+        #   이전: 납기 빠른 순 12건만, 나머지는 알리지 않음 → 지연 21건 중 9건·임박 전부가 가려졌다
+        #   지금: 지연(영업일 많은 순) → 임박(납기 순), 12건 표시 + 가려진 건수를 표 아래에 적는다
+        #   지연 일수 = 영업일(주말·holidays.md 휴무 제외) — erp/machine_queue.py 와 같은 계산
+        try:
+            from machine_queue import load_holidays, biz_days_late
+            _hol = load_holidays(BASE_DIR)
+        except Exception:
+            _hol, biz_days_late = set(), None
+        detail = []
+        for _, r in active[active['dlv'].notna() & (active['dlv'] <= d3)].iterrows():
+            is_late = bool(r['dlv'] < today)
+            if is_late:
+                bd = (biz_days_late(r['dlv'], today, _hol) if biz_days_late
+                      else (today - r['dlv']).days)
+            else:
+                bd = -(r['dlv'] - today).days      # 임박: 0=오늘, -1=D-1 …
+            detail.append({
+                'dlv':   str(r['dlv']),
+                'wd':    '월화수목금토일'[r['dlv'].weekday()],
+                'cust':  str(r.get('cust_nm', '')),
+                'itm':   str(r.get('itm_nm', ''))[:38],
+                'rest':  int(r['rest']),
+                'late':  is_late,
+                'bd':    int(bd),
+            })
+        detail.sort(key=lambda x: (0 if x['late'] else 1, -x['bd'] if x['late'] else -x['bd'], x['dlv']))
+        detail_total = len(detail)
+        detail_hidden_late = sum(1 for x in detail[12:] if x['late'])
+        detail_hidden_near = sum(1 for x in detail[12:] if not x['late'])
+        detail = detail[:12]
+
+        return {
+            'open_cases': int(open_rows['so_no'].nunique()),
+            'open_qty':   int(open_rows['rest'].sum()),
+            'late_cases': int(late['so_no'].nunique()),
+            'late_qty':   int(late['rest'].sum()),
+            'near_cases': int(near['so_no'].nunique()),
+            'near_qty':   int(near['rest'].sum()),
+            'detail':     detail,
+            'detail_total': detail_total,
+            'detail_hidden_late': detail_hidden_late,
+            'detail_hidden_near': detail_hidden_near,
+            'hold_cases': int(hold_rows['so_no'].nunique()),
+            'hold_qty':   int(hold_rows['rest'].sum()),
+            'hold_detail': [
+                {'cust': str(r.get('cust_nm', '')), 'rest': int(r['rest']),
+                 'dlv': str(r['dlv']), 'reason': str(r['hold_rs'])}
+                for _, r in hold_rows.sort_values('dlv').iterrows()
+            ],
+            'minor_cases': int(minor_rows['so_no'].nunique()),
+            'minor_qty':   int(minor_rows['rest'].sum()),
+            'since':      fr,
+        }
+    except Exception as e:
+        _log(f'  ⚠️ 「오늘 할 일」 집계 실패: {type(e).__name__}: {e}')
+        return None
+
+
+# ── 사내 공유폴더 배포 ─────────────────────────────────────────────────────────
+def write_internal_auth_js() -> bool:
+    """직원 게이트 JS(`portal-auth.js`)를 internal/ 에 생성한다. (2026-09-08 신설)
+
+    ★ 이 파일은 공개 배포 경로(dist/·루트·GitHub)에 절대 두지 않는다.
+      publish_internal() 이 internal/ 을 사내 공유폴더로 복사하므로 사내에만 배포된다.
+      비밀번호는 .env 의 STAFF_PASS 에서만 온다 — 저장소에는 값이 남지 않는다.
+    """
+    if not STAFF_PASS:
+        _log('  ⚠️ STAFF_PASS 미설정 — 직원 게이트를 생성하지 않습니다(.env 에 등재하세요)')
+        return False
+    js = """/* portal-auth.js — 직원 게이트 (generate.py 자동 생성, 사내 전용)
+   ⚠️ 손으로 고치지 마세요. 비밀번호는 .env 의 STAFF_PASS 로 관리합니다.
+   ⚠️ 클라이언트 사이드 확인이므로 실제 인증이 아닙니다 — 사내 LAN 화면 보호용. */
+(function initAuth() {
+  var overlay = document.getElementById('auth-overlay');
+  if (!overlay) return;
+  if (sessionStorage.getItem('kt_auth') === '1') {
+    overlay.style.display = 'none';
+    return;
+  }
+  var inp = document.getElementById('pass-input');
+  if (inp) {
+    inp.focus();
+    inp.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') window.checkPass();
+    });
+  }
+})();
+
+function checkPass() {
+  var inp = document.getElementById('pass-input');
+  if (!inp) return;
+  if (inp.value === '__STAFF_PASS__') {
+    sessionStorage.setItem('kt_auth', '1');
+    document.getElementById('auth-overlay').style.display = 'none';
+  } else {
+    var err = document.getElementById('pass-err');
+    if (err) err.textContent = '비밀번호가 틀렸습니다.';
+    inp.value = '';
+    inp.focus();
+  }
+}
+""".replace('__STAFF_PASS__', STAFF_PASS)
+    try:
+        os.makedirs(INTERNAL_ASSET_DIR, exist_ok=True)
+        with open(os.path.join(INTERNAL_ASSET_DIR, 'portal-auth.js'), 'w',
+                  encoding='utf-8') as f:
+            f.write(js)
+        _log('  → 직원 게이트 생성: internal/portal-auth.js (사내 전용)')
+        return True
+    except Exception as e:
+        _log(f'  ⚠️ portal-auth.js 생성 실패: {type(e).__name__}: {e}')
+        return False
+
+
+def write_internal_field_config() -> bool:
+    """현장기록 화면용 설정 JS(`field-record-config.js`)를 internal/ 에 생성한다. (2026-09-08 신설)
+
+    GAS 배포 URL 과 공유 토큰을 `.env` 에서만 받아 사내 전용 자산으로 굽는다.
+    저장소에는 값이 남지 않는다(`portal-auth.js` 와 동일 패턴).
+
+    ★ 값이 없으면 파일을 만들지 않는다 — 클라이언트는 기존 하드코딩 URL 로 폴백해
+      현재 동작을 유지한다(점진 적용).
+    """
+    url   = os.getenv('FIELD_RECORD_GAS_URL', '')
+    token = os.getenv('FIELD_RECORD_TOKEN', '')
+    if not url and not token:
+        return False
+    js = (
+        '/* field-record-config.js — 현장기록 엔드포인트 설정 '
+        '(generate.py 자동 생성, 사내 전용)\n'
+        '   손으로 고치지 마세요. 값은 .env 의 '
+        'FIELD_RECORD_GAS_URL / FIELD_RECORD_TOKEN 입니다. */\n'
+        'window.FIELD_RECORD_GAS_URL = ' + json.dumps(url) + ';\n'
+        'window.FIELD_RECORD_TOKEN   = ' + json.dumps(token) + ';\n'
+    )
+    try:
+        os.makedirs(INTERNAL_ASSET_DIR, exist_ok=True)
+        with open(os.path.join(INTERNAL_ASSET_DIR, 'field-record-config.js'), 'w',
+                  encoding='utf-8') as f:
+            f.write(js)
+        _log('  → 현장기록 설정 생성: internal/field-record-config.js (사내 전용)')
+        return True
+    except Exception as e:
+        _log(f'  ⚠️ field-record-config.js 생성 실패: {type(e).__name__}: {e}')
+        return False
+
+
+def write_internal_submissions_js() -> bool:
+    """접수현황 데이터를 사내 전용 JS 자산(`submissions-data.js`)으로 굽는다. (2026-09-14 신설)
+
+    ★ 왜 JSON 이 아니라 JS 인가 — 사내 현황판은 공유폴더의 dashboard.html 을 직접 여는
+      방식(file:// · UNC)이라 브라우저가 fetch() 를 차단한다. <script src> 는 그 제약이 없다.
+
+    ★ 왜 사내 전용인가 — 접수 폼은 회사명·담당자·연락처를 받는다.
+      dist/·루트·GitHub Pages 에 절대 두지 않는다 (CLAUDE.md §4 개인정보·거래처 원칙).
+
+    ★ 실패해도 예외를 밖으로 던지지 않는다 — 파일이 없으면 화면은 기존 Flask API 로
+      폴백한다(점진 적용, field-record-config.js 와 같은 패턴).
+    """
+    sheet_id = os.getenv('FORM_SHEET_ID', '')
+    if not sheet_id:
+        _log('  ⚠️ FORM_SHEET_ID 미설정 — 접수현황 스냅샷 생략(.env 확인)')
+        return False
+    try:
+        from google.oauth2.credentials import Credentials
+        from google.auth.transport.requests import Request
+        from googleapiclient.discovery import build as _gbuild
+    except Exception as e:
+        _log(f'  ⚠️ Google 모듈 로드 실패 — 접수현황 생략: {type(e).__name__}: {e}')
+        return False
+
+    token_path = os.path.join(BASE_DIR, 'token_sheets.json')
+    scopes = ['https://www.googleapis.com/auth/spreadsheets']
+    # 2026-10-28 견적문의 탭 추가 — 견적 문의 웹폼(estimate.html) 접수분. decisions.md 2026-10-28
+    tabs   = ['재연마의뢰', '불량신고', '진행문의', '소모품요청', '견적문의']
+    try:
+        creds = Credentials.from_authorized_user_file(token_path, scopes)
+        if creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+            with open(token_path, 'w', encoding='utf-8') as f:
+                f.write(creds.to_json())
+        svc = _gbuild('sheets', 'v4', credentials=creds)
+        data, n_rows = {}, 0
+        for tab in tabs:
+            try:
+                res = svc.spreadsheets().values().get(
+                    spreadsheetId=sheet_id, range=f'{tab}!A1:Z500').execute()
+            except Exception as e:
+                # 탭 하나가 없다고 접수현황 전체를 버리지 않는다(2026-10-28 — 견적문의 탭 신설 전후 대비)
+                _log(f'  ⚠️ 접수현황 「{tab}」 탭 조회 실패 — 이 탭만 생략: {type(e).__name__}: {str(e)[:100]}')
+                data[tab] = {'headers': [], 'rows': [], 'error': f'시트에 「{tab}」 탭 없음 또는 조회 실패'}
+                continue
+            values = res.get('values', [])
+            if len(values) > 1:
+                data[tab] = {'headers': values[0], 'rows': list(reversed(values[1:]))}
+                n_rows += len(values) - 1
+            else:
+                data[tab] = {'headers': values[0] if values else [], 'rows': []}
+    except Exception as e:
+        _log(f'  ⚠️ 접수현황 조회 실패 — 생략: {type(e).__name__}: {str(e)[:120]}')
+        return False
+
+    # 2026-10-28 견적문의 규격 줄별 예상 정가(정가만 · 사내 전용). 실패해도 접수현황은 그대로 나간다.
+    try:
+        sys.path.insert(0, os.path.join(BASE_DIR, 'scripts'))
+        import quote_price
+        quote_price.annotate(data, log=_log)
+    except Exception as e:
+        _log(f'  ⚠️ 견적문의 예상 정가 모듈 실패 — 생략: {type(e).__name__}: {str(e)[:120]}')
+
+    payload = {'ok': True, 'data': data,
+               'fetched_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+    js = ('/* submissions-data.js — 접수현황 스냅샷 (generate.py 자동 생성, 사내 전용)\n'
+          '   손으로 고치지 마세요. 원본은 Google Sheets 입니다.\n'
+          '   회사명·담당자·연락처가 들어 있습니다 — 공개 배포 금지. */\n'
+          'window.FORM_SUBMISSIONS = ' + json.dumps(payload, ensure_ascii=False) + ';\n')
+    try:
+        os.makedirs(INTERNAL_ASSET_DIR, exist_ok=True)
+        with open(os.path.join(INTERNAL_ASSET_DIR, 'submissions-data.js'), 'w',
+                  encoding='utf-8') as f:
+            f.write(js)
+        _log(f'  → 접수현황 스냅샷 생성: internal/submissions-data.js '
+             f'({len(tabs)}개 탭 / {n_rows}건, 사내 전용)')
+        return True
+    except Exception as e:
+        _log(f'  ⚠️ submissions-data.js 생성 실패: {type(e).__name__}: {e}')
+        return False
+
+
+def _notify_internal_deploy(ok: bool, reason: str) -> None:
+    """사내 배포 성공/실패를 상태 파일에 기록하고, 실패로 '전환'될 때만 메일 1통을 보낸다. (2026-09-14 신설)
+
+    ★ 왜 현황판 배너가 아닌가 — 배포가 실패하면 배너를 쓸 폴더에 접근할 수 없다.
+      실패를 실패한 통로로 알릴 수는 없다. 화면 쪽은 dashboard.js 의 자가 진단이 맡는다.
+
+    ★ 왜 '전환 시에만' 인가 — 2026-09-04~09-14 처럼 실패가 이어지면 매 실행마다
+      메일이 쌓여 결국 아무도 안 읽는다. 성공→실패 전환 1통 + 하루 1통까지로 제한한다.
+
+    ★ 이 함수는 어떤 경우에도 예외를 밖으로 던지지 않는다. 알림 실패가 배포·보고를 막으면 안 된다.
+    """
+    try:
+        state_path = os.path.join(BASE_DIR, 'outputs', '.internal_deploy_state.json')
+        today = datetime.now().strftime('%Y-%m-%d')
+        prev = {}
+        try:
+            with open(state_path, encoding='utf-8') as f:
+                prev = json.load(f)
+        except Exception:
+            prev = {}
+        was_ok = prev.get('ok', True)
+        last_notified = prev.get('notified_on', '')
+
+        try:
+            os.makedirs(os.path.dirname(state_path), exist_ok=True)
+            with open(state_path, 'w', encoding='utf-8') as f:
+                json.dump({'ok': ok, 'reason': reason, 'at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                           'notified_on': (today if (not ok and (was_ok or last_notified != today))
+                                           else last_notified)}, f, ensure_ascii=False)
+        except Exception:
+            pass
+
+        if ok:
+            if not was_ok:
+                _log('  🟢 사내 배포 정상 복귀 (직전 실행은 실패였음)')
+            return
+        if not (was_ok or last_notified != today):
+            _log('  (사내 배포 실패 알림 — 오늘 이미 발송, 생략)')
+            return
+
+        to_addr = os.getenv('ALERT_EMAIL_TO', '')
+        if not to_addr:
+            _log('  ⚠️ ALERT_EMAIL_TO 미설정 — 사내 배포 실패 메일을 보내지 않습니다')
+            return
+        try:
+            import base64
+            from email.mime.text import MIMEText
+            sys.path.insert(0, os.path.join(BASE_DIR, 'erp'))
+            from daily_dlv_alert import get_gmail_service
+            svc = get_gmail_service()
+            body = ('사내 공유폴더 현황판 배포가 실패했습니다.\n\n'
+                    f'시각: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n'
+                    f'경로: {INTERNAL_DIR}\n'
+                    f'사유: {reason}\n\n'
+                    '영향: 사내 현황판만 옛 데이터로 남습니다. 일일보고 생성과 공개 배포는 정상입니다.\n'
+                    '확인: wiki/reports/daily/run.log 와 generate.log 의 "사내 배포 단계 종료" 줄\n'
+                    '참고: 2026-09-14 사례는 접속 계정명 오등재였습니다 (decisions.md 2026-09-14).\n')
+            msg = MIMEText(body, _charset='utf-8')
+            msg['to'] = to_addr
+            msg['subject'] = '[현황판] 사내 공유폴더 배포 실패'
+            svc.users().messages().send(
+                userId='me',
+                body={'raw': base64.urlsafe_b64encode(msg.as_bytes()).decode()}).execute()
+            _log(f'  📧 사내 배포 실패 알림 발송: {to_addr}')
+        except Exception as e:
+            _log(f'  ⚠️ 실패 알림 발송 실패(무시): {type(e).__name__}: {str(e)[:120]}')
+    except Exception as e:
+        _log(f'  ⚠️ 알림 처리 중 예외(무시): {type(e).__name__}: {str(e)[:120]}')
+
+
+# ── 차단성 장애 경보 메일 (2026-10-08 신설) ───────────────────────────────────
+#   통합 브리핑(예약 작업)의 Gmail 커넥터 경로는 예약 실행에서 한 번도 발송된 적이 없다
+#   [실측 — Gmail 전체(휴지통 포함) 검색 2026-10-08: [CNC위키] 메일은 09-21 대화 세션
+#   발송 1통뿐, 10-07 10:24 수동 발사의 [테스트] 메일도 미발송]. 반면 이 프로세스의
+#   Gmail API 경로는 09-14·15 사내 배포 실패 메일이 실제로 도착했다.
+#   → 차단성 4종 중 나머지 3종(push 실패 · index.lock 잔존 · 일일보고 누락)도 여기서 보낸다.
+#     사내 배포 실패는 _notify_internal_deploy 가 이미 맡는다. decisions.md 2026-10-08.
+#   발송 제한: 정상→실패 전환 시 1통 + 같은 장애가 이어지면 하루 1통.
+#   발송에 실패하면 「보냄」으로 기록하지 않는다 → 다음 실행에서 다시 시도한다.
+ALERT_STATE_PATH = os.path.join(BASE_DIR, 'outputs', '.blocking_alert_state.json')
+_UPLOAD_FAIL_REASON = ''
+
+
+def _send_alert_mail(subject: str, body: str) -> bool:
+    """Gmail API 로 메일 1통. 성공하면 True. 어떤 경우에도 예외를 밖으로 던지지 않는다."""
+    to_addr = os.getenv('ALERT_EMAIL_TO', '')
+    if not to_addr:
+        _log('  ⚠️ ALERT_EMAIL_TO 미설정 — 경보 메일을 보내지 않습니다')
+        return False
+    try:
+        import base64
+        from email.mime.text import MIMEText
+        sys.path.insert(0, os.path.join(BASE_DIR, 'erp'))
+        from daily_dlv_alert import get_gmail_service
+        svc = get_gmail_service()   # 토큰 파일이 없으면 sys.exit(1) — 아래에서 SystemExit 도 받는다
+        msg = MIMEText(body, _charset='utf-8')
+        msg['to'] = to_addr
+        msg['subject'] = subject
+        svc.users().messages().send(
+            userId='me',
+            body={'raw': base64.urlsafe_b64encode(msg.as_bytes()).decode()}).execute()
+        _log(f'  📧 경보 메일 발송: {subject}')
+        return True
+    except (Exception, SystemExit) as e:
+        _log(f'  ⚠️ 경보 메일 발송 실패(무시): {type(e).__name__}: {str(e)[:120]}')
+        return False
+
+
+def _notify_blocking(key: str, ok: bool, title: str, detail: str = '', hint: str = '') -> None:
+    """차단성 장애 1종의 상태를 기록하고, 필요할 때만 메일 1통. 예외를 밖으로 던지지 않는다."""
+    try:
+        now = datetime.now()
+        today = now.strftime('%Y-%m-%d')
+        try:
+            with open(ALERT_STATE_PATH, encoding='utf-8') as f:
+                state = json.load(f)
+        except Exception:
+            state = {}
+        prev = state.get(key, {})
+        was_ok = prev.get('ok', True)
+        last = prev.get('notified_on', '')
+        sent = False
+        if ok:
+            if not was_ok:
+                _log(f'  🟢 정상 복귀: {key}')
+        elif was_ok or last != today:
+            body = (f'{title}\n\n'
+                    f'시각: {now:%Y-%m-%d %H:%M:%S} (이 PC 시계 = KST)\n'
+                    f'내용: {detail}\n\n'
+                    f'확인·조치:\n{hint}\n\n'
+                    '── 이 메일에 대해 ──\n'
+                    '보낸 곳: 경준님 PC의 generate.py (07:50 시작프로그램 · 16:00 일일보고 회차).\n'
+                    '같은 장애는 하루 1통까지만 보냅니다. 정상으로 돌아오면 메일 없이 generate.log 에 '
+                    '「정상 복귀」가 남습니다.\n')
+            sent = _send_alert_mail(f'[CNC위키] 🔴 차단 — {title}', body)
+        else:
+            _log(f'  (차단 경보 {key} — 오늘 이미 발송, 생략)')
+        state[key] = {'ok': ok, 'detail': '' if ok else (detail or '')[:300],   # 정상이면 비운다(10-08: 정상인데 「없습니다」가 남던 것 수정)
+                      'at': now.strftime('%Y-%m-%d %H:%M:%S'),
+                      'notified_on': today if sent else last}
+        try:
+            os.makedirs(os.path.dirname(ALERT_STATE_PATH), exist_ok=True)
+            with open(ALERT_STATE_PATH, 'w', encoding='utf-8') as f:
+                json.dump(state, f, ensure_ascii=False, indent=1)
+        except Exception:
+            pass
+    except Exception as e:
+        _log(f'  ⚠️ 차단 경보 처리 중 예외(무시): {type(e).__name__}: {str(e)[:120]}')
+
+
+def _prev_business_day(today, holidays):
+    """오늘 이전의 가장 가까운 영업일(월~금, holidays.md 휴무 제외)."""
+    d = today - timedelta(days=1)
+    while d.weekday() >= 5 or d in holidays:
+        d -= timedelta(days=1)
+    return d
+
+
+def check_daily_report_file(today=None) -> bool:
+    """직전 영업일 일일보고 xlsx 가 있는지 — 통합 브리핑 A-6b 와 같은 기준."""
+    today = today or date.today()
+    try:
+        sys.path.insert(0, os.path.join(BASE_DIR, 'erp'))
+        from machine_queue import load_holidays
+        hol = load_holidays(BASE_DIR)
+    except Exception:
+        hol = set()
+    d = _prev_business_day(today, hol)
+    fname = f'{d:%Y-%m-%d}_일일보고.xlsx'
+    ok = os.path.exists(os.path.join(BASE_DIR, 'wiki', 'reports', 'daily', fname))
+    _log(f'  일일보고 파일 점검(직전 영업일 {d:%Y-%m-%d}): {"✅ 있음" if ok else "🔴 없음"}')
+    _notify_blocking(
+        'daily_report', ok, f'일일보고 파일 누락 — {d:%Y-%m-%d}',
+        f'wiki/reports/daily/{fname} 이 없습니다.',
+        '1) 그날이 휴무였다면 wiki/_handoff/holidays.md 에 등록하면 다음 실행부터 정상 처리됩니다.\n'
+        '2) 아니면 Cowork 에서 「스케줄러 진단」(scheduler-diagnose 스킬)으로 원인을 확인하세요.\n'
+        f'3) 소급 생성: python scripts\\daily_report.py {d:%Y-%m-%d}')
+    return ok
+
+
+def check_git_lock(min_age_sec: int = 600) -> bool:
+    """.git/index.lock 이 10분 넘게 남아 있는지. 직접 지우지 않는다(보고만)."""
+    p = os.path.join(BASE_DIR, '.git', 'index.lock')
+    detail = ''
+    ok = True
+    try:
+        if os.path.exists(p):
+            mtime = os.path.getmtime(p)
+            age = time.time() - mtime
+            ok = age < min_age_sec
+            detail = (f'.git/index.lock {os.path.getsize(p)} byte, '
+                      f'생성 {datetime.fromtimestamp(mtime):%m-%d %H:%M} ({age/60:.0f}분 경과)')
+    except Exception as e:
+        detail = f'점검 실패: {type(e).__name__}'
+    if not ok:
+        _log(f'  🔴 {detail}')
+    _notify_blocking(
+        'git_lock', ok, '.git/index.lock 잔존 — 커밋·push 막힘', detail,
+        'PowerShell (cnc-wiki 폴더에서):\n'
+        '  Get-Process git,git-remote-https -ErrorAction SilentlyContinue\n'
+        '  → 아무것도 안 나오면:  Remove-Item .git\\index.lock\n'
+        '  → git 프로세스가 나오면 지우지 말고 끝날 때까지 기다리세요.')
+    return ok
+
+
+def notify_upload_result(ok: bool) -> None:
+    _notify_blocking(
+        'upload', ok, 'GitHub 업로드(push) 실패', _UPLOAD_FAIL_REASON or '사유 미상 — generate.log 참조',
+        '1) wiki/reports/daily/generate.log 의 [git] 줄 확인\n'
+        '2) 403 이면 GitHub 토큰 만료·권한 문제 — wiki/scripts/github-token-발급-체크리스트.md\n'
+        '3) index.lock 이면 같은 시각의 「index.lock 잔존」 메일 참조')
+
+
+def publish_internal(pages: dict) -> bool:
+    """생성된 페이지와 정적 파일을 사내 LAN 공유폴더에 한 벌 더 쓴다.
+
+    2026-09-04 신설. 공개(GitHub Pages) / 사내(LAN) 분리의 사내 쪽.
+
+    ★ 실패해도 예외를 밖으로 던지지 않는다.
+      서버가 꺼져 있거나 네트워크가 끊겨도 GitHub 업로드와 일일보고는
+      정상 진행되어야 한다. 실패는 로그로만 남긴다.
+    """
+    if not INTERNAL_ENABLED:
+        _log('사내 배포: 비활성(INTERNAL_ENABLED=False) — 건너뜀')
+        return False
+
+    import shutil, glob
+    try:
+        os.makedirs(INTERNAL_DIR, exist_ok=True)
+    except Exception as e:
+        _log(f'  ⚠️ 사내 배포 실패 — 폴더 접근 불가: {type(e).__name__}: {e}')
+        _log(f'     경로: {INTERNAL_DIR}')
+        _log('     (공개 배포는 정상 진행합니다)')
+        _notify_internal_deploy(False, f'{type(e).__name__}: {str(e)[:160]}')
+        return False
+
+    n_ok, n_fail = 0, 0
+    try:
+        # 생성된 HTML
+        for fname, html in pages.items():
+            try:
+                with open(os.path.join(INTERNAL_DIR, fname), 'w', encoding='utf-8') as f:
+                    f.write(html)
+                n_ok += 1
+            except Exception as e:
+                n_fail += 1
+                _log(f'  ⚠️ {fname} 쓰기 실패: {e}')
+
+        # 정적 파일 — 공용(dist/) + 사내 전용(internal/)
+        search_dirs = [DIST_DIR]
+        if os.path.isdir(INTERNAL_ASSET_DIR):
+            search_dirs.append(INTERNAL_ASSET_DIR)
+        else:
+            _log(f'  ⚠️ internal/ 폴더 없음 — 사내 전용 자산이 빠집니다: {INTERNAL_ASSET_DIR}')
+
+        seen = set()
+        for d in search_dirs:
+          for ext in ('*.html', '*.css', '*.js'):
+            for src in glob.glob(os.path.join(d, ext)):
+                fname = os.path.basename(src)
+                if fname in pages or fname in seen:
+                    continue
+                seen.add(fname)
+                try:
+                    shutil.copy2(src, os.path.join(INTERNAL_DIR, fname))
+                    n_ok += 1
+                except Exception as e:
+                    n_fail += 1
+                    _log(f'  ⚠️ {fname} 복사 실패: {e}')
+    except Exception as e:
+        _log(f'  ⚠️ 사내 배포 중 예외: {type(e).__name__}: {e}')
+        _notify_internal_deploy(False, f'{type(e).__name__}: {str(e)[:160]}')
+        return False
+
+    # ★ 조용한 성공 방지 — 0건 성공을 정상으로 찍지 않는다.
+    if n_ok == 0:
+        _log(f'  🔴 사내 배포: 성공 0건 / 실패 {n_fail}건 — 실패로 판정')
+        _notify_internal_deploy(False, '성공 0건')
+        return False
+
+    _log(f'  → 사내 배포 완료: {n_ok}개 파일'
+         + (f' (실패 {n_fail}건)' if n_fail else ''))
+    _notify_internal_deploy(True, '')
+    _log(f'     {INTERNAL_DIR}')
+    return True
+
+
+# ── GitHub Pages 업로드 ────────────────────────────────────────────────────────
+# 2026-06-15: cwd를 DIST_DIR → BASE_DIR 로 변경
+#   이유: 외부 CSS/JS 파일 분리 이후 루트에 portal.css, dashboard.css 등이 추가됨.
+#   git add . 는 repo 루트 기준으로 실행해야 모든 파일이 포함됨.
+def _mask_secret(s):
+    """로그에 GITHUB_TOKEN 평문이 노출되지 않도록 마스킹.
+    2026-07-07: 실제 push 실패 시 git이 원격 URL(토큰 포함)을 stderr에 그대로 반환하는
+    사고가 발생해 run.log에 토큰 평문이 기록됨 — 재발 방지."""
+    if not s or not GITHUB_TOKEN:
+        return s
+    s = s.replace(GITHUB_TOKEN, '***REDACTED***')
+    if _GH_AUTH_B64:   # 2026-10-30: push 인증 헤더 값(base64)도 가린다
+        s = s.replace(_GH_AUTH_B64, '***REDACTED***')
+    return s
+
+
+# 2026-10-30: push 인증을 origin 주소(토큰 평문 → .git/config 상주) 대신 push 명령에만 싣는 헤더로 바꿨다.
+#   tasks 「PAT 평문 상주」 · decisions 2026-10-30 (7). 사전 확인 scripts/git_auth_check.py(push --dry-run) 통과.
+import base64 as _b64
+_GH_AUTH_B64 = _b64.b64encode(f'{GITHUB_USER}:{GITHUB_TOKEN}'.encode()).decode() if GITHUB_TOKEN else ''
+
+
+def upload_to_github():
+    global _UPLOAD_FAIL_REASON
+    _UPLOAD_FAIL_REASON = ''
+    git = 'git'
+    env = os.environ.copy()
+    # 2026-07-07: 16:00 병목 조사에서 실제 원인 확인 — 원격 URL에 토큰이 포함돼 있어도
+    # Windows의 git-credential-manager가 개입해 인증을 시도하다 비대화형(Task Scheduler
+    # S4U) 세션에서 프롬프트를 표시할 수 없어 17분+ 멈춘 뒤 "/dev/tty: No such device or
+    # address" 오류로 실패하는 현상 확인(run.log 2026-07-07 14:21 블록). 아래 두 환경변수로
+    # 자격증명 프롬프트 자체를 차단해 실패 시 즉시 오류로 반환되도록 함(더 이상 멈추지 않음).
+    env['GIT_TERMINAL_PROMPT'] = '0'
+    env['GCM_INTERACTIVE'] = 'never'
+
+    def run(cmd, cwd=BASE_DIR, timeout=60, label=None):
+        t0 = time.time()
+        try:
+            result = subprocess.run(cmd, cwd=cwd, capture_output=True,
+                                    text=True, encoding='utf-8', errors='replace',
+                                    env=env, timeout=timeout)
+        except subprocess.TimeoutExpired:
+            dt = time.time() - t0
+            if label:
+                _log(f'  [git] {label} — TIMEOUT ({dt:.1f}s)')
+            return 1, '', f'[timeout] {" ".join(cmd)}'
+        dt = time.time() - t0
+        if label:
+            _log(f'  [git] {label}: {dt:.1f}s (code={result.returncode})')
+        return (result.returncode,
+                _mask_secret(result.stdout.strip()),
+                _mask_secret(result.stderr.strip()))
+
+    # 원격 URL — 2026-10-30 부터 토큰 없이. 인증은 push 명령에만 헤더로 싣는다(아래 push).
+    #   원래 줄: remote = f'https://{GITHUB_TOKEN}@github.com/{GITHUB_USER}/{GITHUB_REPO}.git'
+    #   set-url 이 매 실행 이 주소로 덮어써서 .git/config 에 남아 있던 토큰 주소도 첫 실행에서 지워진다.
+    remote = f'https://github.com/{GITHUB_USER}/{GITHUB_REPO}.git'
+
+    # git 설정
+    run([git, 'config', 'user.email', 'hankyungjun@koreatooling.com'], label='config email')
+    run([git, 'config', 'user.name',  GITHUB_USER], label='config name')
+
+    # 원격 URL 갱신
+    run([git, 'remote', 'set-url', 'origin', remote], label='remote set-url')
+
+    # 변경사항 스테이징 — 생성된 정적 파일(HTML/CSS/JS)과 dist/ 폴더만 add.
+    # 2026-06-30: git add . (루트 전체) → timeout 원인 확인.
+    #   BASE_DIR = cnc-wiki 루트이므로 wiki/*.md, raw/ 등 대용량 파일까지 diff 대상이 됨.
+    #   → 생성 파일만 명시적으로 add하여 push 크기를 최소화.
+    t_add = time.time()
+    import glob as _glob
+    n_added = 0
+    _add_fail = []
+    for _pattern in ('*.html', '*.css', '*.js'):
+        for _f in _glob.glob(os.path.join(BASE_DIR, _pattern)):
+            # 2026-09-04: 사내 전용 파일은 .gitignore 대상이라 add 하면 실패한다.
+            #   (당일 16:00 실행에서 「git add 실패 7건」의 원인)
+            if os.path.basename(_f) in INTERNAL_ONLY:
+                continue
+            _c, _o, _e = run([git, 'add', _f])
+            if _c != 0:
+                _add_fail.append(_e)
+            n_added += 1
+    # 2026-09-08: 위키 산출물이 어떤 자동화에도 add 되지 않아 저장소에 안 올라가고 있었다.
+    #   [실측] 09-07 일일보고 xlsx 미추적(디스크 107건 vs 추적 106건). 08-24~09-04 분이
+    #   올라가 있던 것은 사람이 세션에서 함께 커밋했기 때문이며 자동 경로가 아니었다.
+    #   ★ 폴더 통째로 add 하지 않고 xlsx 패턴으로 한정한다(pathspec 은 git 이 직접 해석).
+    #     로그(run.log·generate.log)와 `_구버전_*` 는 .gitignore 대상임을 확인했다.
+    for _wiki_spec in ('wiki/reports/daily/*.xlsx', 'wiki/overview.md'):
+        _c, _o, _e = run([git, 'add', '--', _wiki_spec])
+        if _c != 0:
+            _add_fail.append(_e)
+        n_added += 1
+
+    _dist = os.path.join(BASE_DIR, 'dist')
+    if os.path.isdir(_dist):
+        _c, _o, _e = run([git, 'add', _dist])
+        if _c != 0:
+            _add_fail.append(_e)
+        n_added += 1
+    _log(f'  [git] add 단계 완료: {n_added}개 대상, 총 {time.time()-t_add:.1f}s')
+    # 2026-08-28: .git/index.lock 잔존으로 add가 전부 실패했는데도 개별 run()이
+    #   label 없이 호출돼 로그에 아무 흔적이 남지 않았고, 이어진 commit이 code=128로
+    #   죽은 뒤 push가 code=0(보낼 것 없음)을 반환해 "✅ 업로드 완료"가 거짓으로
+    #   기록됐다. add 실패를 명시적으로 남기고 즉시 중단한다.
+    if _add_fail:
+        _log(f'  ❌ git add 실패 {len(_add_fail)}건 — 첫 오류: {_add_fail[0][:200]}')
+        if 'index.lock' in (_add_fail[0] or ''):
+            _log('  → .git/index.lock 잔존. git 프로세스 종료 후 해당 파일을 삭제하세요.')
+        _UPLOAD_FAIL_REASON = f'git add 실패 {len(_add_fail)}건 — {(_add_fail[0] or "")[:200]}'
+        return None
+
+    # 커밋 (변경 없으면 스킵)
+    msg = f'update: {datetime.now().strftime("%Y-%m-%d %H:%M")}'
+    code, out, err = run([git, 'commit', '-m', msg], label='commit')
+    # 2026-08-28: 커밋할 것이 없을 때 git이 내는 문구는 상황·로케일에 따라 다르다.
+    #   ①'nothing to commit'(작업트리 깨끗) ②'no changes added to commit'(스테이징 안 된
+    #   변경만 있음) ③한국어 로케일. daily_report.py가 이미 generate.py를 한 번 돌리므로
+    #   배치 4단계의 두 번째 실행은 정상적으로 ②에 해당한다 — 실패가 아니다.
+    _noop = ('nothing to commit', 'no changes added to commit',
+             'nothing added to commit', '커밋할 사항 없음', '커밋할 변경 사항')
+    if code != 0 and any(k in (out + err) for k in _noop):
+        _log('  변경 없음 — 업로드 생략')
+        return f'https://{GITHUB_USER}.github.io/{GITHUB_REPO}/'
+    # '변경 없음'이 아닌 커밋 실패(예: index.lock → code=128)를 그대로 흘려보내면
+    #   뒤이은 push가 code=0을 반환해 성공으로 오인된다. 여기서 끊는다.
+    if code != 0:
+        _log(f'  ❌ 커밋 실패 (code={code}): {(err or out)[:300]}')
+        _UPLOAD_FAIL_REASON = f'커밋 실패 (code={code}): {(err or out)[:200]}'
+        return None
+
+    # 푸시 (파이썬 레벨 timeout 없음 — daily_report.py의 1800s가 상위 안전장치)
+    # 2026-10-30: credential.helper= → 자격 증명 관리자 끔(예약 실행에서 멈춤 방지) · extraheader = 이 명령에서만 인증
+    code, out, err = run([git, '-c', 'credential.helper=',
+                          '-c', f'http.https://github.com/.extraheader=AUTHORIZATION: basic {_GH_AUTH_B64}',
+                          'push', 'origin', 'main'], timeout=None, label='push')
+    if code != 0:
+        _log(f'  ❌ 푸시 실패: {err}')
+        _UPLOAD_FAIL_REASON = f'push 실패 (code={code}): {(err or "")[:200]}'
+        return None
+
+    url = f'https://{GITHUB_USER}.github.io/{GITHUB_REPO}/'
+    _log(f'  ✅ 업로드 완료: {url}')
+    return url
+
+
+# ── 메인 ──────────────────────────────────────────────────────────────────────
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--local', action='store_true', help='GitHub Pages 업로드 건너뜀')
+    parser.add_argument('--test-alert', action='store_true',
+                        help='경보 메일 경로 검증용 [테스트] 메일 1통만 보내고 종료 (2026-10-08)')
+    args = parser.parse_args()
+
+    if args.test_alert:
+        _ok = _send_alert_mail(
+            f'[테스트] [CNC위키] 경보 메일 경로 검증 — {datetime.now():%Y-%m-%d %H:%M}',
+            '이 메일은 발송 경로 검증용입니다. 평소에는 차단성 장애가 있는 날에만 옵니다.\n\n'
+            '보낸 곳: 경준님 PC의 generate.py --test-alert\n'
+            '차단성 4종: index.lock 잔존 · push 실패 · 사내 배포 실패 · 일일보고 파일 누락\n')
+        sys.exit(0 if _ok else 1)
+
+    _log(f'generate.py 시작 '
+         f'{"(로컬 전용)" if args.local else "(GitHub Pages 업로드 포함)"}')
+
+    os.makedirs(DIST_DIR, exist_ok=True)
+
+    # 1) 출하현황 파싱
+    _t = time.time()
+    _log('출하현황 파싱 중...')
+    shippings = []
+    for y in YEARS:
+        path = os.path.join(COMP_DIR, f'출하현황_납품처별_월별분석_{y}.xlsx')
+        # 2026-11-03: 공개판은 거래처 익명(거래처 A …) — 사내 현황판은 실명판(_private) 우선 (decisions 2026-11-03)
+        _priv = os.path.join(BASE_DIR, 'wiki', '_private', 'comparisons', os.path.basename(path))
+        if os.path.exists(_priv):
+            path = _priv
+        if os.path.exists(path):
+            data = parse_shipping(path)
+            shippings.append((y, data))
+            _log(f'  → {y}: 납품처 {len(data["customers"])}개사')
+        else:
+            _log(f'  → {y}: 파일 없음 (건너뜀)')
+    _log(f'출하현황 파싱 완료 ({time.time()-_t:.1f}s)')
+
+    # 2) 월간생산일지 파싱
+    _t = time.time()
+    # 2026-10-23: 엑셀 입력 중단 → ERP NC 작업실적(parse_production). 원래 줄: daily, worklog_file = parse_worklog()
+    _log('생산 실적(ERP 작업실적) 조회 중...')
+    daily, worklog_file = parse_production()
+    _log(f'  → {worklog_file or "파일 없음"} ({time.time()-_t:.1f}s)')
+
+    # 2-B) ERP 「오늘 할 일」 (2026-09-04 신설) — 사내 현황판 전용
+    #      실패해도 None 을 받아 블록만 빠진다. 나머지는 정상 진행.
+    _t = time.time()
+    _log('ERP 「오늘 할 일」 조회 중...')
+    todo = fetch_erp_todo()
+    if todo:
+        _log(f'  → 미출하 {todo["open_cases"]}건 / {todo["open_qty"]:,}개 · '
+             f'지연 {todo["late_cases"]}건 · 임박 {todo["near_cases"]}건 · '
+             f'보류 {todo["hold_cases"]}건 / {todo["hold_qty"]:,}개 · '
+             f'자투리 {todo["minor_cases"]}건 '
+             f'({time.time()-_t:.1f}s)')
+    else:
+        _log(f'  → 생략 (블록 미표시) ({time.time()-_t:.1f}s)')
+
+    # 2-C) 장비별 투입 목록 (2026-09-28 신설) — 사내 현황판 전용, 실패해도 블록만 빠진다
+    _t = time.time()
+    _log('장비별 투입 목록 생성 중...')
+    try:
+        sys.path.insert(0, os.path.join(BASE_DIR, 'erp'))
+        from machine_queue import fetch_machine_queue
+        queue = fetch_machine_queue(load_hold_orders(), log=_log)
+    except Exception as e:
+        _log(f'  ⚠️ 장비별 투입 목록 모듈 오류 — 생략: {type(e).__name__}: {e}')
+        queue = None
+    if queue:
+        _log(f'  → FG {queue["FG"]["n"]}품목/{queue["FG"]["qty"]:,}개 (셋업 {queue["FG"]["setups"]}회) · '
+             f'GX7 {queue["GX7"]["n"]}품목/{queue["GX7"]["qty"]:,}개 (셋업 {queue["GX7"]["setups"]}회) · '
+             f'기타 {queue["etc"]["n"]}품목 · 작업일지 { {k: v for k, v in ((queue.get("worklog") or {}).get("stats") or {}).items() if k != "issues"} } '
+             f'가공완료 제외 {(queue.get("worklog") or {}).get("ground_items", 0)}품목 ({time.time()-_t:.1f}s)')
+    else:
+        _log(f'  → 생략 (블록 미표시) ({time.time()-_t:.1f}s)')
+
+    worklog_date = (daily['date'] + (' · ERP 작업실적 기준' if daily.get('source') == 'erp' else '')) if daily else '-'
+    generated_at = datetime.now().strftime('%Y-%m-%d %H:%M')
+
+    # 3) 페이지 생성
+    _t = time.time()
+    # 2026-09-04 — 공개(GitHub Pages) / 사내(LAN 공유폴더) 분리
+    #   공개: 거래처 정보가 없는 고객용 페이지만
+    #   사내: 전부 (현황판은 거래처명·물량이 박히므로 절대 공개로 내보내지 않는다)
+    #   ※ supplies.html 은 미사용 확인(한경준님, 2026-09-04)으로 생성 중단.
+    #      build_supplies_html() 함수는 삭제하지 않고 남겨둔다.
+    public_pages = {
+        'index.html':     build_portal_html(show_staff=False),
+        'request.html':   build_request_html(),
+        'defect.html':    build_defect_html(),
+        'inquiry.html':   build_inquiry_html(),
+    }
+    internal_pages = {
+        'index.html':     build_portal_html(show_staff=True),
+        'request.html':   public_pages['request.html'],
+        'defect.html':    public_pages['defect.html'],
+        'inquiry.html':   public_pages['inquiry.html'],
+        'dashboard.html': build_dashboard_html(shippings, daily, worklog_date, generated_at, todo, queue),
+    }
+    # 2026-10-08 — 거래처 조회 화면(사내 검토). 파일이 없으면 넣지 않는다
+    try:
+        with open(CUSTOMER_PORTAL_PAGE, encoding='utf-8') as _f:
+            _html = _f.read()
+        _url = os.getenv('CUSTOMER_PORTAL_GAS_URL', '')
+        if _url:   # URL 은 .env 에서만 주입(field-record-config.js 와 같은 원칙). 없으면 화면을 내보내지 않는다
+            internal_pages['order-status.html'] = _html.replace('__CUSTOMER_PORTAL_GAS_URL__', _url)
+    except OSError:
+        pass
+    pages = public_pages   # 이하 공개 배포 경로는 기존 로직 그대로
+    _log(f'페이지 생성 완료 — 공개 {len(public_pages)}개 / 사내 {len(internal_pages)}개 '
+         f'({time.time()-_t:.1f}s)')
+
+    _t = time.time()
+    for fname, html in public_pages.items():
+        for out_dir in (DIST_DIR, BASE_DIR):
+            fpath = os.path.join(out_dir, fname)
+            with open(fpath, 'w', encoding='utf-8') as f:
+                f.write(html)
+        _log(f'  → 저장(공개): {fname} (dist/ + 루트)')
+    _log(f'파일 저장 완료 ({time.time()-_t:.1f}s)')
+
+    # 3-B) dist/ 정적 파일 → 루트 동기화 (generate가 생성하지 않는 파일)
+    # HTML 뿐 아니라 CSS·JS 도 루트로 복사 (2026-06-15: 외부 파일 분리 대응)
+    _t = time.time()
+    import shutil, glob
+    generated = set(pages.keys())
+    for ext in ('*.html', '*.css', '*.js'):
+        for src in glob.glob(os.path.join(DIST_DIR, ext)):
+            fname = os.path.basename(src)
+            if fname in INTERNAL_ONLY:      # 2026-09-04 사내 전용 — 공개로 내보내지 않음
+                continue
+            if fname not in generated:
+                dst = os.path.join(BASE_DIR, fname)
+                shutil.copy2(src, dst)
+                _log(f'  → 정적 복사: {fname} (dist/ → 루트)')
+    _log(f'정적 파일 동기화 완료 ({time.time()-_t:.1f}s)')
+
+    # 3-C) 사내 공유폴더 배포 (2026-09-04 신설)
+    _t = time.time()
+    _log('사내 공유폴더 배포 중...')
+    write_internal_auth_js()          # 2026-09-08 — 게이트 JS 를 사내 자산으로 먼저 생성
+    write_internal_field_config()     # 2026-09-08 — 현장기록 GAS URL·토큰 주입
+    write_internal_submissions_js()   # 2026-09-14 — 접수현황 스냅샷(사내 전용)
+    internal_ok = publish_internal(internal_pages)
+    _log(f'사내 배포 단계 종료 ({time.time()-_t:.1f}s) — '
+         f'{"성공" if internal_ok else "실패/건너뜀"}')
+
+    # 3-D) 거래처 조회 데이터 업로드 (2026-10-08 신설) — .env 의 CUSTOMER_PORTAL_CUSTS 가 있을 때만.
+    #   실패해도 이후 단계는 그대로 진행한다(사내 검토 단계라 차단성 경보 대상 아님).
+    try:
+        sys.path.insert(0, os.path.join(BASE_DIR, 'erp'))
+        from customer_portal_export import upload_from_env
+        upload_from_env(_log)
+    except Exception as e:
+        _log(f'  ⚠️ 거래처 조회 업로드 모듈 로드 실패(무시): {type(e).__name__}: {e}')
+
+    # 4) GitHub Pages 업로드
+    upload_ok = True
+    if args.local:
+        _log('완료. (GitHub 업로드 건너뜀)')
+    else:
+        _log('GitHub Pages 업로드 중...')
+        _t = time.time()
+        url = upload_to_github()
+        _log(f'업로드 단계 종료 ({time.time()-_t:.1f}s)')
+        if not url:
+            upload_ok = False
+            _log('⚠ 업로드 실패 — 로컬 파일만 생성됨')
+        notify_upload_result(upload_ok)
+
+    # 5) 차단성 장애 점검 → 필요할 때만 메일 (2026-10-08 신설, decisions.md 2026-10-08)
+    _log('차단성 장애 점검...')
+    check_git_lock()
+    check_daily_report_file()
+
+    _log(f'완료. (전체 소요 {time.time()-_START_TS:.1f}s)')
+
+    # 2026-07-07: 이전에는 업로드 실패해도 exit code가 항상 0이라 daily_report.py가
+    # "GitHub Pages 업로드 완료"로 잘못 로그를 남겼음(returncode만 확인) — 실패를
+    # 상위 프로세스에 정확히 전달하도록 exit code 구분.
+    if not upload_ok:
+        sys.exit(1)
