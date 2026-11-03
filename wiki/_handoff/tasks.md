@@ -26,10 +26,15 @@
 
 ## 진행 중
 
+- [ ] 🟢 **GitHub 토큰 교체 — `cnc-wiki-2026-08` → `cnc-wiki-2026-11`** (P1 → 마무리만, 2026-11-03 등재)
+  - ✅ (11-03 09:3x KST) 새 토큰 발급(만료 **2027-02-01(월)** · `koreatooling-portal` 하나 · Contents R/W) → `.env` 16행 교체(1차 시도 빈 값 사고 → 한 줄씩 재실행, 93자 · `github_pat_` [실측]) → `git_auth_check.py` 쓰기 인증 OK · 예약 알림 2개 새 만료일로 옮김(01-25 · 02-01) · 체크리스트 §0-1 · §2 · §5 갱신
+  - ✅ (11-03) 옛 토큰 `cnc-wiki-2026-08` 삭제 — 목록에 `cnc-wiki-2026-11` 하나만 남음(한경준님 캡처, 두 번째 Delete 는 「unable to be deleted」 = 이미 지워진 뒤라 무해) · ⬜ 오늘 16:00 `push code=0` 확인
+
 - [ ] 🔴 **공개 저장소 노출 정리 — 거래처 실명 익명화 · ERP 파일 추적 제외 · 이력 정리** (P1, 2026-11-03 등재 — decisions 2026-11-03 · 한경준님 ② 선택)
   - ✅ (11-03 Cowork) 익명화 30개 파일 2,492곳(실명판 · 대조표 `wiki/_private/`) · `scripts/anonymize_public.py` · 생성 스크립트 3개 자동 익명화 · `generate.py` 실명판 우선 · `.gitignore` ERP 8개 · ERP 주소 문구 3곳 교체 · `--check` = 추적 제외 전 erp 2개만 남음
   - ✅ **1단계(11-03 완료)**: `git rm --cached` 8개 → `--check` 0개 → `git commit -F outputs\commit_msg_20261103.txt` → push — 절차서 [[_handoff/runbook-저장소-갈아타기-D안-2차-20261103]] §1
-  - ⬜ **2단계(평일 오전 1시간)**: D안 2차 — 옛 저장소 → `koreatooling-portal-archive2` 비공개 · 새 공개 저장소 · PAT 범위 · Pages — 같은 절차서 §2
+  - ✅ **2단계 D안 2차(11-03 08:55 ~ 09:2x KST 완료, 한경준님 실행)**: 미러 백업 `Desktop\koreatooling-portal-backup-20261103.git`(78.84 MiB) · 예약 작업 3개 끄기 → Pages 끄기 → 이름 `koreatooling-portal-archive2` → 비공개(시크릿 창 404) → 새 공개 `koreatooling-portal` → 로컬 `.git` → `Desktop\cnc-wiki-git-archive2-backup` · `git init` · 725개 · 유입 0 · 실명 0(주석 예시 1곳 발견 → 고침) → 커밋 **7f2c3c8**(1개) push → PAT `cnc-wiki-2026-08` 범위에 새 저장소 추가(Contents R/W) → Pages main/(root) 다시 켬(포털 열림) → 예약 작업 3개 Ready → `generate.py` 정상(변경 없음) · `git_auth_check.py` 쓰기 인증 OK [실측]
+  - ⬜ 다음 16:00 배치 `push code=0` 확인 · ⬜ 1 ~ 2주 정상이면 백업 2개(`cnc-wiki-git-archive2-backup` · `koreatooling-portal-backup-20261103.git`) 정리 여부 한경준님 판단 · 📌 09-01 ~ 11-03 커밋 SHA(321개)는 이제 archive2 에만 있음 — 위키에 적힌 SHA 로 복원할 때는 `git -C ..\cnc-wiki-git-archive2-backup show <SHA>:<경로>`
   - ✅ (11-03 한경준님 캡처, 로그인 안 한 창) 옛 `koreatooling-portal-archive` = **404** — 비공개 유지 확인. 11-03 Cowork 웹 확인에서 보인 옛 화면(커밋 380 · raw 폴더)은 캐시로 판단
   - ✅ (11-03) 1단계 `git rm --cached` 8개 · `--check` 0개(한경준님 PowerShell) — PC 파일 8개 그대로 있음 확인 · ✅ 커밋 **8d1104a**(08:53 KST) push 완료 — 원격 main 추적 726개, `erp/dist/TricoERP.exe` · `trico_client.py` 없음 [실측]. 웹 확인: `blob/main/erp/dist/TricoERP.exe` = 404(한경준님 캡처). ⚠️ 옛 커밋(7d883bd 등)으로 들어가면 아직 내려받기 가능 → 2단계
   - 🔎 (11-03 08:2x KST 점검, origin/main 3dc4714 기준 [실측]) xlsx 194개 검사 → **거래처 실명 + 월별 출고 수량 8개**: `wiki/comparisons/출하현황_납품처별_월별분석_2022 ~ 2026.xlsx`(5개, 09-01 부터 추적) · `reports/07_KPI/재연마_납기현황_2026-07-마감.xlsx` · `_20260716.xlsx` · `comparisons/Codex_KPI_2022-2026_v1.xlsx` — CLAUDE.md §4 「거래처 A/B/C 익명화」와 어긋남

@@ -4,7 +4,7 @@ category: "인증·배포 — GitHub fine-grained PAT 발급·교체 절차"
 tags: [GitHub, PAT, 토큰, 인증, 403, generate.py, 배포, 보안]
 sources:
   - "[INT-TOKEN-403-2026]"
-updated: 2026-08-28
+updated: 2026-11-03
 status: "검증됨"
 ---
 
@@ -28,18 +28,20 @@ status: "검증됨"
 
 ---
 
-## 0-1. 현재 사용 중인 토큰 (2026-08-28 기준)
+## 0-1. 현재 사용 중인 토큰 (2026-11-03 기준)
 
 | 항목 | 값 |
 |---|---|
-| 이름 | **`cnc-wiki-2026-08`** |
-| 발급일 | 2026-08-28 |
-| **만료일** | 🔴 **2026-11-26 (목)** |
+| 이름 | **`cnc-wiki-2026-11`** (~~`cnc-wiki-2026-08` · 2026-08-28 발급 · 2026-11-26 만료~~ → 11-03 교체) |
+| 발급일 | 2026-11-03 |
+| **만료일** | 🔴 **2027-02-01 (월)** — 알림: 01-25 「1주일 전」 · 02-01 「만료 당일」 예약 작업 |
 | 권한 | Metadata `Read-only` + **Contents `Read and write`** |
 | 대상 저장소 | `koreatooling-portal` |
 
+> 📌 2026-10-30 부터 `generate.py` 는 토큰을 origin 주소에 넣지 않고 **push 명령에만 인증 헤더**로 싣습니다(§0 그림의 「remote URL 조립」은 옛 방식). 검증은 `python scripts\git_auth_check.py`(헤더 · 대조 시험) 가 가장 확실합니다.
+>
 > 🔴 **만료되면 17:00 자동화가 조용히 멈춥니다.** `generate.py` 는 push 가 실패해도 로컬 파일은 정상 생성하므로
-> **며칠 지나서야 "포털이 왜 안 바뀌지?" 하고 알아채게 됩니다.** 만료 1주일 전(**2026-11-19경**)에 갱신하세요.
+> **며칠 지나서야 "포털이 왜 안 바뀌지?" 하고 알아채게 됩니다.** 만료 1주일 전(**2027-01-25경**)에 갱신하세요.
 >
 > ⚠️ 무기한 토큰(이전 `ToolKorea`)을 90일로 바꾼 것은 옳은 선택이지만, 그 대가로 **갱신을 기억해야 하는 의무**가 생겼습니다.
 > 갱신 시 이 문서 §1 부터 다시 따라가고, **이 표의 값도 함께 갱신**하세요.
@@ -90,6 +92,8 @@ Repositories 1 (또는 2)
 한글 주석이 깨지고, git·python 이 파일을 못 읽게 됩니다. (2026-08-28 `.gitignore` 에서 실제 발생)
 
 **방법 A — PowerShell (.NET 명시, 토큰이 히스토리에 안 남음)**
+
+> 🔴 **2026-11-03 사고**: 아래 상자를 통째로 붙여 넣으면 `Read-Host` 가 토큰 대신 **다음 줄(또는 빈 줄)** 을 입력으로 받아 `GITHUB_TOKEN=` 이 빈 값으로 저장된다. **`$t = Read-Host …` 한 줄만 먼저** 붙여 넣고 토큰 입력 → 나머지는 그다음에. 저장 줄은 `if ($t -like "github_pat_*") { … }` 로 감싸 잘못된 입력이면 저장하지 않게 한다(11-03 2차 시도에서 이 방식으로 성공).
 
 ```powershell
 cd C:\Users\TOOLKOREA\Desktop\cnc-wiki
@@ -160,6 +164,7 @@ python generate.py
 | 2026-07-07 | 16:00 자동화 17분 멈춤 후 실패 | git-credential-manager 가 비대화형 세션에서 프롬프트 시도 → `GIT_TERMINAL_PROMPT=0`·`GCM_INTERACTIVE=never` 추가로 해결. 같은 날 run.log 에 **토큰 평문 노출** 발견 → 마스킹 함수 추가(`generate.py` 688~693행) |
 | 2026-07-08 | push 403 | fine-grained PAT 의 **Contents 가 Read-only** — 저장소만 선택하고 권한 미설정 |
 | **2026-08-28** | push 403 (**재발**) | 권한 목록에서 `Contents` 대신 **`Repository security advisories`** 를 체크. 체크리스트가 없어 동일 함정 반복 |
+| 2026-11-03 | `.env` `GITHUB_TOKEN` 빈 값(push 전 발견) | §2 방법 A 를 통째로 붙여 넣어 `Read-Host` 가 다음 줄을 입력으로 받음 → 한 줄씩 나눠 재실행 · `git_auth_check.py` OK. 같은 날 D안 2차로 새 저장소가 생겨 토큰도 새로 발급(`cnc-wiki-2026-11`) |
 
 > ✅ **2026-08-28 종결** — `Contents: Read and write` 설정 후 `git push --dry-run` 성공(`b0ad167..76a2afc main -> main`) → 실제 push 완료. 옛 `ToolKorea` 토큰(무기한) 삭제 확인. **본 체크리스트를 이때 신설**했으므로, 다음 갱신부터는 §1-1 의 함정 2개를 먼저 확인하면 재발하지 않습니다.
 
