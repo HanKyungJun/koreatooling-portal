@@ -1,3 +1,10 @@
+## [2026-11-05] 신규 — AI 역할 · 검토표 (CLAUDE.md §16)
+
+역할 5개 × 검토 항목(공통 G1 ~ G6 · R1 ~ R5), 통과는 증거로만. 과거 실수 13건 사후 시험(잡음 12 · 부분 1) · 5개 관점 재검수(R1-7 휠 최대사용주속도 추가). `anonymize_public.py --check` 가 새 파일(untracked)도 검사하도록 수정. 챗 지침 §4 · §8 · 계정 선호 원본 v3 반영. decisions 2026-11-05 (1)
+
+영향받은 페이지: [[standards/AI-역할-검토표]], [[_handoff/decisions]], `CLAUDE.md` §16, `scripts/anonymize_public.py`, `_handoff/chat-project-instructions.md`, `_handoff/ai-instructions-universal.md`
+출처 추가: [STD-EN13236] (기존 등재)
+
 ## [2026-11-04] 업데이트 — 넥 원통연삭 테스트 4 (dn 2.000 한계 시험) 결과 반영 · 결정 2건
 
 컴퓨터2 23_ · 24_ · 25_(11-03 17:16 종료 블록) 반영. AFCY 시험 페이지 §7-D(6회 표 · 최종 형상 · 컴퓨터1 검토 6항 · 후보 · 테스트 5 안) · 기록표 v2 T8 ~ T13 · 강성표 §4 시험품 사례 · 홍익 휠 D 개선 후보(B 7 → B 10) 메모. decisions 2026-11-04 (1) 테스트 4 결과 · 보정 후보 · (2) 테스트 5 전 드레싱. 양산 적용 ❌

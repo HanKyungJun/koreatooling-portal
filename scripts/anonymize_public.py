@@ -5,7 +5,7 @@
 「거래처 A · B · … · AA」 코드로 바꾼다. 실명 ↔ 코드 대조표와 실명 원본은
 wiki/_private/ (gitignore) 에만 둔다.
 
-  python scripts/anonymize_public.py --check            추적 파일 전체에서 실명 찾기 (있으면 종료 코드 1)
+  python scripts/anonymize_public.py --check            추적 파일 + 새 파일(.gitignore 제외) 전체에서 실명 찾기 (있으면 종료 코드 1)
   python scripts/anonymize_public.py --apply 파일...      실명 원본을 _private 에 복사한 뒤 그 파일을 익명화
   python scripts/anonymize_public.py --map               대조표 갱신만 (ERP 저장본의 새 거래처에 다음 코드 부여)
 
@@ -220,7 +220,7 @@ def publish(path):
 
 def tracked_files():
     try:
-        out = subprocess.run(['git', '-C', str(BASE), 'ls-files'], capture_output=True, timeout=60)
+        out = subprocess.run(['git', '-C', str(BASE), 'ls-files', '--cached', '--others', '--exclude-standard'], capture_output=True, timeout=60)  # 2026-11-05: 새 파일도 검사 (git add -A 대상)
         files = out.stdout.decode('utf-8').splitlines()
         if files:
             return files

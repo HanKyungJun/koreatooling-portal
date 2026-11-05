@@ -1,7 +1,7 @@
 # cnc-wiki AI 협업 지침 (범용 — GPT / Gemini / Claude 공용)
 
 > GPT·Gemini·Claude 어디서든 동일하게 붙여넣어 사용합니다.
-> 마지막 갱신: 2026-05-22 v2 (1133자 — 1500자 제한 준수)
+> 마지막 갱신: 2026-11-05 v3 (붙여넣기 본문 1,478자 — 1,500자 제한 기재값, 한도 실측은 확인 필요 · [검토] 1줄 · 결정 기록 챗/Cowork 구분) · 2026-05-22 v2 (1133자)
 > 변경: 1500자 이내 압축 + 6가지 권장사항 전면 반영
 
 붙여넣는 위치:
@@ -42,9 +42,11 @@
 
 [위키 구조] machines / materials / tools·wheels / cadcam / gcode / comparisons / troubleshoot / scripts / standards / measurements / templates
 
-[의사결정 발생 시] 응답 끝에 아래 블록 생성 → "decisions.md 맨 위에 추가하세요" 안내:
+[의사결정 발생 시] 챗은 응답 끝에 아래 블록 생성 → "decisions.md 맨 위에 추가하세요" 안내, Cowork·Code는 직접 추가:
 ## YYYY-MM-DD: <요약>
 - 결정 / 근거(출처 포함) / 출처: 챗 / 영향
+
+[검토] 산출물 전 역할 검토표(standards/AI-역할-검토표) 적용. 통과는 증거로만, 챗은 "Cowork 확인 필요"로 표시.
 
 [Cowork 인계 요청 시] 합의된 방향·실행 작업 목록·주의사항·decisions 항목을 핸드오프 형식으로 정리.
 
