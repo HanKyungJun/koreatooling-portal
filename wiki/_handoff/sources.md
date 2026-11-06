@@ -253,6 +253,12 @@
 - **[VEN-EWAG]** EWAG AG — 스위스 졸로투른(Solothurn). 공식 사이트 <https://www.ewag.com>. 1946년 Edel-Werkzeug AG로 설립, 2000년 UNITED GRINDING Group(현 WALTER와 함께 Tool Machining Technology 그룹) 편입. 수동(WS11/WS11-SP, RS 15) · CNC(COMPACT LINE, INSERT LINE, PROFILE LINE, EWAMATIC LINEAR) · 레이저(LASER LINE PRECISION/ULTRA) 3계열. 인서트 그라인딩·다이아몬드 공구 레이저가공·시계산업 전통이 강점. [[ewag-tool-grinder]] 본문 출처. 웹 조사(2026-07-14), 1차 출처 미검증(제조사 공식 사이트·2차 유통 카탈로그 기반).
 - **[VEN-UNITEDGRINDING]** UNITED GRINDING Group — 공식 사이트 <https://www.grinding.ch>, <https://www.grinding.com>. Mägerle·Blohm·Jung·Studer·Schaudt·Mikrosa·Walter·Ewag·Irpd 9개 브랜드 소속 그룹사(구 Körber Schleifring GmbH, 2012~13 재편). 2018년 Körber AG가 BZ Bank 주도 투자자 컨소시엄에 매각. [[ewag-tool-grinder]] §1·§4 출처.
 
+### 드레싱 · 트루잉 — 슈퍼아브레시브 (2026-11-06 등재)
+
+- **[VEN-NORTON-DRESSSTICK]** Saint-Gobain Norton — 카탈로그 E00165 pp.296 ~ 297 「Dressing Sticks」(배포처 사본). https://www.mecampbell.com/media/pdf/NORTONE00165_296_297.pdf — 레진 · 비트리파이드 다이아 / CBN 휠 스틱 선정: 휠보다 1 ~ 2 단계 고운 입도 · 연한 등급 H 또는 I · 휠 #320 이상 → Superfine NMVC400-J5VCA · 알루미나(흰색)는 다이아 휠에도 사용 · ANSI B7.1 준수. 판 연도 확인 필요. [[tools/wheels/원통연마-휠-12도-스펙]] §4-4
+- **[ACA-MACHINERYS31]** Oberg, E. 외 — *Machinery's Handbook*, 31st ed., Industrial Press. p.1310 「Diamond Wheels — Truing and Dressing」(온라인 열람본 https://online.flippingbook.com/view/954192180/1466/) — 레진 다이아 휠은 드레싱이 거의 불필요 · 연한 SiC 스틱 · 브레이크식 트루잉 장치 · SiC 블록 · 일반 다이아 드레서 사용 금지. 발행 연도 확인 필요. [[tools/wheels/원통연마-휠-12도-스펙]] §4-4
+- **[IND-CTE-SACHSEL2019]** Sachsel, H. G. (2019-06-24). *Dressing/conditioning diamond and CBN Borazon grinding wheels*. **Cutting Tool Engineering**. https://ctemag.com/news/dressingconditioning-diamond-and-cbn-borazon-grinding-wheels/ — 레진 휠은 알루미나 스틱 · 휠 #320 이상 → 320 스틱 · 약 1,000 sfm · 적신 스틱을 곧게 밀어 넣고 옆으로 문지르지 않음. 업계지 — 보조 근거만(단독 인용 금지)
+
 ## 0-J. 피삭재 — 알루미늄·스테인리스강 (2026-05-18 등재)
 
 > [[알루미늄]] / [[sus304]] 페이지에서 활용.
