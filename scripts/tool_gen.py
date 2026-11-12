@@ -20,7 +20,7 @@
 """
 import argparse, json, math, os, re, sys, datetime
 
-VERSION = "1.1 (2026-11-12)"
+VERSION = "1.2 (2026-11-12)"
 
 # ───────────────────────── 1. 사양 해석 ─────────────────────────
 class Impossible(Exception):
@@ -519,7 +519,7 @@ def render(doc, png, pdf):
     plt.close(fig)
 
 # ───────────────────────── 5. SolidCraft 레시피 ─────────────────────────
-def recipe(g, stem, sc_dir):
+def recipe_staged(g, stem, sc_dir):
     """SolidCraft batch 단계 목록. 각 단계의 commands 를 batch 의 commands 로, expect 를 expect 로 그대로 넣는다.
     2026-11-12 실측: 날부 회전체 + 홈 경로 + 홈1 을 한 단계로(약 10 ~ 12 s), 홈 2 ~ 4 는 하나씩(10 ~ 38 s, 저장 포함),
     생크 + 스케치 숨김 + 저장 + STEP 내보내기 마지막 단계(약 2 ~ 3 s). 한 단계 90 s 제한(역할 정의 §4-7)."""
@@ -574,6 +574,76 @@ def recipe(g, stem, sc_dir):
             "how": "new_design(name=design_name) → 단계마다 batch(commands, expect, timings=true, verbose=false) → screenshot. "
                    "실패 · 90 s 끊김이면 _작업 의 마지막 저장본을 open 하고 다음 단계부터.",
             "check": "FreeCAD: Part.Shape.read(step) → 솔리드 2 · isValid · 부피 · optimalBoundingBox"}
+
+def section_cmds(g, Ro, z0, name="Section"):
+    """날부 단면(반지름 Ro 원호 = 외경, 홈 원호 = 오목) 닫힌 윤곽 1장 — 평면 z = z0."""
+    a, rf, z = g["a"], g["rf"], g["z"]
+    phi = math.acos((Ro * Ro + a * a - rf * rf) / (2 * Ro * a))
+    P = lambda ang: [round(Ro * math.cos(ang), 6) + 0.0, round(Ro * math.sin(ang), 6) + 0.0]
+    c = [{"command": "sketch.create", "params": {"plane": {"origin": [0, 0, z0], "x_dir": [1, 0, 0], "y_dir": [0, 1, 0]}, "name": name}}]
+    for k in range(z):
+        th, th2 = 2 * math.pi * k / z, 2 * math.pi * (k + 1) / z
+        c.append({"command": "sketch.arc.center_point", "params": {"center": [0, 0], "start": P(th + phi), "end": P(th2 - phi)}})
+        C = [round(a * math.cos(th2), 6) + 0.0, round(a * math.sin(th2), 6) + 0.0]
+        c.append({"command": "sketch.arc.center_point", "params": {"center": C, "start": P(th2 - phi), "end": P(th2 + phi), "clockwise": True}})
+    c.append({"command": "sketch.finish", "params": {}})
+    return c
+
+def recipe(g, stem, sc_dir):
+    """SolidCraft batch 1회로 끝나는 레시피 (v1.2, 2026-11-12 속도 개선).
+    평: 날부 단면 1장을 비틀어 쓸기(불리언 0번) — 실측 0.5 s(2날 D10, 저장 · STEP 포함).
+    코너 R · 볼: 날 끝 회전체 ∩ 외경을 0.55D 로 키운 단면 쓸기(불리언 1번) — 실측 4날 15 s · 3날 볼 21 s.
+    (옛 방식 = 홈마다 빼기 4번: 43 ~ 87 s · batch 4 ~ 6번.) 교차가 실패하면 fallback_stages(옛 방식)로."""
+    D, L, Lc, R = g["D"], g["L"], g["Lc"], g["R"]
+    YZ = {"origin": [0, 0, 0], "x_dir": [0, 1, 0], "y_dir": [0, 0, 1]}
+    sgn = 1 if g["hand"] == "R" else -1
+    cmds = []
+    if g["shape"] == "square":
+        cmds += section_cmds(g, D / 2, 0.0)
+        cmds += [{"command": "sketch.create", "params": {"plane": YZ, "name": "FlutePath"}},
+                 {"command": "sketch.line", "params": {"points": [[0, 0], [0, Lc]]}},
+                 {"command": "sketch.finish", "params": {}},
+                 {"command": "solid.sweep", "params": {"sketch": "Section", "path_sketch": "FlutePath", "path": ["l1"],
+                                                       "twist": f"{sgn * 360.0 * Lc / g['lead']:.4f} deg", "operation": "new_body",
+                                                       "body_name": "FluteBody", "name": "Flutes"}}]
+    else:
+        tip = [{"command": "sketch.create", "params": {"plane": YZ, "name": "TipProfile"}}]
+        if g["shape"] == "corner":
+            tip += [{"command": "sketch.line", "params": {"points": [[0, Lc], [0, 0], [D / 2 - R, 0]]}},
+                    {"command": "sketch.arc.center_point", "params": {"center": [D / 2 - R, R], "start": [D / 2 - R, 0], "end": [D / 2, R]}},
+                    {"command": "sketch.line", "params": {"points": [[D / 2, R], [D / 2, Lc], [0, Lc]]}}]
+        else:
+            tip += [{"command": "sketch.arc.center_point", "params": {"center": [0, R], "start": [0, 0], "end": [R, R]}},
+                    {"command": "sketch.line", "params": {"points": [[R, R]] + ([[R, Lc]] if Lc > R + 1e-9 else []) + [[0, Lc], [0, 0]]}}]
+        tip += [{"command": "sketch.finish", "params": {}},
+                {"command": "solid.revolve", "params": {"sketch": "TipProfile", "axis": "Z", "operation": "new_body", "body_name": "FluteBody", "name": "Tip"}}]
+        Ro = min(0.55 * D, (D / 2 + g["a"] + g["rf"]) / 2)      # 외경보다 크게 — 외경 면이 겹치면 교차 실패(실측)
+        cmds += tip + section_cmds(g, Ro, -1.0)
+        cmds += [{"command": "sketch.create", "params": {"plane": YZ, "name": "FlutePath"}},
+                 {"command": "sketch.line", "params": {"points": [[0, -1], [0, Lc + 1]]}},
+                 {"command": "sketch.finish", "params": {}},
+                 {"command": "solid.sweep", "params": {"sketch": "Section", "path_sketch": "FlutePath", "path": ["l1"],
+                                                       "twist": f"{g['twist']:.4f} deg", "operation": "intersect",
+                                                       "targets": ["FluteBody"], "name": "Flutes"}}]
+    sk = [[0, Lc]] + [[round(r, 6), round(zq, 6)] for zq, r in g["shank"]] + [[0, L]]
+    cmds += [{"command": "sketch.create", "params": {"plane": YZ, "name": "ShankProfile"}},
+             {"command": "sketch.line", "params": {"points": sk, "closed": True}},
+             {"command": "sketch.finish", "params": {}},
+             {"command": "solid.revolve", "params": {"sketch": "ShankProfile", "axis": "Z", "operation": "new_body", "body_name": "ShankBody", "name": "Shank"}},
+             {"command": "browser.visibility", "params": {"visible": False, "folder": "sketches"}},
+             {"command": "save", "params": {"path": f"{sc_dir}\\{stem}.sc"}},
+             {"command": "export", "params": {"path": f"{sc_dir}\\{stem}.step"}}]
+    rm = max(D, g["d"]) / 2
+    old = recipe_staged(g, stem, sc_dir)
+    return {"tool_gen": VERSION, "design_name": stem, "sc_dir": sc_dir,
+            "stages": [{"name": "1_한번에(날부 + 생크 + 저장 + STEP)", "commands": cmds,
+                        "expect": {"volume_mm3": round(g["vol"]["total"], 4), "bodies": 2,
+                                   "bbox": {"min": [-rm, -rm, 0], "max": [rm, rm, L]}}}],
+            "fallback_stages": old["stages"],
+            "screenshot": old["screenshot"],
+            "how": "new_design(name=design_name) → stages 의 batch 1회(commands, expect, timings=true, verbose=false) → screenshot. "
+                   "교차(Flutes) 실패 · 90 s 끊김이면 new_design 후 fallback_stages(홈마다 빼기, 단계마다 저장)로.",
+            "check": old["check"]}
 
 # ───────────────────────── 6. 실행 ─────────────────────────
 def main(argv=None):
