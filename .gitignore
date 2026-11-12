@@ -1,0 +1,231 @@
+# =====================================================
+# cnc-wiki .gitignore
+# 목적: 핸드오프·위키·원본 데이터는 추적, 임시·캐시 파일은 제외
+# 작성일: 2026-05-08 (ADR-003 채택)
+# =====================================================
+
+# --- Python 관련 ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# --- OS 임시 파일 ---
+Thumbs.db
+desktop.ini
+.DS_Store
+ehthumbs.db
+
+# --- Office 잠금 파일 (편집 중 임시 파일) ---
+~$*
+*.~lock.*
+*.tmp
+
+# --- 한글 워드프로세서 임시 파일 ---
+*.gul
+
+# --- pdf_search.py 등이 생성하는 캐시 ---
+*.cache.json
+.cache/
+
+# --- 에디터 설정 (개인 환경) ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- 로그 파일 (작업 로그가 아닌 시스템 로그) ---
+*.log
+logs/
+
+# --- 빌드/배포 산출물 (해당 시) ---
+# dist/ — 2026-06-09 추적 대상으로 변경. 직접 작성한 HTML 포털 소스이므로 git 관리 필요.
+build/
+node_modules/
+
+# --- Cowork/Claude 임시 산출물 (2026-06-02 추가) ---
+# outputs/ 폴더: Cowork 세션 임시 작업물, git 추적 불필요
+outputs/
+
+# --- Cowork/Claude 루트 잔여물 (2026-09-21 추가) ---
+# 「Claude outputs/」: Cowork 세션이 루트에 만든 산출물 폴더. 정본은 wiki/reports/ 아래에 둔다.
+#   2026-09-21 커밋 5046e6b 에 기획서 docx 중복본이 딸려 들어간 사례로 추가.
+# 「cleanup_stray_files.py」: 2026-09-17 손상파일 제거용 일회성 스크립트, 역할 종료.
+# ⚠️ 이미 추적 중인 파일에는 소급 적용되지 않는다 — git rm --cached 로 별도 해제 필요.
+Claude outputs/
+cleanup_stray_files.py
+
+# --- 민감 정보 (2026-05-11 추가) ---
+# Google OAuth 클라이언트 시크릿 + 토큰
+client_secret*.json
+_unused_client_secret*.json
+token.json
+token_*.json
+_unused_token*.json
+sheets_id.json
+
+# 환경변수 파일 (.env.example만 추적, 실제 .env는 제외)
+.env
+.env.local
+.env.*.local
+
+# --- 출하 보류 대장 (2026-09-07 추가) ---
+# 거래처 신용 정보(입금대기 등)가 들어간다. 저장소가 Public 이므로 반드시 제외.
+erp/hold_orders.json
+
+# --- 외주 대장 (2026-10-19 추가) ---
+# 오더번호·품목만 있으나 사내 생산 기록이라 보류 대장과 같이 제외.
+erp/outsource_items.json
+
+# --- 작업 백업 파일 (2026-09-07 추가) ---
+# {원본명}.bak_YYYYMMDD 형식의 수정 전 백업. 저장소에 둘 이유가 없다.
+# ⚠️ 이미 추적 중인 파일에는 소급 적용되지 않는다 — 필요하면 git rm --cached 로 별도 해제.
+*.bak_*
+
+# --- Cowork/Claude 로컬 설정 (2026-09-07 추가) ---
+.claude/settings.local.json
+
+# --- 명시적으로 추적하는 항목 (위 패턴에 걸려도 살림) ---
+!.env.example
+# !raw/notes/.gitkeep
+
+raw/Catalog/*.pdf
+raw/Catalog/*.json
+
+*.zip
+
+# --- 대용량 미디어 파일 (2026-07-08 추가) ---
+# repo 비대화로 인한 git push 타임아웃 재발 방지 (2026-06-30~07-07 사이 반복 발생·해결 이력 참조)
+# raw/report/6.al엔드밀/가공 영상/ (181MB, mp4 5건)에서 처음 발견 — 로컬에는 보존, git 추적만 제외
+*.mp4
+*.mov
+*.avi
+
+# --- raw/report 대용량 원본 파일 (2026-07-09 추가) ---
+# 2026-07-09 한경준님이 PowerShell에서 직접 git add . 실행(commit f378aff, 이미 push됨) →
+# raw/report 전체(1.2GB, jpg 287·xlsx 24·hwp 11·pdf 16·tif 6·docx 1건 등)가 처음으로 git에 추적됨.
+# .git 1.1GB로 증가. 기존 push 타임아웃 이력(2026-06-30~07-08, .git 830MB 시점에도 반복 발생)과
+# 동일 패턴 재발 위험 판단. 이미 push된 커밋 자체는 되돌리지 않고(기존 이력 유지), 향후
+# 추가·수정되는 대용량 원본만 git 추적에서 제외.
+# ⚠️ 새로 추가되는 파일만 막음 — 이미 추적 중인 기존 파일은 `git rm --cached`로 별도 해제 필요(아래 안내).
+raw/report/**/*.jpg
+raw/report/**/*.jpeg
+raw/report/**/*.png
+raw/report/**/*.tif
+raw/report/**/*.tiff
+raw/report/**/*.pdf
+raw/report/**/*.hwp
+raw/report/**/*.db
+
+# --- 로컬 전용 폴더 (업로드 금지) ---
+# _local/ : GitHub에 올리면 안 되는 파일 보관 전용
+# 어떤 파일을 넣어도 git이 절대 추적하지 않음
+_local/
+
+# --- 삭제 대기 폴더 (Cowork가 device_bash로 삭제 불가할 때 임시 이동) ---
+# 2026-08-25 추가: 중복 파일이 커밋에 실려 가는 것을 방지
+_to_delete/
+
+# --- 공수 DB 중간 산출물 (재생성 가능) ---
+outputs/worklog_parsed/
+
+# --- 
+
+# --- 작업환경측정 결과보고서 (사업장 주소·대표자명·측정자 실명·자격등록번호 포함) ---
+raw/작업환경측정/*작업환경측정결과보고서.pdf
+raw/작업환경측정/*작업환경측정결과서*.pdf
+
+# =====================================================
+# raw/ 원본 자료 전체 추적 제외 (2026-08-28)
+# 사유: 저장소가 Public이고 GitHub Pages가 리포지토리 루트를 서빙하므로
+#       raw/ 파일이 https://HanKyungJun.github.io/koreatooling-portal/raw/... 로
+#       직접 다운로드된다. 실거래 단가·금융문서·개인정보가 포함돼 있어 제외한다.
+# 영향 없음: generate.py 는 *.html·*.css·*.js·dist/ 만 git add 한다.
+# 원본은 로컬 디스크와 사내 서버(\192.168.0.252\ToolKorea\...)에 보관.
+# =====================================================
+raw/
+
+# =====================================================
+# wiki/_private/ 추적 제외 (2026-08-28)
+# 사유: 실거래 단가·거래처 실명이 들어 있는데 추적 중이었고,
+#       https://HanKyungJun.github.io/koreatooling-portal/wiki/_private/... 로
+#       200 응답이 확인됐다(공개 노출). raw/ 건과 동일 구조.
+#       파일 자체에 "[대외비] git 추적 제외 대상"이라 적혀 있었으나 제외되지 않았다.
+# 영향 없음: 포털 생성물(*.html·*.css·*.js·dist/)과 무관.
+# =====================================================
+wiki/_private/
+
+# 일일보고 소급 재생성 시 만든 백업 사본 (2026-08-31)
+# 사유: 원본과 동일한 xlsx가 저장소에 중복 적재되는 것을 막는다. 로컬에는 그대로 보존.
+wiki/reports/daily/_구버전_*/
+
+# Claude Code worktree 잔재 (2026-09-01, .git/info/exclude 에서 이관)
+.claude/worktrees/
+
+# --- ANCA 중고장비 모니터 런타임 로그 (2026-09-02 추가) ---
+# 스크래퍼가 매 실행마다 append 하는 런타임 로그. 확장자가 .txt 라 위 `*.log` 패턴에 걸리지 않았다.
+scripts/anca-monitor/data/run_log.txt
+scripts/anca-monitor/data/hashes.json
+scripts/anca-monitor/*.bak_*
+
+# ── 사내 전용 (2026-09-04) ────────────────────────────────────────────────────
+#   공개(GitHub Pages) / 사내(LAN 공유폴더) 분리.
+#   현황판에는 거래처명·월별 물량이 박히므로 공개 저장소에 두지 않는다.
+#   ★ 파일을 지운 것이 아니라 추적만 해제한 것이다. 디스크에는 그대로 있다.
+#   사내 배포 경로: \\192.168.0.252\ToolKorea\생산팀\4.AI 자료실\현황판
+/dashboard.html
+/dashboard.css
+/dashboard.js
+/field-record.html
+/field-record.css
+/field-record.js
+/supplies.html
+/dist/dashboard.html
+/dist/dashboard.css
+/dist/dashboard.js
+/dist/field-record.html
+/dist/field-record.css
+/dist/field-record.js
+/dist/supplies.html
+
+# ── 2026-09-08 보안 조치 ──────────────────────────────────────────────────────
+#   근거: decisions.md 2026-09-08 (1) — 공개 저장소 전수 스캔 결과
+#   ① 직원 게이트: 비밀번호가 공개 저장소에 평문으로 있었다.
+#      게이트 JS 는 generate.py 가 .env 의 STAFF_PASS 로 빌드 시 생성하며
+#      사내 전용이므로 추적하지 않는다.
+/internal/
+/portal-auth.js
+/dist/portal-auth.js
+#   ② 현장기록 엔드포인트·토큰도 사내 전용이다(2026-09-08).
+/field-record-config.js
+/dist/field-record-config.js
+#   ② 옛 포털 UI 백업 — 인라인 게이트에 비밀번호가 남아 있었다.
+/wiki/_backup/portal-ui-20260615/
+#   ③ 대외비 수치(설비 투자 금액·원가·거래처 실명 물량)가 든 문서.
+#      파일은 로컬에 그대로 두고 저장소 추적만 해제한다.
+/wiki/reports/09_업무일정/ANCA_장비_현안_정리_보고_20260812.docx
+/wiki/reports/09_업무일정/ANCA_장비_현안_정리_보고_20260820_개정판.docx
+/wiki/reports/07_KPI/2026년_2분기_판매수량비교_영업팀출하현황기준.docx
+/회의록/260617_회의록.docx
+/scripts/ANCA_중고_시장_보고서_20260623.docx
+
+# 2026-09-29: ERP 점검 스크립트 결과 — 거래처명 포함, 공개 저장소에 올리지 않는다
+erp/probe_*_result.txt
+erp/worklog_unmatched.txt
+
+# 2026-09-30: ERP 조회 스냅샷(거래처명 포함, 매 실행 덮어씀) — 사내 PC 전용, 공개 저장소 제외
+erp/snapshot/
+
+# 2026-11-03: 공개 저장소 노출 정리(decisions 2026-11-03) — ERP 서버 주소 · 거래처명이 든 ERP 파일, 사내 ERP 조회 프로그램
+erp/dist/TricoERP.exe
+erp/dist/config.json
+erp/trico_client.py
+erp/probe_trico_service.py
+erp/probe_code_master.py
+erp/probe_workset_as.py
+erp/check_so.py
+erp/probe_dlv_mismatch.py

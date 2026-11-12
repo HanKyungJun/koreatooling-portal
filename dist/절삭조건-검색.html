@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>절삭 조건 검색 — JJ · COGO 카탈로그</title>
+<link rel="stylesheet" href="search.css">
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>⚙️ 절삭 조건 검색</h1>
+    <span>JJ TOOLS · COGO TOOL 카탈로그 기준값 — 제조사 기준 ⚠️ 검증 없이 양산 적용 금지</span>
+  </div>
+  <a href="index.html" class="back-link">← 포털로</a>
+</header>
+
+<div class="search-bar">
+  <input type="text" id="searchInput" placeholder="피삭재·시리즈명·날경으로 검색 (예: SUS304, Ø6, 4VSE, 볼엔드밀…)" oninput="renderResults()">
+  <div class="filter-group" id="mfgFilter">
+    <button class="filter-btn active" onclick="setFilter('mfg','all',this)">전체</button>
+    <button class="filter-btn" onclick="setFilter('mfg','JJ',this)">JJ TOOLS</button>
+    <button class="filter-btn" onclick="setFilter('mfg','COGO',this)">COGO TOOL</button>
+  </div>
+</div>
+
+<div class="filter-row">
+  <span class="filter-label">공구 유형</span>
+  <div class="filter-group" id="typeFilter">
+    <button class="filter-btn active" onclick="setFilter('type','all',this)">전체</button>
+    <button class="filter-btn" onclick="setFilter('type','평엔드밀',this)">평엔드밀</button>
+    <button class="filter-btn" onclick="setFilter('type','볼엔드밀',this)">볼엔드밀</button>
+    <button class="filter-btn" onclick="setFilter('type','코너엔드밀',this)">코너엔드밀</button>
+    <button class="filter-btn" onclick="setFilter('type','드릴',this)">드릴</button>
+  </div>
+  <span class="filter-label">피삭재</span>
+  <div class="filter-group" id="matFilter">
+    <button class="filter-btn active" onclick="setFilter('mat','all',this)">전체</button>
+    <button class="filter-btn" onclick="setFilter('mat','탄소강',this)">탄소강</button>
+    <button class="filter-btn" onclick="setFilter('mat','SUS',this)">SUS</button>
+    <button class="filter-btn" onclick="setFilter('mat','알루미늄',this)">알루미늄</button>
+    <button class="filter-btn" onclick="setFilter('mat','경화강',this)">경화강</button>
+    <button class="filter-btn" onclick="setFilter('mat','Ti',this)">Ti</button>
+  </div>
+</div>
+
+<div class="result-area">
+
+  <!-- Vc ↔ RPM 계산기 -->
+  <div id="calcPanel">
+    <h3>📐 Vc ↔ RPM 변환기</h3>
+    <div class="row">
+      <div>
+        <label>날경 D (mm)</label>
+        <input type="number" id="cD" value="6" min="0.1" step="0.5" oninput="doCalc()">
+      </div>
+      <div>
+        <label>Vc (m/min)</label>
+        <input type="number" id="cVc" value="" min="1" step="1" oninput="doCalcVc()">
+      </div>
+      <div>
+        <label>RPM</label>
+        <input type="number" id="cRpm" value="" min="1" step="100" oninput="doCalcRpm()">
+      </div>
+      <div id="calcOut" class="calc-result">D 입력 후 Vc 또는 RPM 입력</div>
+    </div>
+    <div style="font-size:11px;color:#888;">N = Vc×1000÷(π×D) &nbsp;|&nbsp; Vc = N×π×D÷1000</div>
+  </div>
+
+  <div class="result-count" id="resultCount"></div>
+  <div id="results"></div>
+</div>
+
+<!-- 하단 퀵 네비 -->
+<nav class="quick-nav">
+  <a class="qn-btn" href="index.html"><span class="qn-icon">🏠</span>포털</a>
+  <a class="qn-btn" href="절삭조건-검색.html"><span class="qn-icon">⚙️</span>조건검색</a>
+  <a class="qn-btn" href="request.html"><span class="qn-icon">🔧</span>재연마의뢰</a>
+</nav>
+
+<script src="search.js"></script>
+</body>
+</html>
