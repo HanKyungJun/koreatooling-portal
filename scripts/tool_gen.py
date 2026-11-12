@@ -20,7 +20,7 @@
 """
 import argparse, json, math, os, re, sys, datetime
 
-VERSION = "1.4 (2026-11-12)"
+VERSION = "1.5 (2026-11-13)"
 
 # ───────────────────────── 1. 사양 해석 ─────────────────────────
 class Impossible(Exception):
@@ -34,7 +34,7 @@ def parse_spec(text):
     toks = t.split()
     sp = {"raw": text.strip(), "kind": None, "z": None, "D": None, "d": None, "L": None, "Lc": None,
           "R": None, "ball": False, "neck": None, "helix": None, "hand": "R",
-          "core_pct": None, "taper_deg": 13.0, "C": None, "number": None, "neck_step": True, "D_tol": None}
+          "core_pct": None, "taper_deg": 13.0, "C": None, "number": None, "neck_step": True, "D_tol": None, "section": "rake", "rake": 6.0, "flute_pct": 55.0}
     unknown = []
     for tok in toks:
         u = tok.upper()
@@ -62,6 +62,12 @@ def parse_spec(text):
             sp["helix"] = _num(m.group(2))
             if m.group(3) in ("좌", "L"):
                 sp["hand"] = "L"
+        elif tok == "단면원호":
+            sp["section"] = "circle"
+        elif (m := re.fullmatch(r"경사(-?[\d.]+)°?", tok)):
+            sp["rake"] = _num(m.group(1))
+        elif (m := re.fullmatch(r"홈각([\d.]+)%?", tok)):
+            sp["flute_pct"] = _num(m.group(1))
         elif (m := re.fullmatch(r"코어([\d.]+)%?", tok)):
             sp["core_pct"] = _num(m.group(1))
         elif (m := re.fullmatch(r"테이퍼([\d.]+)°?", tok)):
@@ -170,7 +176,20 @@ def derive(sp):
     g = dict(shape=shape, R=R, z=z, D=D, d=d, L=L, Lc=Lc, core_pct=core_pct, core_d=core_pct / 100.0 * D,
              rf=rf, a=a, C=C, lead=lead, twist=twist, shank=prof, zt=zt, neck=neck,
              helix=sp["helix"], hand=sp["hand"], taper_deg=sp["taper_deg"], h6=h6(d), neck_step=sp["neck_step"],
-             D_tol=sp["D_tol"], D_dev=shaft_tol(sp["D_tol"], D) if sp["D_tol"] else None)
+             D_tol=sp["D_tol"], D_dev=shaft_tol(sp["D_tol"], D) if sp["D_tol"] else None,
+             section=sp["section"], rake=sp["rake"])
+    if g["section"] == "rake" and shape != "square":
+        # v1.5 실측(2026-11-13): 경사 단면 스윕 ∩ 코너R·볼 회전체 교차가 4회 모두 실패
+        # (스플라인 25점·9점, 원호 4개·2개 — 78 s 후 "no result" 또는 90 s 끊김). → 검증된 원호 단면으로 자동 전환.
+        g["section"] = "circle"
+        g["section_fallback"] = True
+    if g["section"] == "rake":
+        if not (-10 <= g["rake"] <= 25):
+            raise Impossible(f"경사각 {g['rake']}° — −10 ~ 25° 범위 밖")
+        g["flute_pct"] = sp["flute_pct"]
+        if not (30 <= g["flute_pct"] <= 85):
+            raise Impossible(f"홈각 {g['flute_pct']} % — 피치의 30 ~ 85 % 범위 밖")
+        g["rk"] = rake_geom(D / 2, g["core_d"] / 2, z, g["rake"], g["flute_pct"])
     g["vol"] = volumes(g)
     return g
 
@@ -203,7 +222,110 @@ def simpson(f, x0, x1, n=4000):
         s += (4 if i % 2 else 2) * f(x0 + i * h)
     return s * h / 3
 
+# ───────── 날 단면 v1.5: 경사면 직선 + 원호 (모양 확인용 · 추정값) ─────────
+# 날 하나(피치 Θ = 360°/z) 를 반시계 방향으로: 날 끝 P(각 0) → 랜드 원호(외경) → Q(각 Θ − 홈각) →
+# 원호 B(Q 를 지나 심압 원에 바깥 접 · 경사면 직선에 접) → 접점 T → 경사면 직선 → 다음 날 끝 P'(각 Θ).
+# 경사각 γ = 날 끝에서 반경선과 경사면이 이루는 각(+ = 날 몸체 쪽으로 기울어 날이 예리) [STD-ISO3002-1] 정의 범주.
+# 근거: 단면을 경사각 · 심압 반지름 · 홈각 3개로 정하는 방식 [ACA-FANG2020-WHEEL] · [ACA-WANG2014-THESIS].
+# 기본값 경사 6° = 4날 D6 사례 1건 [ACA-KIMJH2005-KSPE](추정값) · 홈각 = 피치의 60 %(추정값).
+def _v(a, b, k=1.0):
+    return (a[0] + k * b[0], a[1] + k * b[1])
+
+BOTTOM_POS = 0.30     # 홈 바닥(심압 접점) 위치 — 홈 구간 중 경사면 쪽에서 30 % (추정값, CIM3D 2날 메시 모양 참고)
+RAKE_FOOT = 0.15      # 경사면 아래 끝 높이 — 심압에서 (R − rc) 의 15 % 위 (추정값)
+
+def rake_geom(R, rc, z, rake_deg, flute_pct, n_pts=8):      # 점 8개(9점) — 많으면 SolidCraft 교차가 90 s 넘음(24개 실측)
+    """날 하나(피치 Θ): 랜드(외경, 날 끝 P_k → Q) → 홈 곡선(Q → 바닥 K(심압) → A, 매끈한 스플라인) → 경사면 직선(A → 다음 날 끝 P).
+    경사각 γ = 날 끝에서 반경선과 경사면 사이(+ = 날 몸체 쪽으로 기울어 예리). 홈각 = Q ~ P (피치의 %)."""
+    Th = 2 * math.pi / z
+    phf = Th * flute_pct / 100.0
+    g_ = math.radians(rake_deg)
+    P = (R * math.cos(Th), R * math.sin(Th))
+    rh = (math.cos(Th), math.sin(Th)); th_ = (-math.sin(Th), math.cos(Th))
+    u = (-rh[0] * math.cos(g_) + th_[0] * math.sin(g_), -rh[1] * math.cos(g_) + th_[1] * math.sin(g_))
+    rA = rc + RAKE_FOOT * (R - rc)
+    bq = P[0] * u[0] + P[1] * u[1]; cq = R * R - rA * rA
+    disc = bq * bq - cq
+    if disc < 0:
+        raise Impossible("경사면이 홈 바닥 높이까지 내려가지 못함 — 경사각 확인")
+    sv = -bq - math.sqrt(disc)
+    A = (P[0] + sv * u[0], P[1] + sv * u[1])
+    phA = math.atan2(A[1], A[0]) % (2 * math.pi)
+    phQ = Th - phf
+    if not (phQ + 0.15 * phf < phA < Th + 0.5 * (Th - phf)):    # 경사각 + 이면 A 가 날 끝보다 조금 뒤(파고듦)
+        raise Impossible("경사면 아래 끝이 홈 구간 밖 — 경사각 · 홈각 확인")
+    phK = phA - (phA - phQ) * BOTTOM_POS
+    curve = []
+    for i in range(n_pts + 1):
+        ph = phQ + (phA - phQ) * i / n_pts
+        if ph <= phK:
+            v = (ph - phQ) / (phK - phQ); r = rc + (R - rc) * (0.5 + 0.5 * math.cos(math.pi * v))
+        else:
+            v = (ph - phK) / (phA - phK); r = rc + (rA - rc) * (0.5 - 0.5 * math.cos(math.pi * v))
+        curve.append((r * math.cos(ph), r * math.sin(ph)))
+    curve[-1] = A
+    # 원호 근사: 점 3개씩 원호(스플라인 쓸기 교차는 SolidCraft 에서 90 s 초과 — 2026-11-13 실측 3회)
+    arcs = [(curve[i], curve[i + 1], curve[i + 2]) for i in range(0, len(curve) - 2, 2)]
+    return dict(Th=Th, phf=phf, P=P, Q=curve[0], A=A, curve=curve, arcs=arcs, u=u, R=R, rc=rc, phK=phK, rA=rA)
+
+def circle3(p0, p1, p2):
+    ax, ay = p0; bx, by = p1; cx, cy = p2
+    d = 2 * (ax * (by - cy) + bx * (cy - ay) + cx * (ay - by))
+    ux = ((ax * ax + ay * ay) * (by - cy) + (bx * bx + by * by) * (cy - ay) + (cx * cx + cy * cy) * (ay - by)) / d
+    uy = ((ax * ax + ay * ay) * (cx - bx) + (bx * bx + by * by) * (ax - cx) + (cx * cx + cy * cy) * (bx - ax)) / d
+    return (ux, uy), math.hypot(ax - ux, ay - uy)
+
+def arc3_points(p0, p1, p2, n=40):
+    (ux, uy), r = circle3(p0, p1, p2)
+    a0 = math.atan2(p0[1] - uy, p0[0] - ux); a1 = math.atan2(p1[1] - uy, p1[0] - ux); a2 = math.atan2(p2[1] - uy, p2[0] - ux)
+    s01 = (a1 - a0) % (2 * math.pi); s02 = (a2 - a0) % (2 * math.pi)
+    sweep = s02 if s01 < s02 else -((a0 - a2) % (2 * math.pi))
+    return [(ux + r * math.cos(a0 + sweep * i / n), uy + r * math.sin(a0 + sweep * i / n)) for i in range(n + 1)]
+
+def rk_rot(p, ang):
+    c, s_ = math.cos(ang), math.sin(ang)
+    return (p[0] * c - p[1] * s_, p[0] * s_ + p[1] * c)
+
+def rk_dense(rk, n=40):
+    """홈 곡선(원호 근사)을 촘촘한 점으로 — 부피 · 그림 · SolidCraft 형상이 같은 원호."""
+    out = []
+    for i, (p0, p1, p2) in enumerate(rk["arcs"]):
+        pts = arc3_points(p0, p1, p2, n)
+        out += pts if i == 0 else pts[1:]
+    return out
+
+def rk_polygon(rk, z, n_arc=96):
+    """외경 R 단면 윤곽(반시계): 랜드 → 홈 곡선 → (경사면 직선) → 다음 날 랜드."""
+    pts = []
+    land = rk["Th"] - rk["phf"]
+    dense = rk_dense(rk)
+    for k in range(z):
+        base = k * rk["Th"]
+        for i in range(n_arc):
+            t = base + land * i / n_arc
+            pts.append((rk["R"] * math.cos(t), rk["R"] * math.sin(t)))
+        pts += [rk_rot(p_, base) for p_ in dense]
+    return pts
+
 def volumes(g):
+    if g.get("section") == "rake":
+        from shapely.geometry import Polygon, Point
+        poly = Polygon(rk_polygon(g["rk"], g["z"]))
+        D, Lc, R = g["D"], g["Lc"], g["R"]
+        zr = R if g["shape"] != "square" else 0.0
+        area = lambda r: poly.intersection(Point(0, 0).buffer(r, 512)).area if r > 0 else 0.0
+        full = poly.area
+        body = simpson(lambda q: area(tip_r(g, q)), 0, zr, 200) + full * (Lc - zr)
+        rev = simpson(lambda q: math.pi * tip_r(g, q) ** 2, 0, zr) + math.pi * (D / 2) ** 2 * (Lc - zr)
+        shank = 0.0
+        pts = g["shank"]
+        for (z0, r0), (z1, r1) in zip(pts, pts[1:]):
+            shank += math.pi * (z1 - z0) * (r0 * r0 + r0 * r1 + r1 * r1) / 3
+        return dict(revolve=rev, flute_one=(rev - body) / g["z"], after_flutes=[rev, body], shank=shank,
+                    total=body + shank, section_area=full)
+    return volumes_circle(g)
+
+def volumes_circle(g):
     D, Lc, R, a, rf, z = g["D"], g["Lc"], g["R"], g["a"], g["rf"], g["z"]
     zr = R if g["shape"] != "square" else 0.0
     # 회전체(날부)
@@ -525,12 +647,20 @@ def build_dxf(sp, g, tpl, date, stem, number, title, shape_k):
     # ── 끝면도 (날 끝 형상 생략 → 날부 단면과 같은 모양) ──
     se, c = lay["se"], lay["ev_c"]
     Rp, a, rf, z = D / 2 * se, g["a"] * se, g["rf"] * se, g["z"]
-    phi = math.degrees(math.acos((Rp ** 2 + a ** 2 - rf ** 2) / (2 * Rp * a)))
-    # 홈 원 위 교점 각(홈 원 중심 기준)
-    px, py = Rp * math.cos(math.radians(phi)), Rp * math.sin(math.radians(phi))
-    psi = math.degrees(math.atan2(py, px - a))
-    sgn = 1 if g["hand"] == "R" else -1
-    for k in range(z):
+    if g.get("section") == "rake":
+        rk = g["rk"]; Th = rk["Th"]
+        dense = rk_dense(rk)
+        S_ = lambda p_: (c[0] + se * p_[0], c[1] + se * p_[1])
+        for k in range(z):
+            bk = k * Th
+            m.add_arc(c, Rp, math.degrees(bk), math.degrees(bk + Th - rk["phf"]), dxfattribs={"layer": "OUTLINE"})
+            m.add_lwpolyline([S_(rk_rot(p_, bk)) for p_ in dense], dxfattribs={"layer": "OUTLINE"})
+            m.add_line(S_(rk_rot(rk["A"], bk)), S_(rk_rot(rk["P"], bk)), dxfattribs={"layer": "OUTLINE"})
+        a = rf = None
+    for k in (range(z) if a is not None else []):
+        phi = math.degrees(math.acos((Rp ** 2 + a ** 2 - rf ** 2) / (2 * Rp * a)))
+        px, py = Rp * math.cos(math.radians(phi)), Rp * math.sin(math.radians(phi))
+        psi = math.degrees(math.atan2(py, px - a))
         th = 360.0 * k / z
         m.add_arc(c, Rp, th + phi, th + 360.0 / z - phi, dxfattribs={"layer": "OUTLINE"})
         cc = (c[0] + a * math.cos(math.radians(th)), c[1] + a * math.sin(math.radians(th)))
@@ -583,7 +713,9 @@ def build_dxf(sp, g, tpl, date, stem, number, title, shape_k):
              "1. 날 끝 형상(갭 · 끝날 여유각 · 경사각) · 홈 끝맺음 생략",
              f"2. d h6 = 0 / −{g['h6']:.3f}" + (f" · D {g['D_tol']} = {g['D_dev'][0]:+.3f} / {g['D_dev'][1]:+.3f}".replace("-", "−") if g["D_tol"] else "") + " (ISO 286-2)",
              f"3. 나선각 {fmt(g['helix'])}° {hand_k} · 리드 {g['lead']:.2f} (= π×{fmt(D)}÷tan{fmt(g['helix'])}°)",
-             f"4. 홈 단면 원호 R{g['rf']:.2f} · 심압 Ø{g['core_d']:.2f} ({fmt(g['core_pct'])} %D, 추정값)"]
+             (f"4. 홈 단면 경사면 직선(경사각 {fmt(g['rake'])}°) + 곡선 · 심압 Ø{g['core_d']:.2f} ({fmt(g['core_pct'])} %D) · 홈각 {fmt(g['flute_pct'])} % (추정값)"
+              if g.get("section") == "rake" else f"4. 홈 단면 원호 R{g['rf']:.2f} · 심압 Ø{g['core_d']:.2f} ({fmt(g['core_pct'])} %D, 추정값)"
+              + (" · 코너R·볼 원호 고정" if g.get("section_fallback") else ""))]
     if g["neck"]:
         notes.append(f"5. 넥 단 45°{' (반경 %.2f)' % ((D - g['neck'][0]) / 2) if g['neck_step'] else ' 없음'} · 넥 → 생크 테이퍼 편측 {fmt(g['taper_deg'])}° (길이 {g['zt'] - g['neck'][1]:.2f}, 참고)")
     elif D != d:
@@ -696,6 +828,49 @@ def recipe_staged(g, stem, sc_dir):
             "check": "FreeCAD: Part.Shape.read(step) → 솔리드 2 · isValid · 부피 · optimalBoundingBox"}
 
 def section_cmds(g, Ro, z0, name="Section"):
+    if g.get("section") == "rake":
+        return section_cmds_rake(g, Ro, z0, name)
+    return section_cmds_circle(g, Ro, z0, name)
+
+def section_cmds_rake(g, Ro, z0, name="Section"):
+    """v1.5 단면: 랜드 원호(Ro) → [Ro>R 면 반경 직선] → 홈 곡선 스플라인 → 경사면 직선(Ro 까지 연장)."""
+    rk, z = g["rk"], g["z"]
+    R = rk["R"]
+    rd = lambda p_: [round(p_[0], 6) + 0.0, round(p_[1], 6) + 0.0]
+    dense = rk_dense(rk)
+    u = rk["u"]
+    P0 = rk["P"]
+    if Ro > R + 1e-9:
+        bq = -(P0[0] * u[0] + P0[1] * u[1]); cq = R * R - Ro * Ro
+        se = -bq + math.sqrt(bq * bq - cq)                 # P 에서 -u 방향으로 Ro 까지
+        E0 = (P0[0] - se * u[0], P0[1] - se * u[1])
+        F0 = (rk["Q"][0] * Ro / R, rk["Q"][1] * Ro / R)
+    else:
+        E0, F0 = P0, rk["Q"]
+    Th = rk["Th"]
+    c = [{"command": "sketch.create", "params": {"plane": {"origin": [0, 0, z0], "x_dir": [1, 0, 0], "y_dir": [0, 1, 0]}, "name": name}}]
+    for k in range(z):
+        b = k * Th
+        Ek = rk_rot(E0, b - Th)            # 이 날의 날 끝(앞 날 경사면 연장점)
+        Fk = rk_rot(F0, b); Qk = rk_rot(rk["Q"], b)
+        Ak = rk_rot(rk["A"], b); En = rk_rot(E0, b)
+        land_id = 1 + k * (1 + len(rk["arcs"]))
+        c.append({"command": "sketch.arc.center_point", "params": {"center": [0, 0], "start": rd(Ek), "end": rd(Fk)}})
+        if Ro > R + 1e-9:
+            c.append({"command": "sketch.line", "params": {"points": [rd(Fk), rd(Qk)]}})
+            first = f"l{2 * k + 1}.end"            # 반경 직선 끝(=Q) 에 잇는다(점 참조 — 안 이으면 닫힌 윤곽 안 됨, 실측)
+        else:
+            first = f"a{land_id}.end"
+        aid = land_id
+        for j, (p0, p1, p2) in enumerate(rk["arcs"]):
+            aid += 1
+            c.append({"command": "sketch.arc.three_point", "params": {"start": first if j == 0 else f"a{aid - 1}.end",
+                                                                       "through": rd(rk_rot(p1, b)), "end": rd(rk_rot(p2, b))}})
+        c.append({"command": "sketch.line", "params": {"points": [f"a{aid}.end", rd(En)]}})
+    c.append({"command": "sketch.finish", "params": {}})
+    return c
+
+def section_cmds_circle(g, Ro, z0, name="Section"):
     """날부 단면(반지름 Ro 원호 = 외경, 홈 원호 = 오목) 닫힌 윤곽 1장 — 평면 z = z0."""
     a, rf, z = g["a"], g["rf"], g["z"]
     phi = math.acos((Ro * Ro + a * a - rf * rf) / (2 * Ro * a))
@@ -737,7 +912,7 @@ def recipe(g, stem, sc_dir):
                     {"command": "sketch.line", "params": {"points": [[R, R]] + ([[R, Lc]] if Lc > R + 1e-9 else []) + [[0, Lc], [0, 0]]}}]
         tip += [{"command": "sketch.finish", "params": {}},
                 {"command": "solid.revolve", "params": {"sketch": "TipProfile", "axis": "Z", "operation": "new_body", "body_name": "FluteBody", "name": "Tip"}}]
-        Ro = min(0.55 * D, (D / 2 + g["a"] + g["rf"]) / 2)      # 외경보다 크게 — 외경 면이 겹치면 교차 실패(실측)
+        Ro = 0.55 * D if g.get("section") == "rake" else min(0.55 * D, (D / 2 + g["a"] + g["rf"]) / 2)      # 외경보다 크게 — 외경 면이 겹치면 교차 실패(실측)
         cmds += tip + section_cmds(g, Ro, -1.0)
         cmds += [{"command": "sketch.create", "params": {"plane": YZ, "name": "FlutePath"}},
                  {"command": "sketch.line", "params": {"points": [[0, -1], [0, Lc + 1]]}},
@@ -754,7 +929,7 @@ def recipe(g, stem, sc_dir):
              {"command": "save", "params": {"path": f"{sc_dir}\\{stem}.sc"}},
              {"command": "export", "params": {"path": f"{sc_dir}\\{stem}.step"}}]
     rm = max(D, g["d"]) / 2
-    old = recipe_staged(g, stem, sc_dir)
+    old = recipe_staged(g, stem, sc_dir) if g.get("section") != "rake" else {"stages": [], "screenshot": {"view": "iso", "grid": False, "axes": False, "width": 960, "height": 540, "path": f"{sc_dir}\\{stem}_3D.png"}, "check": "FreeCAD: Part.read(step) → 솔리드 2 · isValid · 부피 · optimalBoundingBox"}
     return {"tool_gen": VERSION, "design_name": stem, "sc_dir": sc_dir,
             "stages": [{"name": "1_한번에(날부 + 생크 + 저장 + STEP)", "commands": cmds,
                         "expect": {"volume_mm3": round(g["vol"]["total"], 4), "bodies": 2,
@@ -822,6 +997,9 @@ def main(argv=None):
     info = {"tool_gen": VERSION, "spec_raw": sp["raw"], "stem": stem_v, "number": number, "title": title,
             "derived": {k: g[k] for k in ("shape", "z", "D", "d", "L", "Lc", "R", "core_pct", "core_d", "rf", "a", "C",
                                          "lead", "twist", "zt", "neck", "helix", "hand", "taper_deg", "h6", "D_tol", "D_dev", "shank")},
+            "section": {"type": g["section"], "rake_deg": g["rake"] if g["section"] == "rake" else None,
+                        "flute_pct": g.get("flute_pct") if g["section"] == "rake" else None,
+                        "fallback": "코너R·볼 → 원호 단면 자동 전환(경사 단면 3D 교차 실패, 2026-11-13 실측)" if g.get("section_fallback") else None},
             "iso13399": {"DC": g["D"], "DMM": g["d"], "OAL": g["L"], "APMX": g["Lc"], "NOF": g["z"], "FHA": g["helix"],
                          "DN": g["neck"][0] if g["neck"] else None, "LU": g["neck"][1] if g["neck"] else g["Lc"],
                          "RE": g["R"] if g["shape"] != "square" else None,

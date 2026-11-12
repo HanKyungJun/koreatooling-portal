@@ -128,7 +128,7 @@
 - [[cadcam/iGrind-원통연삭-넥가공-2JJCR040010200|iGrind 원통연삭으로 넥 Ø3.85 가공 — 2JJCR 040 010 200]] — Step Tools Cylindrical Grinding 넥 설정(X Start −4.1 · Step length 15.34 · Washout 15°/0.56), Allow Wheel Overhang 해제 필수. CIM3D 까지 · 실가공 미검증 · 넥 Ø3.85 확정 · 기본 D − 0.15 (10-19). (2026-10-19 신규)
 - [[cadcam/Blender-3D-시각화-MCP-연동]] — Blender 5.2.2 + Blender Lab 공식 MCP 애드온으로 공구 · 명판 3D 모델, 렌더, G코드 가공 영상 제작. 화면 방식만 실사용(백그라운드는 약 2분 · 60 s 제한), 그림 · 영상 전용(조건 · G코드 검증 근거 아님). (2026-10-22 신규)
 - [[cadcam/CAD-3D-프로그램-역할-정의]] — Claude 연결 프로그램 4개 역할: 2D 도면 CADCraft · 3D SolidCraft · MCT CAM FreeCAD · 그림 · 영상 Blender(연삭 원본은 ANCA ToolRoom). SolidCraft 나선 날 · 구멍 판 시험, STEP 원 인식 문제와 변환 스크립트 sc_step_canon.py, 사내 포스트 출력 시험. (2026-11-12 신규)
-- [[cadcam/공구-도면-3D-생성기]] — 사양 한 줄 → 공구 도면(DXF · PDF · PNG) + SolidCraft 3D(STEP). 평 · 코너R · 볼 · 2 ~ 4날 · 넥, 축척 ISO 5455 자동 · 부피 자동 대조. 샘플 3종 공구 1종 약 3분. (2026-11-12 신규)
+- [[cadcam/공구-도면-3D-생성기]] — 사양 한 줄 → 공구 도면(DXF · PDF · PNG) + SolidCraft 3D(STEP). 평 · 코너R · 볼 · 2 ~ 4날 · 넥, 축척 ISO 5455 자동 · 부피 자동 대조. 샘플 3종 공구 1종 약 3분. v1.5 평 끝날 홈 단면 경사면 + 곡선. (2026-11-12 신규 · 11-13 갱신)
 - [[cadcam/도면-작업-자료-목록]] — raw/도면 작업 6개 폴더(양식 · 연습 · 고객도면 · 사내도면 2016 · 개인 실습) 안내 · 새 샘플에서 얻은 생성기 보강 근거. (2026-11-12 신규)
 - [[cadcam/도면-3D-외부자료-학습목록]] — 공구 도면 · 3D 외부 자료(ISO 13399 · ISO 1101 · KS B 0001 · ToolDraft · 날 단면 논문 7편) 정리 · 생성기 보강 우선순위 · 학습 순서. (2026-11-12 신규)
 - [[cadcam/anca-재연마-작업절차-SOP]] — ANCA 기계준비(배전반·에어컴프레샤·CNC동작·워밍업·Run-out·콜렛)·인터페이스(엔드밀 가공 10단계)·휠드레싱(7단계)·휠교체 표준 절차. (2026-07-27 신규)
