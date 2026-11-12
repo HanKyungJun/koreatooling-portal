@@ -109,6 +109,7 @@ SolidCraft STEP 은 원을 **반원 자유곡선(B-spline) 2개**로 저장한�
 
 ## 6. 관련 페이지
 
+- [[cadcam/공구-도면-3D-생성기]] — 사양 한 줄 → 도면 + SolidCraft 3D 자동 생성(§4-7 단계 저장 방식 적용)
 - [[cadcam/Blender-3D-시각화-MCP-연동]] — Blender 연결 · 그림 · 영상 전용
 - [[projects/파일럿2기-발표-소재-모음]] — CADCraft · Blender · FreeCAD 연결 사례 표
 - [[재연마-프로그램-워크플로우]] — ANCA CAD → CAM → 시뮬 → 머신 → 검증 (연삭 쪽 원본)

@@ -1,3 +1,10 @@
+## [2026-11-12] 신규 — 공구 도면 · 3D 생성기 (scripts/tool_gen.py)
+
+사양 한 줄 → 도면(DXF · PDF · PNG) + SolidCraft 레시피 · 3D(STEP). 샘플 3종(평 2날 D10 · 코너R 4날 넥 D6 · 볼 3날 D4 d6) 부피 −0.017 % 이내 · FreeCAD 형상 정상 · 공구 1종 약 3분.
+
+영향받은 페이지: [[cadcam/공구-도면-3D-생성기]], [[cadcam/CAD-3D-프로그램-역할-정의]], [[index]]
+출처 추가: [STD-ISO5455]
+
 ## [2026-11-12] 업데이트 — CAD · 3D 역할 정의 §4-7 SolidCraft 시간 초과 대처
 
 샘플 도면 SMP-01 ~ 03(CADCraft) · 3D(SolidCraft) 작성 중 확인. 산출물 `outputs/02_도면_3D_CAM/샘플도면_20261112/`.

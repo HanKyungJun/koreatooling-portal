@@ -333,6 +333,7 @@
 
 - **[STD-ISO286]** ISO 286-1:2010 — *Geometrical product specifications (GPS) — ISO code system for tolerances on linear sizes — Part 1: Basis of tolerances, deviations and fits* / ISO 286-2:2010 — *Part 2: Tables of standard tolerance classes and limit deviations for holes and shafts*. International Organization for Standardization, Geneva. IT 공차 등급·기초 편차(Part 1), 구멍·축 공차역 수치표(Part 2). [[끼워맞춤공차]] 의 H5~H9 구멍 공차표·H7 조합표 근거. 상세 서지는 [[ISO_표준_참조집]] §ISO 286-1. ⚠️ 위키 수치는 사내 `raw/manuals/끼워맞춤공차.xls` 환산표에서 옮긴 것 — 표준 원문 대조는 미실시(원문 미보유).
 - **[STD-ISO2768]** ISO 2768-1:1989 — *General tolerances — Part 1: Tolerances for linear and angular dimensions without individual tolerance indications*. International Organization for Standardization, Geneva. 도면에 개별 공차가 없을 때 적용하는 일반 공차(f·m·c·v 등급). [[치수불량]] 에서 인용. ⚠️ 측정 기준 온도(20 °C)는 이 표준이 아니라 ISO 1 소관 — [[치수불량]] 해당 줄은 2026-10-01 `[STD-ISO1]` 로 정정.
+- **[STD-ISO5455]** ISO 5455:1979 — *Technical drawings — Scales*. International Organization for Standardization, Geneva. 도면 권장 축척(확대 50:1 · 20:1 · 10:1 · 5:1 · 2:1, 실척 1:1, 축소 1:2 · 1:5 · 1:10 …). [[cadcam/공구-도면-3D-생성기]] 축척 자동 선택 근거. ⚠️ 원문 미보유 — 권장 축척 목록은 일반 제도 교재 기준, 원문 대조 미실시(2026-11-12 등재).
 - **[STD-ISO1]** ISO 1:2016 — *Geometrical product specifications (GPS) — Standard reference temperature for the specification of geometrical and dimensional properties*. International Organization for Standardization, Geneva. 기하·치수 사양의 표준 기준 온도를 **20 °C** 로 규정. 허용 편차(±값)는 규정하지 않는다. [[치수불량]] 측정 온도 줄의 근거. 상세는 [[ISO_표준_참조집]] §2-1. (2026-10-01 등재)
 
 ### 사내 원본 자료 (Internal TOOLKOREA Data)
@@ -567,6 +568,7 @@
 ### CAD · 3D 프로그램 역할 정의 페이지 매핑 (2026-11-12 등재)
 
 - [[cadcam/CAD-3D-프로그램-역할-정의]] → [VEN-SOLIDCRAFT-MCP] · [VEN-FREECAD-CAM-SRC] · [VEN-BLENDER-LAB-MCP] · [SYS-COWORK]
+- [[cadcam/공구-도면-3D-생성기]] → [VEN-SOLIDCRAFT-MCP] · [STD-ISO286] · [STD-ISO2768] · [STD-ISO5455] · [SYS-COWORK]
 
 ### 넥 지름 기준 페이지 매핑 (2026-10-20 등재)
 
