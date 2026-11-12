@@ -1,3 +1,17 @@
+## [2026-11-12] 검수 — 공구 도면 · 3D 외부 자료 · 학습 목록
+
+review-role(R2 주 · R5 · G1 ~ G6). 고침 6: 자료 건수 · CIM3D 표현 · 도면번호 글자 수 · ISO 2768-2 출처 ID · 프론트매터 · worklog/생성기 시각(KST 실측). 출처 ID 등재 대조 0 누락.
+
+영향받은 페이지: [[cadcam/도면-3D-외부자료-학습목록]], [[cadcam/공구-도면-3D-생성기]]
+출처 추가: [VEN-CAMCUT-RUNOUT]
+
+## [2026-11-12] 신규 — 공구 도면 · 3D 외부 자료 · 학습 목록
+
+표준 9(새 8 · 기존 1) · 제조사/도구 8 · 논문 7건 조사, sources 새 ID 23개 등재(검수 뒤 +1 = 24). ISO 1641-1:2016 이 초경 엔드밀 제외 — 기존 [STD-ISO1641] 과 병기. 추천: ANCA ToolDraft 사용 가능 여부 확인.
+
+영향받은 페이지: [[cadcam/도면-3D-외부자료-학습목록]], [[index]]
+출처 추가: [STD-ISO13399-303] [STD-ISO13399-71] [VEN-DORMERPRAMET-ISO13399] [STD-ISO1641-1] [STD-DIN6527] [VEN-HOFFMANN-203440] [STD-ISO1101] [STD-KSB0001] [STD-ISO128] [STD-ISO7200] [VEN-ANCA-TOOLDRAFT] [VEN-ANCA-CIM3D-V9] [VEN-SIEMENS-GTC2015] [VEN-EZDXF-DIM] [VEN-FREECAD-TECHDRAW] [VEN-CADQUERY] [ACA-WANG2017-FLATEM] [ACA-WANG2014-THESIS] [ACA-WANGCHEN2014-DEFL] [ACA-REN2018-FLUTE] [ACA-FANG2020-WHEEL] [ACA-KIMJH2005-KSPE] [ACA-PHAM2006-KSPE]
+
 ## [2026-11-12] 신규 · 업데이트 — raw/도면 작업 정리 · 공구 생성기 v1.3
 
 도면 작업 폴더 6개로 정리 · 자료 목록 페이지 신설. 생성기 기본 테이퍼 13° · 넥 단 45° · 기하공차(흔들림 · 원통도 0.005, 데이텀 A) — 고객 STEP 외형과 +0.002 % · 불리언 차 0.
