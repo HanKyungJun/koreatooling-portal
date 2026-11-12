@@ -20,7 +20,7 @@
 """
 import argparse, json, math, os, re, sys, datetime
 
-VERSION = "1.2 (2026-11-12)"
+VERSION = "1.3 (2026-11-12)"
 
 # ───────────────────────── 1. 사양 해석 ─────────────────────────
 class Impossible(Exception):
@@ -34,7 +34,7 @@ def parse_spec(text):
     toks = t.split()
     sp = {"raw": text.strip(), "kind": None, "z": None, "D": None, "d": None, "L": None, "Lc": None,
           "R": None, "ball": False, "neck": None, "helix": None, "hand": "R",
-          "core_pct": None, "taper_deg": 15.0, "C": None, "number": None}
+          "core_pct": None, "taper_deg": 13.0, "C": None, "number": None, "neck_step": True}
     unknown = []
     for tok in toks:
         u = tok.upper()
@@ -65,6 +65,8 @@ def parse_spec(text):
             sp["core_pct"] = _num(m.group(1))
         elif (m := re.fullmatch(r"테이퍼([\d.]+)°?", tok)):
             sp["taper_deg"] = _num(m.group(1))
+        elif tok == "넥단직각":
+            sp["neck_step"] = False
         elif (m := re.fullmatch(r"C([\d.]+)", u)):
             sp["C"] = _num(m.group(1))
         elif (m := re.fullmatch(r"번호(.+)", tok)):
@@ -134,7 +136,10 @@ def derive(sp):
         if NL <= Lc:
             raise Impossible(f"유효장 {NL} ≤ 날장 {Lc}")
         zt = NL + (d / 2 - ND / 2) / tan_t
-        prof = [(Lc, ND / 2), (NL, ND / 2), (zt, d / 2)]
+        st = (D - ND) / 2 if sp["neck_step"] else 0.0      # 넥 → 날부 45° 단(실물 4KCR: 반경 0.08)
+        if NL <= Lc + st:
+            raise Impossible(f"유효장 {NL} 이 날장 + 넥 단({Lc + st:.2f}) 이하")
+        prof = ([(Lc, D / 2), (Lc + st, ND / 2)] if st > 0 else [(Lc, ND / 2)]) + [(NL, ND / 2), (zt, d / 2)]
     elif abs(D - d) > 1e-9:
         zt = Lc + abs(d / 2 - D / 2) / tan_t
         prof = [(Lc, D / 2), (zt, d / 2)]
@@ -148,7 +153,7 @@ def derive(sp):
     twist = 360.0 * (Lc + 2.0) / lead * (1 if sp["hand"] == "R" else -1)
     g = dict(shape=shape, R=R, z=z, D=D, d=d, L=L, Lc=Lc, core_pct=core_pct, core_d=core_pct / 100.0 * D,
              rf=rf, a=a, C=C, lead=lead, twist=twist, shank=prof, zt=zt, neck=neck,
-             helix=sp["helix"], hand=sp["hand"], taper_deg=sp["taper_deg"], h6=h6(d))
+             helix=sp["helix"], hand=sp["hand"], taper_deg=sp["taper_deg"], h6=h6(d), neck_step=sp["neck_step"])
     g["vol"] = volumes(g)
     return g
 
@@ -259,6 +264,9 @@ def plan_layout(g):
                 bad.append(k)
         if overlap(box, ev_box, 2.0):
             bad.append("끝면도")
+        lbl = (x0, bot - 5.5, x0 + 26, bot)                 # 「정면도 (축척)」 글자 — 정면도 왼쪽 아래
+        if lbl[1] < FRAME[1] or any(overlap(lbl, r, 1.0) for r in RESERVED.values()):
+            bad.append("정면도 이름")
         tried.append((s, bad))
         if not bad:
             break
@@ -283,6 +291,91 @@ def plan_layout(g):
 def text_w(t, h):
     """글자 폭 추정(mm): 한글 0.95h · 그 밖 0.6h — 칸 넘침 방지용."""
     return h * sum(0.95 if ord(ch) > 0x2E80 else 0.68 for ch in t)
+
+GDT_TOL = 0.005   # 사내 명칭도 2016(raw/도면 작업/사내도면_2016) — 사내 경험값
+
+def _free_x(busy, w, lo, hi, want):
+    """[lo, hi] 안에서 busy 구간과 안 겹치는 폭 w 자리 중 want 에 가장 가까운 시작 x (없으면 None)."""
+    cands = [lo, want] + [b + 2 for _, b in busy]
+    best = None
+    for x in cands:
+        x = max(lo, x)
+        if x + w > hi:
+            continue
+        if any(not (x + w <= a or x >= b) for a, b in busy):
+            continue
+        if best is None or abs(x - want) < abs(best - want):
+            best = x
+    return best
+
+def gdt(m, g, X0, Y0, s, top, busy):
+    """날부 원주 흔들림 0.005 A · 생크 원통도 0.005 · 데이텀 A(생크). 윗줄 빈자리에 넣고, 못 넣으면 주기로 돌린다."""
+    D, d, L, Lc, C = g["D"], g["d"], g["L"], g["Lc"], g["C"]
+    yc = top + ROW            # 윗줄 중심
+    H, W = 5.0, 21.0
+    out = []
+
+    def L_(a, b):
+        m.add_line(a, b, dxfattribs={"layer": "DIM"})
+
+    def frame(x, sym):
+        y0 = yc - H / 2
+        m.add_lwpolyline([(x, y0), (x + W, y0), (x + W, y0 + H), (x, y0 + H)], close=True, dxfattribs={"layer": "DIM"})
+        L_((x + 6, y0), (x + 6, y0 + H)); L_((x + 16, y0), (x + 16, y0 + H))
+        cx, cy = x + 3, yc
+        if sym == "runout":       # 원주 흔들림 ↗
+            L_((cx - 1.6, cy - 1.6), (cx + 1.6, cy + 1.6))
+            m.add_solid([(cx + 1.6, cy + 1.6), (cx + 0.4, cy + 1.3), (cx + 1.3, cy + 0.4)], dxfattribs={"layer": "DIM"})
+        else:                     # 원통도 ⌭
+            m.add_circle((cx, cy), 1.0, dxfattribs={"layer": "DIM"})
+            L_((cx - 1.9, cy - 1.7), (cx - 0.1, cy + 1.7)); L_((cx + 0.1, cy - 1.7), (cx + 1.9, cy + 1.7))
+        m.add_text(f"{GDT_TOL:.3f}", height=2.3, dxfattribs={"layer": "DIM", "style": "KOR", "insert": (x + 6.8, cy - 1.1)})
+        if sym == "runout":
+            m.add_text("A", height=2.3, dxfattribs={"layer": "DIM", "style": "KOR", "insert": (x + 17.7, cy - 1.1)})
+
+    def leader(p_from, p_to):
+        L_(p_from, p_to)
+        ang = math.atan2(p_from[1] - p_to[1], p_from[0] - p_to[0])
+        a1 = (p_to[0] + 1.8 * math.cos(ang + 0.3), p_to[1] + 1.8 * math.sin(ang + 0.3))
+        a2 = (p_to[0] + 1.8 * math.cos(ang - 0.3), p_to[1] + 1.8 * math.sin(ang - 0.3))
+        m.add_solid([p_to, a1, a2], dxfattribs={"layer": "DIM"})
+
+    hi = X0 + L * s + 14
+    # 원주 흔들림: 날부 위
+    xr = _free_x(busy, W, X0 + Lc * s * 0.2, hi, X0 + Lc * s + 4)
+    if xr is not None:
+        frame(xr, "runout")
+        tx = X0 + Lc * s * 0.55
+        leader((xr + 2, yc - H / 2), (tx, top))
+        busy.append((xr - 1, xr + W + 1))
+    else:
+        out.append(f" · 날부 원주 흔들림 {GDT_TOL:.3f} A")
+    # 데이텀 A + 원통도: 생크 위 (원통도 틀이 안 들어가면 데이텀만 그리고 원통도는 주기로)
+    x_sh0, x_sh1 = X0 + g["zt"] * s + 2, X0 + (L - C) * s - 2
+    ysh = Y0 + d / 2 * s
+
+    def datum(bx):
+        m.add_lwpolyline([(bx, yc - 2.5), (bx + 5, yc - 2.5), (bx + 5, yc + 2.5), (bx, yc + 2.5)], close=True, dxfattribs={"layer": "DIM"})
+        m.add_text("A", height=2.5, dxfattribs={"layer": "DIM", "style": "KOR", "insert": (bx + 1.4, yc - 1.2)})
+        L_((bx + 2.5, yc - 2.5), (bx + 2.5, ysh + 2.2))
+        m.add_solid([(bx + 1.0, ysh), (bx + 4.0, ysh), (bx + 2.5, ysh + 2.2)], dxfattribs={"layer": "DIM"})
+
+    xs = _free_x(busy, 6 + 3 + W, x_sh0, min(hi, x_sh1 + W), (x_sh0 + x_sh1) / 2 - 15)
+    if xs is not None and xs + 3 <= x_sh1:
+        datum(xs)
+        fx = xs + 9
+        frame(fx, "cyl")
+        leader((fx + 4, yc - H / 2), (min(max(fx + 4, x_sh0), x_sh1), ysh))
+        busy.append((xs - 1, fx + W + 1))
+    else:
+        xd = _free_x(busy, 6, x_sh0, x_sh1, (x_sh0 + x_sh1) / 2)
+        if xd is not None:
+            datum(xd)
+            busy.append((xd - 1, xd + 6))
+            out.append(f" · 생크 원통도 {GDT_TOL:.3f}")
+        else:
+            out.append(f" · 생크(데이텀 A) 원통도 {GDT_TOL:.3f}")
+    return out
 
 def build_dxf(sp, g, tpl, date, stem, number, title, shape_k):
     import ezdxf
@@ -378,7 +471,9 @@ def build_dxf(sp, g, tpl, date, stem, number, title, shape_k):
         if len(seg) > 1:
             m.add_lwpolyline(seg, dxfattribs={"layer": "THIN"})
     line(f(-3 / s, 0), f(L + 3 / s, 0), "CENTER")
-    txt(f"정면도 ({scale_txt(s)})", X0 + s * max(L * 0.7, g["zt"] + 0.25 * L), Y0 + D / 2 * s + ROW - 1.2, 3.0)
+    rows_below = 2 if g["neck"] else 1
+    txt(f"정면도 ({scale_txt(s)})", X0, Y0 - max(D, d) / 2 * s - rows_below * ROW - 3.5 - 4.0, 3.0)
+    busy = [(X0 - 3, X0 + Lc * s + 3)]
     # 치수
     top = Y0 + D / 2 * s
     rmax = max(D, d) / 2 * s
@@ -401,8 +496,11 @@ def build_dxf(sp, g, tpl, date, stem, number, title, shape_k):
     if g["neck"] or D != d:
         zq0, rq0 = g["shank"][-4] if g["neck"] else g["shank"][0]
         pm = f((zq0 + g["zt"]) / 2, (rq0 + d / 2) / 2)
-        m.add_lwpolyline([pm, (pm[0] + 3, pm[1] + 6), (pm[0] + 18, pm[1] + 6)], dxfattribs={"layer": "DIM"})
-        txt(f"편측 {fmt(g['taper_deg'])}°", pm[0] + 3.5, pm[1] + 6.6, 2.3, "DIM")
+        m.add_lwpolyline([pm, (pm[0] + 3, pm[1] + 6), (pm[0] + 10, pm[1] + 6)], dxfattribs={"layer": "DIM"})
+        txt(f"{fmt(g['taper_deg'])}°", pm[0] + 3.5, pm[1] + 6.6, 2.3, "DIM")
+        busy.append((pm[0] - 1, pm[0] + 11))
+    busy.append((pc[0] - 1, pc[0] + 11))
+    gdt_notes = gdt(m, g, X0, Y0, s, top, busy)
 
     # ── 끝면도 (날 끝 형상 생략 → 날부 단면과 같은 모양) ──
     se, c = lay["se"], lay["ev_c"]
@@ -466,16 +564,17 @@ def build_dxf(sp, g, tpl, date, stem, number, title, shape_k):
              f"3. 나선각 {fmt(g['helix'])}° {hand_k} · 리드 {g['lead']:.2f} (= π×{fmt(D)}÷tan{fmt(g['helix'])}°)",
              f"4. 홈 단면 원호 R{g['rf']:.2f} · 심압 Ø{g['core_d']:.2f} ({fmt(g['core_pct'])} %D, 추정값)"]
     if g["neck"]:
-        notes.append(f"5. 넥 → 생크 테이퍼 편측 {fmt(g['taper_deg'])}° (길이 {g['zt'] - g['neck'][1]:.2f}, 참고)")
+        notes.append(f"5. 넥 단 45°{' (반경 %.2f)' % ((D - g['neck'][0]) / 2) if g['neck_step'] else ' 없음'} · 넥 → 생크 테이퍼 편측 {fmt(g['taper_deg'])}° (길이 {g['zt'] - g['neck'][1]:.2f}, 참고)")
     elif D != d:
         notes.append(f"5. 날부 → 생크 테이퍼 편측 {fmt(g['taper_deg'])}° (길이 {g['zt'] - Lc:.2f}, 참고)")
     else:
         notes.append(f"5. 생크 끝 C{fmt(g['C'])} (추정값)")
     notes += [f"6. 3D STEP 솔리드 2개(날부 · 생크) · 부피 {g['vol']['total']:,.2f} mm³",
-              "7. 지시 없는 공차 ISO 2768-m"]
+              "7. 기하공차 0.005 = 사내 2016 도면 관례" + "".join(gdt_notes),
+              "8. 지시 없는 공차 ISO 2768-m"]
     for i, s_ in enumerate(notes):
         hn = min(2.3, 83.0 / text_w(s_, 1.0))
-        txt(s_, 22.0, 47.0 - i * 4.4, hn)
+        txt(s_, 22.0, 47.5 - i * 4.25, hn)
     return doc, lay, notes
 
 def post_check(doc, lay):
