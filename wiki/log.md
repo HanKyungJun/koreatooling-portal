@@ -1,3 +1,10 @@
+## [2026-11-12] 업데이트 — CAD · 3D 역할 정의 §4-7 SolidCraft 시간 초과 대처
+
+샘플 도면 SMP-01 ~ 03(CADCraft) · 3D(SolidCraft) 작성 중 확인. 산출물 `outputs/02_도면_3D_CAM/샘플도면_20261112/`.
+
+영향받은 페이지: [[cadcam/CAD-3D-프로그램-역할-정의]]
+출처 추가: 없음
+
 ## [2026-11-12] 신규 — CAD · 3D 프로그램 역할 정의 (CADCraft · SolidCraft · FreeCAD · Blender)
 
 SolidCraft 연결(headless, outputs/02_도면_3D_CAM 만 허용) · 4개 프로그램 역할 표 · SolidCraft 시험(원통 · 나선 날 · 구멍 판) · FreeCAD 에서 STEP 원 인식 문제(드릴 구멍 0개 · 반지름 0 · 구멍까지 윤곽 가공)와 변환 스크립트 · 사내 포스트 O9101 출력 시험(G2 25 · G3 15).
