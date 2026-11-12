@@ -20,7 +20,7 @@
 """
 import argparse, json, math, os, re, sys, datetime
 
-VERSION = "1.3 (2026-11-12)"
+VERSION = "1.4 (2026-11-12)"
 
 # ───────────────────────── 1. 사양 해석 ─────────────────────────
 class Impossible(Exception):
@@ -34,7 +34,7 @@ def parse_spec(text):
     toks = t.split()
     sp = {"raw": text.strip(), "kind": None, "z": None, "D": None, "d": None, "L": None, "Lc": None,
           "R": None, "ball": False, "neck": None, "helix": None, "hand": "R",
-          "core_pct": None, "taper_deg": 13.0, "C": None, "number": None, "neck_step": True}
+          "core_pct": None, "taper_deg": 13.0, "C": None, "number": None, "neck_step": True, "D_tol": None}
     unknown = []
     for tok in toks:
         u = tok.upper()
@@ -47,8 +47,9 @@ def parse_spec(text):
             sp["ball"] = True
         elif (m := re.fullmatch(r"LC([\d.]+)", u)):
             sp["Lc"] = _num(m.group(1))
-        elif (m := re.fullmatch(r"D([\d.]+)", tok)):
+        elif (m := re.fullmatch(r"D([\d.]+)([a-z]\d+)?", tok)):
             sp["D"] = _num(m.group(1))
+            sp["D_tol"] = m.group(2)
         elif (m := re.fullmatch(r"d([\d.]+)", tok)):
             sp["d"] = _num(m.group(1))
         elif (m := re.fullmatch(r"L([\d.]+)", u)):
@@ -84,6 +85,21 @@ def parse_spec(text):
 #   2날 = SMP-01(심압 60 %D · R 0.35D) · 4날 = SMP-02(심압 65 %D · R 1.3/6 D) · 3날 = 중간값
 FLUTE_RULE = {2: (60.0, 0.35), 3: (62.0, 0.27), 4: (65.0, 1.3 / 6.0)}
 H6_UM = [(3, 6), (6, 8), (10, 9), (18, 11), (30, 13), (50, 16)]   # ISO 286-2 h6 (IT6) — 「이하」 기준
+# 축 공차 등급 한계 편차(μm, 위 · 아래) — 「이하」 기준. JIS B 0401(= ISO 286-2) 발췌표 [VEN-MIKI-JISB0401] 로 대조한 구간만.
+#   3 mm 이하 e8 은 발췌표에 없어 넣지 않음(확인 필요).
+SHAFT_TOL = {"h6": [(6, 0, -8), (10, 0, -9), (18, 0, -11), (30, 0, -13), (50, 0, -16)],
+             "e8": [(6, -20, -38), (10, -25, -47), (18, -32, -59), (30, -40, -73), (50, -50, -89)]}
+
+def shaft_tol(cls, size):
+    """(위 편차, 아래 편차) mm. 3 초과 ~ 50 이하만."""
+    if cls not in SHAFT_TOL:
+        raise Impossible(f"공차 등급 {cls} 는 표에 없음 — 지원: {', '.join(SHAFT_TOL)} (확인 필요)")
+    if size <= 3:
+        raise Impossible(f"{cls} {size} mm — 3 mm 이하 구간은 대조한 표에 없음(확인 필요)")
+    for up, es, ei in SHAFT_TOL[cls]:
+        if size <= up:
+            return es / 1000.0, ei / 1000.0
+    raise Impossible(f"{cls} {size} mm — 50 mm 초과")
 
 def h6(d):
     for up, um in H6_UM:
@@ -153,7 +169,8 @@ def derive(sp):
     twist = 360.0 * (Lc + 2.0) / lead * (1 if sp["hand"] == "R" else -1)
     g = dict(shape=shape, R=R, z=z, D=D, d=d, L=L, Lc=Lc, core_pct=core_pct, core_d=core_pct / 100.0 * D,
              rf=rf, a=a, C=C, lead=lead, twist=twist, shank=prof, zt=zt, neck=neck,
-             helix=sp["helix"], hand=sp["hand"], taper_deg=sp["taper_deg"], h6=h6(d), neck_step=sp["neck_step"])
+             helix=sp["helix"], hand=sp["hand"], taper_deg=sp["taper_deg"], h6=h6(d), neck_step=sp["neck_step"],
+             D_tol=sp["D_tol"], D_dev=shaft_tol(sp["D_tol"], D) if sp["D_tol"] else None)
     g["vol"] = volumes(g)
     return g
 
@@ -407,9 +424,12 @@ def build_dxf(sp, g, tpl, date, stem, number, title, shape_k):
         m.add_linear_dim(base=(p1[0], y), p1=p1, p2=p2, angle=0, text=text, dimstyle="TG",
                          dxfattribs={"layer": "DIM"}, override={"dimlfac": 1.0 / s}).render()
 
-    def dim_v(p1, p2, x, s, text):
-        m.add_linear_dim(base=(x, p1[1]), p1=p1, p2=p2, angle=90, text=text, dimstyle="TG",
-                         dxfattribs={"layer": "DIM"}, override={"dimlfac": 1.0 / s}).render()
+    def dim_v(p1, p2, x, s, text, tol=None):
+        dm = m.add_linear_dim(base=(x, p1[1]), p1=p1, p2=p2, angle=90, text=text, dimstyle="TG",
+                              dxfattribs={"layer": "DIM"}, override={"dimlfac": 1.0 / s})
+        if tol:      # (위 편차, 아래 편차) mm — 쌓은 공차 글자
+            dm.set_tolerance(upper=tol[0], lower=-tol[1], hfactor=0.7, align=0, dec=3)
+        dm.render()
 
     # 양식 칸
     set_text("S (생크경)", "d (생크경)")
@@ -484,12 +504,12 @@ def build_dxf(sp, g, tpl, date, stem, number, title, shape_k):
         row += 1
     dim_h(f(0, -D / 2), f(L, -(d / 2 - g["C"])), Y0 - rmax - ROW * row, s, "<> (전장 L)")
     xD = Lc * 0.62 if g["shape"] != "ball" else max(R * 1.3, Lc * 0.7)
-    dim_v(f(xD, -D / 2), f(xD, D / 2), f(xD, 0)[0], s, "D %%c<>")
+    dim_v(f(xD, -D / 2), f(xD, D / 2), f(xD, 0)[0], s, "D %%c<>" + (f" {g['D_tol']}" if g["D_tol"] else ""), g["D_dev"])
     if g["neck"]:
         xn = (Lc + g["neck"][1]) / 2
         dim_v(f(xn, -g["neck"][0] / 2), f(xn, g["neck"][0] / 2), f(xn, 0)[0], s, "%%c<> (넥)")
     xd = L - g["C"] - min(0.12 * (L - g["zt"]), 6.0)
-    dim_v(f(xd, -d / 2), f(xd, d / 2), f(xd, 0)[0], s, "d %%c<> h6")
+    dim_v(f(xd, -d / 2), f(xd, d / 2), f(xd, 0)[0], s, "d %%c<> h6", (0.0, -g["h6"]))
     pc = f(L - g["C"] / 2, d / 2 - g["C"] / 2)
     m.add_lwpolyline([pc, (pc[0] + 4, pc[1] + 5), (pc[0] + 10, pc[1] + 5)], dxfattribs={"layer": "DIM"})
     txt(f"C{fmt(g['C'])}", pc[0] + 4.5, pc[1] + 5.6, 2.5, "DIM")
@@ -549,18 +569,19 @@ def build_dxf(sp, g, tpl, date, stem, number, title, shape_k):
     # ── 사양표 · 주기 ──
     def spec_row(label, val):
         t = [e for e in m.query("TEXT") if e.dxf.text == label][0]
-        m.add_text(val, height=2.3, dxfattribs={"layer": "TB_VALUE", "style": "KOR", "insert": (239.0, t.dxf.insert.y)})
+        m.add_text(val, height=min(2.3, 46.0 / text_w(val, 1.0)), dxfattribs={"layer": "TB_VALUE", "style": "KOR", "insert": (239.0, t.dxf.insert.y)})
     hand_k = "오른나선" if g["hand"] == "R" else "왼나선"
-    neck_v = f"Ø{fmt(g['neck'][0])} × {fmt(g['neck'][1])} (유효장)" if g["neck"] else "—"
-    rv = {"square": "—", "corner": f"코너 R{fmt(R)}", "ball": f"볼 R{fmt(R)}"}[g["shape"]]
-    for k, v in {"공구 종류": f"{shape_k} 엔드밀" + (" (넥)" if g["neck"] else ""), "날 수": str(g["z"]),
-                 "D (날경)": f"Ø{fmt(D)}", "d (생크경)": f"Ø{fmt(d)} h6", "L (전장)": fmt(L), "날장": fmt(Lc),
-                 "목경 × 목길이": neck_v, "볼 R / 코너 R": rv, "나선각": f"{fmt(g['helix'])}° {hand_k}",
+    neck_v = f"Ø{fmt(g['neck'][0])} × {fmt(g['neck'][1])}  (DN × LU)" if g["neck"] else "—"
+    rv = {"square": "—", "corner": f"코너 R{fmt(R)}  (RE)", "ball": f"볼 R{fmt(R)}  (RE)"}[g["shape"]]
+    dtxt = f"Ø{fmt(D)}" + (f" {g['D_tol']} ({g['D_dev'][0]:+.3f}/{g['D_dev'][1]:+.3f})" if g["D_tol"] else "")
+    for k, v in {"공구 종류": f"{shape_k} 엔드밀" + (" (넥)" if g["neck"] else ""), "날 수": f"{g['z']}  (NOF)",
+                 "D (날경)": dtxt + "  (DC)", "d (생크경)": f"Ø{fmt(d)} h6  (DMM)", "L (전장)": f"{fmt(L)}  (OAL)", "날장": f"{fmt(Lc)}  (APMX)",
+                 "목경 × 목길이": neck_v, "볼 R / 코너 R": rv, "나선각": f"{fmt(g['helix'])}° {hand_k}  (FHA)",
                  "소재 (등급)": "초경 (확인 필요)", "코팅": "확인 필요", "비고": "생성기 초안"}.items():
         spec_row(k, v)
     notes = [f"[주기] 단위 mm · 모양 확인용 초안 ({date})",
              "1. 날 끝 형상(갭 · 끝날 여유각 · 경사각) · 홈 끝맺음 생략",
-             f"2. d Ø{fmt(d)} h6 = 0 / −{g['h6']:.3f} (ISO 286-2)",
+             f"2. d h6 = 0 / −{g['h6']:.3f}" + (f" · D {g['D_tol']} = {g['D_dev'][0]:+.3f} / {g['D_dev'][1]:+.3f}".replace("-", "−") if g["D_tol"] else "") + " (ISO 286-2)",
              f"3. 나선각 {fmt(g['helix'])}° {hand_k} · 리드 {g['lead']:.2f} (= π×{fmt(D)}÷tan{fmt(g['helix'])}°)",
              f"4. 홈 단면 원호 R{g['rf']:.2f} · 심압 Ø{g['core_d']:.2f} ({fmt(g['core_pct'])} %D, 추정값)"]
     if g["neck"]:
@@ -571,7 +592,7 @@ def build_dxf(sp, g, tpl, date, stem, number, title, shape_k):
         notes.append(f"5. 생크 끝 C{fmt(g['C'])} (추정값)")
     notes += [f"6. 3D STEP 솔리드 2개(날부 · 생크) · 부피 {g['vol']['total']:,.2f} mm³",
               "7. 기하공차 0.005 = 사내 2016 도면 관례" + "".join(gdt_notes),
-              "8. 지시 없는 공차 ISO 2768-m"]
+              "8. 지시 없는 공차 ISO 2768-m · 사양표 괄호 = ISO 13399 기호"]
     for i, s_ in enumerate(notes):
         hn = min(2.3, 83.0 / text_w(s_, 1.0))
         txt(s_, 22.0, 47.5 - i * 4.25, hn)
@@ -800,7 +821,11 @@ def main(argv=None):
         json.dump(rc, fp, ensure_ascii=False, indent=1)
     info = {"tool_gen": VERSION, "spec_raw": sp["raw"], "stem": stem_v, "number": number, "title": title,
             "derived": {k: g[k] for k in ("shape", "z", "D", "d", "L", "Lc", "R", "core_pct", "core_d", "rf", "a", "C",
-                                         "lead", "twist", "zt", "neck", "helix", "hand", "taper_deg", "h6", "shank")},
+                                         "lead", "twist", "zt", "neck", "helix", "hand", "taper_deg", "h6", "D_tol", "D_dev", "shank")},
+            "iso13399": {"DC": g["D"], "DMM": g["d"], "OAL": g["L"], "APMX": g["Lc"], "NOF": g["z"], "FHA": g["helix"],
+                         "DN": g["neck"][0] if g["neck"] else None, "LU": g["neck"][1] if g["neck"] else g["Lc"],
+                         "RE": g["R"] if g["shape"] != "square" else None,
+                         "_주": "사내 표기 ↔ ISO 13399 기호 대응 [VEN-DORMERPRAMET-ISO13399]. 날장 → APMX · 넥 없을 때 LU = 날장(추정)"},
             "volume_mm3": g["vol"], "layout": {"scale": scale_txt(lay["s"]), "end_view": scale_txt(lay["se"]),
                                                 "detail": scale_txt(lay["sd"]) if "sd" in lay else None,
                                                 "scale_tries": [(scale_txt(s), b) for s, b in lay["tried"]], "drawn_extent": ext, "inside_frame": ok},

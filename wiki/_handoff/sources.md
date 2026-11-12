@@ -352,6 +352,7 @@
 - **[VEN-SIEMENS-GTC2015]** Keinan, M. (2015-04-13). *Digital Cutting Tool Catalogs: ISO 13399 and GTC*. Siemens 블로그 https://blogs.sw.siemens.com/news/?p=266 — ISO 13399/GTC 로 속성 · 3D 모델 · 도면 교환, 3D 모델에 좌표계 · 절삭/비절삭 구역 표시 필요.
 - **[VEN-EZDXF-DIM]** ezdxf 1.4.5 문서. *Tutorial for Linear Dimensions* https://ezdxf.readthedocs.io/en/stable/tutorials/linear_dimension.html (+ radius · diameter 튜토리얼) — `render()` 필수 · `dimlfac` · 공차 `dimtol`/`dimtp`/`dimtm`(`set_tolerance()`) · 한계 치수 `set_limits()`.
 - **[VEN-FREECAD-TECHDRAW]** FreeCAD 문서. *TechDraw API* (미러 https://gitea.suzanne.soy/suzanne.soy/FreeCAD-Doc/src/branch/master/localwiki/TechDraw_API.html) — `findShapeOutline` · `writeDXFView` · `writeDXFPage` · `viewPartAsSvg`. 3D → 2D 투상 도면.
+- **[VEN-MIKI-JISB0401]** Miki Pulley. *List of Fit Tolerances (Excerpt from JIS B 0401)*. https://www.mikipulley.co.jp/en/resources/standards-fitting-tolerances (확인일 2026-11-12) — 축 e8: 3 ~ 6 −20/−38 · 6 ~ 10 −25/−47 · 10 ~ 18 −32/−59 · 18 ~ 30 −40/−73 · 30 ~ 50 −50/−89 μm, h6: 0/−8 · −9 · −11 · −13 · −16 μm. JIS B 0401 = ISO 286 부합(2차 출처 · 발췌표, 3 mm 이하 없음). [[cadcam/공구-도면-3D-생성기]] 공차 표.
 - **[VEN-CAMCUT-RUNOUT]** CAMCUT Group. *General tolerances for circular run-out*. https://www.camcut-group.com/en-us/support/instructions/measuring/general-tolerances/general-tolerances-for-circular-run-out/ — ISO 2768-2:1989 흔들림 일반공차 H 0.1 · K 0.2 · L 0.5 mm(2차 출처, 공구 전용 아님).
 - **[VEN-CADQUERY]** CadQuery 문서 API Reference https://cadquery.readthedocs.io/en/latest/apireference.html — `Workplane.twistExtrude(distance, angleDegrees)` · `sweep` · `exporters.export`. / build123d https://github.com/gumyr/build123d (Apache-2.0, OCCT, `pip install build123d`, STEP · STL).
 - **[ACA-WANG2017-FLATEM]** Wang, L., Kong, L., Li, J., & Chen, Z. (2017). A parametric and accurate CAD model of flat end mills based on its grinding operations. *Int. J. Precis. Eng. Manuf.*, 18(10), 1363–1370. doi:10.1007/s12541-017-0162-9 — 휠 형상 → 접촉 이론으로 나선 홈면, 갭 4 변수, 정확도 약 1e-3 mm.
@@ -595,7 +596,7 @@
 ### CAD · 3D 프로그램 역할 정의 페이지 매핑 (2026-11-12 등재)
 
 - [[cadcam/CAD-3D-프로그램-역할-정의]] → [VEN-SOLIDCRAFT-MCP] · [VEN-FREECAD-CAM-SRC] · [VEN-BLENDER-LAB-MCP] · [SYS-COWORK]
-- [[cadcam/공구-도면-3D-생성기]] → [VEN-SOLIDCRAFT-MCP] · [STD-ISO286] · [STD-ISO2768] · [STD-ISO5455] · [SYS-COWORK]
+- [[cadcam/공구-도면-3D-생성기]] → [VEN-SOLIDCRAFT-MCP] · [STD-ISO286] · [STD-ISO2768] · [STD-ISO5455] · [SYS-COWORK] · [VEN-MIKI-JISB0401] · [VEN-DORMERPRAMET-ISO13399]
 - [[cadcam/도면-3D-외부자료-학습목록]] → [STD-ISO13399-303] · [STD-ISO13399-71] · [VEN-DORMERPRAMET-ISO13399] · [STD-ISO1641-1] · [STD-DIN6527] · [VEN-HOFFMANN-203440] · [STD-ISO1101] · [STD-KSB0001] · [STD-ISO128] · [STD-ISO7200] · [VEN-ANCA-TOOLDRAFT] · [VEN-ANCA-CIM3D-V9] · [VEN-SIEMENS-GTC2015] · [VEN-EZDXF-DIM] · [VEN-FREECAD-TECHDRAW] · [VEN-CADQUERY] · [VEN-CAMCUT-RUNOUT] · [STD-ISO1641] · [ACA-WANG2017-FLATEM] · [ACA-WANG2014-THESIS] · [ACA-WANGCHEN2014-DEFL] · [ACA-REN2018-FLUTE] · [ACA-FANG2020-WHEEL] · [ACA-KIMJH2005-KSPE] · [ACA-PHAM2006-KSPE] · [STD-ISO3002-1]
 
 ### 넥 지름 기준 페이지 매핑 (2026-10-20 등재)
