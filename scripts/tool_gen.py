@@ -729,8 +729,9 @@ def build_dxf(sp, g, tpl, date, stem, number, title, shape_k):
     for k, v in {"공구 종류": f"{shape_k} 엔드밀" + (" (넥)" if g["neck"] else ""), "날 수": f"{g['z']}  (NOF)",
                  "D (날경)": dtxt + "  (DC)", "d (생크경)": f"Ø{fmt(d)} h6  (DMM)", "L (전장)": f"{fmt(L)}  (OAL)", "날장": f"{fmt(Lc)}  (APMX)",
                  "목경 × 목길이": neck_v, "볼 R / 코너 R": rv, "나선각": f"{fmt(g['helix'])}° {hand_k}  (FHA)",
-                 "소재 (등급)": "초경 (확인 필요)", "코팅": "확인 필요", "비고": "생성기 초안"}.items():
-        spec_row(k, v)
+                 "소재 (등급)": "", "코팅": "", "비고": "생성기 초안"}.items():
+        if v:  # 소재 · 코팅은 빈칸 — 작성할 때 채움(한경준님 11-13)
+            spec_row(k, v)
     notes = [f"[주기] 단위 mm · 모양 확인용 초안 ({date})",
              "1. 날 끝 형상(갭 · 끝날 여유각 · 경사각) · 홈 끝맺음 생략",
              f"2. d h6 = 0 / −{g['h6']:.3f}" + (f" · D {g['D_tol']} = {g['D_dev'][0]:+.3f} / {g['D_dev'][1]:+.3f}".replace("-", "−") if g["D_tol"] else "") + " (ISO 286-2)",
@@ -1026,7 +1027,7 @@ def recipe_rake_cut(g, stem, sc_dir, tip_path):
     return {"tool_gen": VERSION, "design_name": stem, "sc_dir": sc_dir, "stages": stages, "fallback_stages": [],
             "screenshot": {"view": "iso", "grid": False, "axes": False, "width": 960, "height": 540, "path": f"{sc_dir}\\{stem}_3D.png"},
             "how": "new_design(name=design_name) → stages 를 차례로 batch(commands, expect, timings=true, verbose=false) → screenshot. "
-                   "90 s 끊김이면 _작업 의 마지막 저장본을 open 하고 다음 단계부터. 홈 곡선 = 꺾은선 "
+                   "응답 대기 초과(80 s)는 작업이 계속 도는 것 — _작업 저장 파일이 생길 때까지 기다린 뒤, 다음 단계 전에 그 저장본을 open(빈 설계로 바뀐 사례 11-13). 홈 곡선 = 꺾은선 "
                    f"{g.get('rk_poly_n')} 구간(곡선과 최대 {g.get('rk_poly_dev', 0):.3f} mm).",
             "check": "FreeCAD: Part.read(step) → 솔리드 2 · isValid · 부피 · optimalBoundingBox"}
 
