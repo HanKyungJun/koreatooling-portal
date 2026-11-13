@@ -20,7 +20,7 @@
 """
 import argparse, json, math, os, re, sys, datetime
 
-VERSION = "1.5 (2026-11-13)"
+VERSION = "1.6 (2026-11-13)"
 
 # ───────────────────────── 1. 사양 해석 ─────────────────────────
 class Impossible(Exception):
@@ -178,11 +178,6 @@ def derive(sp):
              helix=sp["helix"], hand=sp["hand"], taper_deg=sp["taper_deg"], h6=h6(d), neck_step=sp["neck_step"],
              D_tol=sp["D_tol"], D_dev=shaft_tol(sp["D_tol"], D) if sp["D_tol"] else None,
              section=sp["section"], rake=sp["rake"])
-    if g["section"] == "rake" and shape != "square":
-        # v1.5 실측(2026-11-13): 경사 단면 스윕 ∩ 코너R·볼 회전체 교차가 4회 모두 실패
-        # (스플라인 25점·9점, 원호 4개·2개 — 78 s 후 "no result" 또는 90 s 끊김). → 검증된 원호 단면으로 자동 전환.
-        g["section"] = "circle"
-        g["section_fallback"] = True
     if g["section"] == "rake":
         if not (-10 <= g["rake"] <= 25):
             raise Impossible(f"경사각 {g['rake']}° — −10 ~ 25° 범위 밖")
@@ -190,6 +185,11 @@ def derive(sp):
         if not (30 <= g["flute_pct"] <= 85):
             raise Impossible(f"홈각 {g['flute_pct']} % — 피치의 30 ~ 85 % 범위 밖")
         g["rk"] = rake_geom(D / 2, g["core_d"] / 2, z, g["rake"], g["flute_pct"])
+        if shape != "square":
+            # v1.6 실측(2026-11-13): 홈 곡선을 이어진 원호(접선 연결)로 두면 불리언(교차 · 빼기)이 모두 「no result」
+            # — 평 원기둥 빼기도 실패. 꺾인 직선(꺾은선)으로 두면 홈 1개 빼기 3.8 ~ 5.8 s 성공.
+            # → 코너 R · 볼은 홈 곡선을 꺾은선 N 구간으로(곡선과 차이 ≤ 0.4 %D 가 되는 가장 작은 N).
+            g["rk"]["poly"], g["rk_poly_n"], g["rk_poly_dev"] = rk_poly(g["rk"], D)
     g["vol"] = volumes(g)
     return g
 
@@ -287,12 +287,34 @@ def rk_rot(p, ang):
     return (p[0] * c - p[1] * s_, p[0] * s_ + p[1] * c)
 
 def rk_dense(rk, n=40):
-    """홈 곡선(원호 근사)을 촘촘한 점으로 — 부피 · 그림 · SolidCraft 형상이 같은 원호."""
+    """홈 곡선(원호 근사)을 촘촘한 점으로 — 부피 · 그림 · SolidCraft 형상이 같은 원호.
+    v1.6: 꺾은선(poly)이 있으면 그 점(코너 R · 볼 — 3D 와 같은 꺾은선)."""
+    if rk.get("poly"):
+        return list(rk["poly"])
+    return rk_dense_arcs(rk, n)
+
+def rk_dense_arcs(rk, n=40):
     out = []
     for i, (p0, p1, p2) in enumerate(rk["arcs"]):
         pts = arc3_points(p0, p1, p2, n)
         out += pts if i == 0 else pts[1:]
     return out
+
+def _segdist(p, a, b):
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    L2 = dx * dx + dy * dy
+    u = max(0.0, min(1.0, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L2)) if L2 > 0 else 0.0
+    return math.hypot(p[0] - a[0] - u * dx, p[1] - a[1] - u * dy)
+
+def rk_poly(rk, D, tol_pct=0.4):
+    """홈 곡선 → 꺾은선 점(Q … A). 곡선과의 최대 차이 ≤ tol_pct %D 인 가장 작은 구간 수(6 ~ 16)."""
+    dense = rk_dense_arcs(rk, 60)
+    for N in (6, 8, 10, 12, 16):
+        idx = [round(i * (len(dense) - 1) / N) for i in range(N + 1)]
+        pl = [dense[i] for i in idx]
+        dev = max(min(_segdist(q, pl[i], pl[i + 1]) for i in range(N)) for q in dense)
+        if dev <= tol_pct / 100.0 * D or N == 16:
+            return pl, N, dev
 
 def rk_polygon(rk, z, n_arc=96):
     """외경 R 단면 윤곽(반시계): 랜드 → 홈 곡선 → (경사면 직선) → 다음 날 랜드."""
@@ -715,7 +737,7 @@ def build_dxf(sp, g, tpl, date, stem, number, title, shape_k):
              f"3. 나선각 {fmt(g['helix'])}° {hand_k} · 리드 {g['lead']:.2f} (= π×{fmt(D)}÷tan{fmt(g['helix'])}°)",
              (f"4. 홈 단면 경사면 직선(경사각 {fmt(g['rake'])}°) + 곡선 · 심압 Ø{g['core_d']:.2f} ({fmt(g['core_pct'])} %D) · 홈각 {fmt(g['flute_pct'])} % (추정값)"
               if g.get("section") == "rake" else f"4. 홈 단면 원호 R{g['rf']:.2f} · 심압 Ø{g['core_d']:.2f} ({fmt(g['core_pct'])} %D, 추정값)"
-              + (" · 코너R·볼 원호 고정" if g.get("section_fallback") else ""))]
+)]
     if g["neck"]:
         notes.append(f"5. 넥 단 45°{' (반경 %.2f)' % ((D - g['neck'][0]) / 2) if g['neck_step'] else ' 없음'} · 넥 → 생크 테이퍼 편측 {fmt(g['taper_deg'])}° (길이 {g['zt'] - g['neck'][1]:.2f}, 참고)")
     elif D != d:
@@ -870,6 +892,32 @@ def section_cmds_rake(g, Ro, z0, name="Section"):
     c.append({"command": "sketch.finish", "params": {}})
     return c
 
+def gap_cmds_rake(g, k, Ro, z0=-1.0):
+    """v1.6 코너 R · 볼: 홈 k 의 빈 공간(꺾은선 홈 곡선 + 경사면 직선 + Ro 원호) 스케치 → 비틀어 쓸어 빼기.
+    실측(2026-11-13, D6 R0.5 4날): 홈 1개 5.8 s. 이어진 원호 곡선은 빼기 실패(57.8 s 후 no result)."""
+    rk = g["rk"]
+    R, Th = rk["R"], rk["Th"]
+    rd = lambda p_: [round(p_[0], 6) + 0.0, round(p_[1], 6) + 0.0]
+    P0, u = rk["P"], rk["u"]
+    bq = -(P0[0] * u[0] + P0[1] * u[1]); cq = R * R - Ro * Ro
+    se = -bq + math.sqrt(bq * bq - cq)
+    E0 = (P0[0] - se * u[0], P0[1] - se * u[1])
+    F0 = (rk["Q"][0] * Ro / R, rk["Q"][1] * Ro / R)
+    b = k * Th
+    # 홈 시작점 Q 는 외경 R 위에 있다 → 꼭짓점을 R 위(또는 바로 밖)에 두면 쓸었을 때 외경 원통과 겹치거나 스치듯 만나
+    # 빼기가 실패(54.7 s 후 no result)하거나 재시도로 87.9 s(실측 2026-11-13). Q 를 반지름 방향 1 % 안쪽(Qi)으로 —
+    # F → Qi 는 반지름 직선이라 외경을 직각으로 지나가고 Q 자리(랜드 끝)는 그대로. 부피 차이 무시 수준(삼각형 ≈ 0.005 mm²).
+    Qi = (rk["Q"][0] * 0.99, rk["Q"][1] * 0.99)
+    pts = [rk_rot(F0, b), rk_rot(Qi, b)] + [rk_rot(p_, b) for p_ in rk["poly"][1:]] + [rk_rot(E0, b)]
+    name = f"Gap{k + 1}"
+    return [{"command": "sketch.create", "params": {"plane": {"origin": [0, 0, z0], "x_dir": [1, 0, 0], "y_dir": [0, 1, 0]}, "name": name}},
+            {"command": "sketch.line", "params": {"points": [rd(q) for q in pts]}},
+            {"command": "sketch.arc.center_point", "params": {"center": [0, 0], "start": rd(pts[-1]), "end": rd(pts[0]), "clockwise": True}},
+            {"command": "sketch.finish", "params": {}},
+            {"command": "solid.sweep", "params": {"sketch": name, "path_sketch": "FlutePath", "path": ["l1"],
+                                                  "twist": f"{g['twist']:.4f} deg", "operation": "cut", "targets": ["FluteBody"],
+                                                  "name": f"Flute{k + 1}Cut"}}]
+
 def section_cmds_circle(g, Ro, z0, name="Section"):
     """날부 단면(반지름 Ro 원호 = 외경, 홈 원호 = 오목) 닫힌 윤곽 1장 — 평면 z = z0."""
     a, rf, z = g["a"], g["rf"], g["z"]
@@ -912,12 +960,14 @@ def recipe(g, stem, sc_dir):
                     {"command": "sketch.line", "params": {"points": [[R, R]] + ([[R, Lc]] if Lc > R + 1e-9 else []) + [[0, Lc], [0, 0]]}}]
         tip += [{"command": "sketch.finish", "params": {}},
                 {"command": "solid.revolve", "params": {"sketch": "TipProfile", "axis": "Z", "operation": "new_body", "body_name": "FluteBody", "name": "Tip"}}]
-        Ro = 0.55 * D if g.get("section") == "rake" else min(0.55 * D, (D / 2 + g["a"] + g["rf"]) / 2)      # 외경보다 크게 — 외경 면이 겹치면 교차 실패(실측)
-        cmds += tip + section_cmds(g, Ro, -1.0)
-        cmds += [{"command": "sketch.create", "params": {"plane": YZ, "name": "FlutePath"}},
-                 {"command": "sketch.line", "params": {"points": [[0, -1], [0, Lc + 1]]}},
-                 {"command": "sketch.finish", "params": {}},
-                 {"command": "solid.sweep", "params": {"sketch": "Section", "path_sketch": "FlutePath", "path": ["l1"],
+        path = [{"command": "sketch.create", "params": {"plane": YZ, "name": "FlutePath"}},
+                {"command": "sketch.line", "params": {"points": [[0, -1], [0, Lc + 1]]}},
+                {"command": "sketch.finish", "params": {}}]
+        if g.get("section") == "rake":
+            return recipe_rake_cut(g, stem, sc_dir, tip + path)
+        Ro = min(0.55 * D, (D / 2 + g["a"] + g["rf"]) / 2)      # 외경보다 크게 — 외경 면이 겹치면 교차 실패(실측)
+        cmds += tip + section_cmds(g, Ro, -1.0) + path
+        cmds += [{"command": "solid.sweep", "params": {"sketch": "Section", "path_sketch": "FlutePath", "path": ["l1"],
                                                        "twist": f"{g['twist']:.4f} deg", "operation": "intersect",
                                                        "targets": ["FluteBody"], "name": "Flutes"}}]
     sk = [[0, Lc]] + [[round(r, 6), round(zq, 6)] for zq, r in g["shank"]] + [[0, L]]
@@ -939,6 +989,46 @@ def recipe(g, stem, sc_dir):
             "how": "new_design(name=design_name) → stages 의 batch 1회(commands, expect, timings=true, verbose=false) → screenshot. "
                    "교차(Flutes) 실패 · 90 s 끊김이면 new_design 후 fallback_stages(홈마다 빼기, 단계마다 저장)로.",
             "check": old["check"]}
+
+def shank_cmds(g, stem, sc_dir):
+    YZ = {"origin": [0, 0, 0], "x_dir": [0, 1, 0], "y_dir": [0, 0, 1]}
+    sk = [[0, g["Lc"]]] + [[round(r, 6), round(zq, 6)] for zq, r in g["shank"]] + [[0, g["L"]]]
+    return [{"command": "sketch.create", "params": {"plane": YZ, "name": "ShankProfile"}},
+            {"command": "sketch.line", "params": {"points": sk, "closed": True}},
+            {"command": "sketch.finish", "params": {}},
+            {"command": "solid.revolve", "params": {"sketch": "ShankProfile", "axis": "Z", "operation": "new_body", "body_name": "ShankBody", "name": "Shank"}},
+            {"command": "browser.visibility", "params": {"visible": False, "folder": "sketches"}},
+            {"command": "save", "params": {"path": f"{sc_dir}\\{stem}.sc"}},
+            {"command": "export", "params": {"path": f"{sc_dir}\\{stem}.step"}}]
+
+def recipe_rake_cut(g, stem, sc_dir, tip_path):
+    """v1.6 코너 R · 볼 + 경사 단면: 날 끝 회전체에서 홈마다 빼기(꺾은선 홈 곡선). 홈 1개씩 한 단계 · 단계마다 저장.
+    실측(2026-11-13): D6 R0.5 4날 = 홈별 7.2 · 27.2 · 25.3 · 약 90 s(뒤로 갈수록 느림) · D4 볼 3날 = 12.3 · 20.7 · 44.1 s.
+    홈 4개를 한 스케치로 한 번에 빼기는 80 s 넘어 더 느림 → 쓰지 않음."""
+    D, L = g["D"], g["L"]
+    Ro = 0.55 * D
+    wd = sc_dir + "\\_작업\\"
+    v = g["vol"]
+    one = v["flute_one"]
+    stages, cur = [], list(tip_path)
+    for k in range(g["z"]):
+        cur += gap_cmds_rake(g, k, Ro)
+        if True:
+            cur.append({"command": "save", "params": {"path": f"{wd}{stem}_s{len(stages) + 1}_flute{k + 1}.sc"}})
+            head = "날끝회전체+" if not stages else ""
+            rng = f"홈{k + 1}"
+            stages.append({"name": f"{len(stages) + 1}_{head}{rng}",
+                           "commands": cur, "expect": {"volume_mm3": round(v["revolve"] - (k + 1) * one, 4), "bodies": 1}})
+            cur = []
+    rm = max(D, g["d"]) / 2
+    stages.append({"name": f"{len(stages) + 1}_생크+저장+STEP", "commands": shank_cmds(g, stem, sc_dir),
+                   "expect": {"volume_mm3": round(v["total"], 4), "bodies": 2, "bbox": {"min": [-rm, -rm, 0], "max": [rm, rm, L]}}})
+    return {"tool_gen": VERSION, "design_name": stem, "sc_dir": sc_dir, "stages": stages, "fallback_stages": [],
+            "screenshot": {"view": "iso", "grid": False, "axes": False, "width": 960, "height": 540, "path": f"{sc_dir}\\{stem}_3D.png"},
+            "how": "new_design(name=design_name) → stages 를 차례로 batch(commands, expect, timings=true, verbose=false) → screenshot. "
+                   "90 s 끊김이면 _작업 의 마지막 저장본을 open 하고 다음 단계부터. 홈 곡선 = 꺾은선 "
+                   f"{g.get('rk_poly_n')} 구간(곡선과 최대 {g.get('rk_poly_dev', 0):.3f} mm).",
+            "check": "FreeCAD: Part.read(step) → 솔리드 2 · isValid · 부피 · optimalBoundingBox"}
 
 # ───────────────────────── 6. 실행 ─────────────────────────
 def main(argv=None):
@@ -999,7 +1089,8 @@ def main(argv=None):
                                          "lead", "twist", "zt", "neck", "helix", "hand", "taper_deg", "h6", "D_tol", "D_dev", "shank")},
             "section": {"type": g["section"], "rake_deg": g["rake"] if g["section"] == "rake" else None,
                         "flute_pct": g.get("flute_pct") if g["section"] == "rake" else None,
-                        "fallback": "코너R·볼 → 원호 단면 자동 전환(경사 단면 3D 교차 실패, 2026-11-13 실측)" if g.get("section_fallback") else None},
+                        "poly_segments": g.get("rk_poly_n"), "poly_max_dev_mm": round(g["rk_poly_dev"], 4) if g.get("rk_poly_dev") is not None else None,
+                        "_주": "코너R·볼 = 홈 곡선 꺾은선(이어진 원호는 SolidCraft 불리언 실패, 2026-11-13 실측) · 홈마다 빼기" if g.get("rk_poly_n") else None},
             "iso13399": {"DC": g["D"], "DMM": g["d"], "OAL": g["L"], "APMX": g["Lc"], "NOF": g["z"], "FHA": g["helix"],
                          "DN": g["neck"][0] if g["neck"] else None, "LU": g["neck"][1] if g["neck"] else g["Lc"],
                          "RE": g["R"] if g["shape"] != "square" else None,
