@@ -26,6 +26,10 @@ Trico ERP 뷰어 GUI  v2.0
               ⑦ 빈 칸이 「nan」으로 보이던 것을 빈 칸으로 표시
               ⑧ Tk 위젯은 메인 스레드에서만 다루도록 정리(칸 값은 조회 전에 읽고, 결과는 큐로 전달)
               ⑨ 달력 창 grab 실패(창이 뜨기 전 grab_set) 시 20ms 간격 재시도(최대 25회 = 0.5초)
+  2026-11-13 (v2.1): 생산팀 「품목 정가」 탭 추가 (DMA100P_g10, trico_client.품목정가).
+              품목코드 또는 규격(형번)으로 찾고, 품목코드 · 품목명 · 규격 · 정가 4열만 표시.
+              할인 단가 · 매입단가 · 마진은 받자마자 버림. 엑셀 저장 · 자동 조회 없음.
+              가격 차단의 유일한 예외 — decisions 2026-11-13 (2) · (3).
 """
 
 import json
@@ -132,6 +136,8 @@ COL_LABELS = {
     "mov_own_qty": "자사수량",    "mov_qty":     "출하수량",
     "sal_dt":      "판매일",      "bad_qty":     "불량수량",
     "cnt":         "품목수",      "ex_rt":       "환율",
+    # 품목 정가 (2026-11-13 추가)
+    "list_up":     "정가",
 }
 
 # ── 색상/폰트 ──────────────────────────────────────────────────────────────────
@@ -1083,10 +1089,113 @@ class SettingsTab(ttk.Frame):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+class ItemPriceTab(DataTab):
+    """품목 정가 탭 (2026-11-13) — 품목코드 / 규격으로 찾아 정가(list_up)만 보여 줌.
+
+    날짜 대신 품목코드 · 규격 칸. 엑셀 저장 버튼 없음(정가 열만 화면으로 확인).
+    마이다스툴 일부 품목은 품목코드가 245-… 라서 사이트 형번(SK16-11 등)은 「규격」 칸에 넣는다.
+    """
+
+    def _build(self):
+        bar = tk.Frame(self, bg=BG, pady=6, padx=8)
+        bar.pack(fill="x")
+        tk.Label(bar, text="품목코드", bg=BG, font=FONT).pack(side="left")
+        self.e_itm = tk.Entry(bar, width=18, font=FONT)
+        self.e_itm.pack(side="left", padx=(4, 16))
+        tk.Label(bar, text="규격(형번)", bg=BG, font=FONT).pack(side="left")
+        self.e_spec = tk.Entry(bar, width=18, font=FONT)
+        self.e_spec.pack(side="left", padx=(4, 16))
+        for e in (self.e_itm, self.e_spec):
+            e.bind("<Return>", lambda ev: self._query_thread())
+        self.btn_query = tk.Button(
+            bar, text="조회", font=FONT_HD, bg=ACCENT, fg=WHITE,
+            padx=14, relief="flat", cursor="hand2", command=self._query_thread,
+        )
+        self.btn_query.pack(side="left")
+        self.lbl_status = tk.Label(bar, text="앞자리만 넣어도 됩니다 (예: KER20 · SK16-11)",
+                                   bg=BG, font=FONT_SM, fg="#666")
+        self.lbl_status.pack(side="left", padx=12)
+
+        frame = tk.Frame(self)
+        frame.pack(fill="both", expand=True)
+        self.tree = ttk.Treeview(frame, show="headings", selectmode="browse")
+        vsb = ttk.Scrollbar(frame, orient="vertical",   command=self.tree.yview)
+        hsb = ttk.Scrollbar(frame, orient="horizontal", command=self.tree.xview)
+        self.tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
+        vsb.pack(side="right",  fill="y")
+        hsb.pack(side="bottom", fill="x")
+        self.tree.pack(fill="both", expand=True)
+        self.tree.tag_configure("odd",  background="#fafafa")
+        self.tree.tag_configure("even", background=WHITE)
+        self.tree.tag_configure("zero", background="#FFF8E1", foreground="#8D6E63")
+
+    def _query_thread(self):
+        itm  = self.e_itm.get().strip()
+        spec = self.e_spec.get().strip()
+        if not (itm or spec):
+            self.lbl_status.config(text="품목코드 또는 규격을 넣어 주세요", fg=RED)
+            return
+        self._seq = getattr(self, "_seq", 0) + 1
+        seq = self._seq
+        self.btn_query.config(state="disabled", text="조회 중...")
+        self.lbl_status.config(text="", fg="#666")
+        threading.Thread(target=self._do_query, args=(seq, itm, spec, ""), daemon=True).start()
+
+    def _do_query(self, seq, itm, spec, _kw):
+        try:
+            df = self.fetch_fn(itm_cd=itm or None, spec=spec or None)
+            df = self._postprocess_df(df)
+            if df is not None:
+                df = df.reset_index(drop=True)
+            prepared = self._prepare_rows(df)
+            self._ui(lambda: self._load_table(seq, df, prepared))
+        except Exception as e:
+            msg = str(e)
+            self._ui(lambda: self._query_failed(seq, msg))
+
+    def _postprocess_df(self, df):
+        """정가를 「8,310」처럼 쉼표 정수로, 품목코드 순 정렬"""
+        if df is None or df.empty:
+            return df
+        df = df.copy()
+        if "list_up" in df.columns:
+            def won(v):
+                try:
+                    return f"{int(round(float(v))):,}"
+                except (TypeError, ValueError):
+                    return ""
+            df["list_up"] = df["list_up"].map(won)
+        if "itm_cd" in df.columns:
+            df = df.sort_values("itm_cd", kind="mergesort")
+        return df
+
+    def _prepare_rows(self, df):
+        """정가 0 행은 연한 노랑(정가 미등록)"""
+        if df is None or df.empty:
+            return []
+        cols = list(df.columns)
+        pi = cols.index("list_up") if "list_up" in cols else -1
+        out = []
+        for i, row in enumerate(df.itertuples(index=False, name=None)):
+            vals = [_fmt(v) for v in row]
+            zero = pi >= 0 and vals[pi] in ("0", "")
+            out.append((vals, "zero" if zero else ("odd" if i % 2 else "even")))
+        return out
+
+    def _column_spec(self, c: str, lbl: str):
+        if c == "list_up":
+            return 110, 60, "e"
+        return (220 if c in ("itm_nm", "spec") else 160), 60, "w"
+
+    def _save_excel(self):
+        """이 탭은 엑셀 저장을 두지 않는다(정가 화면 확인 전용)."""
+        return
+
+
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Trico ERP 뷰어  v2.0")
+        self.title("Trico ERP 뷰어  v2.1")
         self.geometry("1280x760")
         self.configure(bg=BG)
 
@@ -1130,6 +1239,11 @@ class App(tk.Tk):
                 inner_nb.add(tab, text=f"  {name}  ")
                 tab.after(prefetch_delay_ms, tab._query_thread)
                 prefetch_delay_ms += PREFETCH_STEP_MS
+
+            # 품목 정가 탭 (2026-11-13) — 자동 조회 없음, 품목코드 · 규격을 넣고 조회
+            price_tab = ItemPriceTab(inner_nb, name="품목 정가", fetch_fn=client.품목정가,
+                                     style="TFrame")
+            inner_nb.add(price_tab, text="  품목 정가  ")
         except Exception as e:
             ttk.Label(prod_frame,
                       text=f"⚠️  ERP 연결 실패: {e}\n\n사무실 네트워크(LAN/VPN) 연결 후 재시작하세요.",
@@ -1165,7 +1279,7 @@ class App(tk.Tk):
 
         # 상태바
         tk.Label(self,
-                 text="Trico ERP 뷰어 v2.0  |  단가·금액 컬럼 자동 차단  |  사무실 네트워크 전용",
+                 text="Trico ERP 뷰어 v2.1  |  단가·금액 컬럼 자동 차단 (예외: 품목 정가 탭은 정가만 표시)  |  사무실 네트워크 전용",
                  bg="#e0e0e0", font=FONT_SM, anchor="w", padx=8, pady=3
                  ).pack(fill="x", side="bottom")
 
