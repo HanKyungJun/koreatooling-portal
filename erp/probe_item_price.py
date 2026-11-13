@@ -165,8 +165,9 @@ def _pick(cols, cands, override=None):
     return None
 
 
-# trico_client.is_price_col 은 「_up(단가) · _bup(매입단가) · margin」 열을 못 잡는다(2026-11-13 DMA100P_g10 실측:
-# list_up · std_up · app_itm_up · std_bup · margin 이 표시 없이 통과). 이 화면 표시용으로 따로 본다.
+# trico_client.is_price_col 은 「_up(단가) · _bup(매입단가) · margin」 열을 못 잡았다(2026-11-13 DMA100P_g10 실측:
+# list_up · std_up · app_itm_up · std_bup · margin 이 표시 없이 통과). → 같은 날 is_price_col 에 추가(승인).
+# 할인율(dc_rt · bdc_rt)은 공용 차단에 없어 이 화면 표시용으로 계속 따로 본다.
 _EXTRA_PRICE = re.compile(r"(^|_)b?up$|margin|dc_rt|bdc_rt")
 
 
