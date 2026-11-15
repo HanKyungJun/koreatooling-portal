@@ -7,6 +7,14 @@
 - 다음 단계 제안: P0 넥 휠 D 교체 승인(11-10 추천, 예비 휠 유무) — 새 세션 · 생성기는 실제 제품 사양 1건으로 도면 의견
 - 챗으로 가져갈 질문: 없음
 
+## 2026-11-16 (#1) 핸드오프 — Cowork · Claude 활용 책 2권 · 요청 다듬기 스킬 · pre-commit 훅 · 사내 스킬 정상본
+
+- 한 일: wikidocs 19445 · 19104 요약 → refine-request 스킬 저장 · git pre-commit 실명 검사 훅 · 사내 스킬 11개 정상본 보관
+- 결과/산출물: `.githooks/pre-commit` · `.gitattributes` · `git-commit.bat`(fba69ad) · `_handoff/skills-custom/`(40cd125) · decisions 2026-11-16 (1) (2)
+- 미완·블로커: ① skills-custom/README §3 md5 안내 1줄 미커밋 ② refine-request 범위 밖 시험 미실행(새 대화 필요) ③ CLAUDE.md §15-2 「커밋 전 --check 수동」 문구 — 훅이 대신, 주간 정리 때 정리
+- 다음 단계 제안: 스킬 개정 후보 중 grinding-calc(출처 표기) · scheduler-diagnose(휴무 소스) 먼저 — 승인 대기, 새 세션 권장
+- 챗으로 가져갈 질문: 없음
+
 ## 2026-11-13 (#3) 핸드오프 — Cowork · 가격 차단 단어 추가 · 정가 이상 품목 이력 확인 · #368 정정 보류
 
 - 한 일: 공용 가격 차단(`erp/trico_client.py` `is_price_col`)에 이름 끝 `_up` · `_bup` + `margin` 추가(경준님 승인) · 기존 열 188개 회귀 → 새로 막히는 열 `list_up` 하나(품목 정가는 차단 해제 경로라 영향 없음) · `last_upd_dt` 등 통과 확인
