@@ -3,6 +3,13 @@
 > 무엇을(What), 왜(Why), 출처(Where)를 **시간 역순(최신이 맨 위)** 으로 기록합니다.
 > 챗에서 결정된 내용도 반드시 여기로 옮겨야 Code/Cowork가 따라옵니다.
 
+## 2026-11-16 (2): 사내 스킬 정상본을 `wiki/_handoff/skills-custom/` 에 보관 · 개정은 테스트카드 3가지 시험 뒤 교체
+
+- 결정: ① 사내 스킬 11개 원본(계정 저장본 그대로 복사 · md5 대조)과 목록 · 개정 후보 · 개정 절차를 `skills-custom/README.md` 에 둔다 ② 개정 때 기존 요청 · 바뀐 규칙 · 범위 밖 요청 3가지를 새 대화에서 시험해 `테스트카드.md` 에 남긴 뒤 정상본을 교체한다 ③ 원본을 읽으며 찾은 개정 후보 5건(scheduler-diagnose 휴무 소스 · wiki-lint 옛 경로 · cnc-handoff add -A · grinding-calc 출처 표기 · wiki-new-page 두 곳 관리)은 고치지 않고 승인 대기
+- 근거: 이전에는 사내 스킬 원본이 위키에 없어 깨지거나 잘못 고쳐도 되돌릴 곳이 없었다. 계기 wikidocs 19445 13-7 · 14-3(보조 참고, 단독 근거 아님). 대안: 계정 저장본만 믿기(기각 — 개정 이력 · 시험 기록이 남지 않음)
+- 출처: Cowork (한경준님 「1번 추천도 바로 진행」 2026-11-16)
+- 영향: `wiki/_handoff/skills-custom/`(신규) · [[standards/요청-문장-모음]] 관련 페이지
+
 ## 2026-11-16 (1): 커밋 전 실명 검사를 git pre-commit 훅으로 자동화 — Claude 훅은 쓰지 않음
 
 - 결정: ① `.githooks/pre-commit` 이 커밋 직전 `python scripts/anonymize_public.py --check` 를 돌려 실명이 남으면 커밋을 막는다 ② 켜기는 `git config core.hooksPath .githooks`(PC 마다 1회, 한경준님 PowerShell) ③ `.gitattributes` 로 `.githooks/*` 줄바꿈 LF 고정 ④ `git-commit.bat` 은 커밋 실패 시 「[실패]」 표시 후 종료 ⑤ `doc_style_check.py` 는 훅에 넣지 않음(제출 보고서 전용 — 양식 · 견본 docx 로 커밋이 막힐 수 있음)
