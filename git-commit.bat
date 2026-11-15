@@ -20,6 +20,12 @@ for /f "tokens=1-3 delims=-" %%a in ("%date%") do (
 set MSG=자동커밋 %YY%-%MM%-%DD%
 
 git commit -m "%MSG%"
+if errorlevel 1 (
+    echo.
+    echo [실패] 커밋이 안 됐습니다. 위 메시지를 확인하세요.
+    pause
+    exit /b 1
+)
 
 echo.
 echo [완료] 커밋: %MSG%

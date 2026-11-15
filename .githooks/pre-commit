@@ -1,0 +1,13 @@
+#!/bin/sh
+# cnc-wiki pre-commit: 공개 저장소 실명 검사 (decisions 2026-11-16)
+export PYTHONIOENCODING=utf-8
+PY=python
+command -v python >/dev/null 2>&1 || PY=py
+"$PY" scripts/anonymize_public.py --check
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "[pre-commit] 거래처 실명이 남은 파일이 있어 커밋을 막았습니다."
+  echo "[pre-commit] 위 목록의 파일을 고친 뒤 다시 커밋하세요."
+  exit 1
+fi
+exit 0

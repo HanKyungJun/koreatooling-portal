@@ -3,6 +3,14 @@
 > 무엇을(What), 왜(Why), 출처(Where)를 **시간 역순(최신이 맨 위)** 으로 기록합니다.
 > 챗에서 결정된 내용도 반드시 여기로 옮겨야 Code/Cowork가 따라옵니다.
 
+## 2026-11-16 (1): 커밋 전 실명 검사를 git pre-commit 훅으로 자동화 — Claude 훅은 쓰지 않음
+
+- 결정: ① `.githooks/pre-commit` 이 커밋 직전 `python scripts/anonymize_public.py --check` 를 돌려 실명이 남으면 커밋을 막는다 ② 켜기는 `git config core.hooksPath .githooks`(PC 마다 1회, 한경준님 PowerShell) ③ `.gitattributes` 로 `.githooks/*` 줄바꿈 LF 고정 ④ `git-commit.bat` 은 커밋 실패 시 「[실패]」 표시 후 종료 ⑤ `doc_style_check.py` 는 훅에 넣지 않음(제출 보고서 전용 — 양식 · 견본 docx 로 커밋이 막힐 수 있음)
+- 근거: Claude Code 훅은 Claude 도구 호출에만 걸리고 사용자가 PowerShell 에서 하는 커밋은 못 잡는다(공식 문서). git pre-commit 은 0 이 아닌 종료 코드로 커밋을 막는다(githooks). `--check` 는 실명 있으면 종료 코드 1 — 그대로 사용. 실측(11-16, PC 안 가상 환경): 현재 0개 · 약 16 s, 통과(rc 0) · 막힘(rc 1) 두 경로 시험. 대안: Claude 훅(기각 — 수동 커밋 못 잡음) · 수동 검사 유지(기각 — §15-2 실수 ② 재발 위험)
+  - 학술 · 표준 출처: [Anthropic Claude Code Hooks 문서](https://code.claude.com/docs/en/hooks) · [Git githooks](https://git-scm.com/docs/githooks) · 계기: wikidocs 19104 「클로드 코드 가이드」 09 훅(보조)
+- 출처: Cowork (한경준님 「진행 해보자」 2026-11-16)
+- 영향: `.githooks/pre-commit`(신규) · `.gitattributes`(신규) · `git-commit.bat` · CLAUDE.md §15-2 의 `--check` 수동 단계는 훅이 대신(문구 정리는 다음 정리 때) · ⚠️ `git commit --no-verify` 로 건너뛸 수 있음
+
 ## 2026-11-13 (4): 공구 생성기 코너 R · 볼도 경사 단면 — 홈 곡선 꺾은선 + 홈마다 빼기 (2026-11-13 (1) ② 대체)
 
 - 결정: ① `tool_gen.py` v1.6 코너 R · 볼 = 평 끝날과 같은 경사 단면, 홈 곡선만 꺾은선(곡선과 차이 ≤ 0.4 %D) ② 3D 는 날 끝 회전체에서 홈마다 빼기(홈 1개 = 1단계, 단계마다 저장) ③ 홈 시작점은 반지름 1 % 안쪽 점으로 둔다(외경 위 꼭짓점 금지) ④ 평 끝날은 v1.5 그대로(원호 4개 · 불리언 없음)
