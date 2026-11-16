@@ -2,14 +2,15 @@
 
 - 한 일: 빨간 링크 6 · index 미등재 3 · 11-02 브리핑 머리말 · `wiki/CLAUDE.md` → `_to_delete/20261116_wiki-CLAUDE/`(승인) · 공구-코팅 검수표 17건 반영 · 출처 7건 등재
 - 결과: 커밋 b6f81c2 · 7cde6d7 · 4163759 · 7cee87d · a2e49b4 — 위키 검수 ①③④⑤ 0건
-- 미완·블로커: 공구-코팅 확인 3(No.5 단위 · No.17 pdf 발행처 → 보림 문의, No.6 Al AlTiN 사내 기준 → 경준님) · run.log 아침 `ERROR` → `SKIP` · 스킬 개정 후보 3(cnc-handoff · grinding-calc · wiki-new-page)
-- 다음 단계 제안: run.log 문구 정리(스크립트 수정 — 새 세션 권장)
+- run.log: `scripts/update_calendar_artifact.py` — 날짜 지정 없음 + 16시 전이면 `[calendar] SKIP … (16:00 생성 전)` · rc 0, 그 밖은 ERROR 그대로(시험 3경우 통과, 옛판 `.bak_20261116`). 🔲 11-17 아침 OnBoot run.log 에 SKIP 줄 확인
+- 미완 → 새 세션 ①: 스킬 개정 후보 3(cnc-handoff · grinding-calc · wiki-new-page) — 내용 `skills-custom/README.md` §2(31~33행) · 절차 decisions 2026-11-16 (2) · 시험 `테스트카드.md`
+- 미완 → 새 세션 ②: 공구-코팅 확인 3 — No.5 미세경도 단위 · No.17 `코팅 종류.pdf` 발행처(보림시스템 문의) · No.6 Al 가공 AlTiN(뮤) 사내 기준 유지 여부(경준님 판단) — `outputs/공구-코팅_검수표_20261116.xlsx`
 
 ## 2026-11-16 (#3) 핸드오프 — Cowork · 스킬 개정 후보 2건(scheduler-diagnose · wiki-lint) 반영
 
 - 한 일: 개정안 작성 → 저장 카드 → 새 대화 시험 각 3가지 → 정상본 교체(테스트카드 #2 · #3 전부 통과)
 - 결과/산출물: `skills-custom/scheduler-diagnose/SKILL.md`(3069de6f) · `skills-custom/wiki-lint/SKILL.md`(5451aaa4, 3판) · README §1 · §2 · holidays.md §4 · decisions 2026-11-16 (3)
-- 미완·블로커: 개정 후보 3건 남음(cnc-handoff · grinding-calc · wiki-new-page) · 시험에서 나온 위키 수정 목록 미적용 — ~~빨간 링크 6곳~~(2026-11-16 완료, lint ⑤ 0건) · ~~index 미등재 3~~(2026-11-16 완료, lint ④ 0건) · ~~11-02 브리핑 머리말~~(2026-11-16 type · updated 추가) · ~~`wiki/CLAUDE.md` 처리~~(2026-11-16 `_to_delete/20261116_wiki-CLAUDE/` 로 이동, 한경준님 승인 — 옛 줄임판 · §0-A 와 충돌) · ~~주간브리핑 10-26 · 11-09 파일 없음~~(누락 아님 — 10-26 연차, 11-02 브리핑 머리말에 기재 · 11-09 는 아침 브리핑 예약 작업 11-02 중단, decisions 2026-11-02 (1)) · ~~`공구-코팅.md` 검토 17건~~(2026-11-16 전부 반영 — 남은 확인 3: No.5 미세경도 단위 · No.17 pdf 발행처 → 보림시스템 문의, No.6 Al 가공 AlTiN 사내 기준 유지 여부 → 경준님) · run.log 아침 `ERROR` → `SKIP` 문구
+- 미완·블로커: 개정 후보 3건 남음(cnc-handoff · grinding-calc · wiki-new-page) · 시험에서 나온 위키 수정 목록 미적용 — ~~빨간 링크 6곳~~(2026-11-16 완료, lint ⑤ 0건) · ~~index 미등재 3~~(2026-11-16 완료, lint ④ 0건) · ~~11-02 브리핑 머리말~~(2026-11-16 type · updated 추가) · ~~`wiki/CLAUDE.md` 처리~~(2026-11-16 `_to_delete/20261116_wiki-CLAUDE/` 로 이동, 한경준님 승인 — 옛 줄임판 · §0-A 와 충돌) · ~~주간브리핑 10-26 · 11-09 파일 없음~~(누락 아님 — 10-26 연차, 11-02 브리핑 머리말에 기재 · 11-09 는 아침 브리핑 예약 작업 11-02 중단, decisions 2026-11-02 (1)) · ~~`공구-코팅.md` 검토 17건~~(2026-11-16 전부 반영 — 남은 확인 3: No.5 미세경도 단위 · No.17 pdf 발행처 → 보림시스템 문의, No.6 Al 가공 AlTiN 사내 기준 유지 여부 → 경준님) · ~~run.log 아침 `ERROR` → `SKIP` 문구~~(2026-11-16 완료, #4)
 - 다음 단계 제안: 위 위키 수정 목록 한 번에 처리(빨간 링크부터) · 공구-코팅 상 1건(BLUE = 울트라-X) 먼저
 - 챗으로 가져갈 질문: 없음
 

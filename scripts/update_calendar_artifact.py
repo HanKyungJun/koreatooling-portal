@@ -18,7 +18,7 @@ r"""
 import sys, io, re, json
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 import openpyxl
 
@@ -159,6 +159,13 @@ def main():
     xlsx_path = DAILY_DIR / f'{date_key}_일일보고.xlsx'
 
     if not xlsx_path.exists():
+        # 2026-11-16: 아침 OnBoot 실행(07~08시)은 그날 보고서가 16:00 에 만들어지기 전이라
+        #   파일이 없는 게 정상이다. 날짜를 지정하지 않았고 16시 전이면 SKIP · rc 0 으로 남긴다.
+        #   16시 이후이거나 날짜를 지정했는데 없으면 그대로 ERROR · rc 1.
+        #   (PC 시각 = KST. 이전 판: update_calendar_artifact.py.bak_20261116)
+        if not pos and datetime.now().hour < 16:
+            log(f'[calendar] SKIP - {date_key} 보고서 아직 없음(16:00 생성 전): {xlsx_path.name}')
+            sys.exit(0)
         log(f'[calendar] ERROR - report not found: {xlsx_path}')
         sys.exit(1)
 
