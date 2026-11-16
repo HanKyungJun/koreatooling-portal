@@ -2,7 +2,7 @@
 
 > 이 파일은 Claude Code와 Cowork 모두 자동으로 읽는 규약서입니다.
 > 위키 스키마, 세션 프로토콜, 출처 인용 표준, 정보 분류 원칙을 정의합니다.
-> 마지막 갱신: 2026-11-10 (다이어트 — §1 · §6 · §9 · §13 본문을 standards/ 로 이전 · §3 · §6-5 휠 출처 예시 [STD-ISO12413] → [STD-EN13236]) · 2026-11-05 (§16 역할 검토표) · 2026-11-03 (§0 가볍게 시작 · §5-A 결정 기록 기준 · §15 작업 원칙 추가 · §15-2-A 승인 요청 전 점검 · §15-4 핸드오프 · 메모리 상한) · 2026-10-28 (§14 보고서 작성 추가)
+> 마지막 갱신: 2026-11-16 (§0-B 커밋 명령 바꾼 파일만 add · §3 Vc 인용 예시 출처 분리 · §15-2 실명 검사 훅) · 2026-11-10 (다이어트 — §1 · §6 · §9 · §13 본문을 standards/ 로 이전 · §3 · §6-5 휠 출처 예시 [STD-ISO12413] → [STD-EN13236]) · 2026-11-05 (§16 역할 검토표) · 2026-11-03 (§0 가볍게 시작 · §5-A 결정 기록 기준 · §15 작업 원칙 추가 · §15-2-A 승인 요청 전 점검 · §15-4 핸드오프 · 메모리 상한) · 2026-10-28 (§14 보고서 작성 추가)
 
 ---
 
@@ -50,15 +50,22 @@
 - 챗으로 가져갈 질문: ...
 ```
 
-세션 종료 시 아래 PowerShell commit 명령도 함께 제공합니다 (한경준님이 직접 실행):
+세션 종료 시 아래 PowerShell commit 명령도 함께 제공합니다 (한경준님이 직접 실행). **이번 세션에서 바꾼 파일만 경로로** add 한다(2026-11-16 개정 — decisions 2026-11-16 (6)):
 
 ```powershell
 cd C:\Users\TOOLKOREA\Desktop\cnc-wiki
-git add .
+git add -- "wiki/_handoff/worklog.md" "바꾼/파일/경로.md"
 git commit -m "[이번 세션 작업 요약 — Claude가 작성]"
+git push
+git log --oneline origin/main..HEAD
 ```
 
-> ⚠️ **Cowork bash에서 git 명령은 동작하지 않습니다** (Windows 마운트 폴더 제약, 실측 확인).
+- 마지막 줄 출력이 비면 push 완료. 한글 메시지가 길면 `-m` 대신 `-F outputs\commit_msg_YYYYMMDD.txt`(UTF-8, BOM 없음).
+- add 목록은 이번 세션에서 직접 만들거나 고친 파일만. device_bash 읽기 명령 `git --no-optional-locks -c core.quotepath=false diff --ignore-cr-at-eol --numstat` · `status --short --untracked-files=all` 로 대조하고, 세션 밖 변경은 빼고 알린다. 상세 절차는 cnc-handoff 스킬 「커밋 안내」.
+- ~~`git add .`~~ (2026-11-16 까지) — 세션 밖 변경 · CRLF 노이즈가 같이 들어가 폐기.
+- 거래처 실명 검사는 커밋 때 pre-commit 훅이 자동으로 한다(decisions 2026-11-16 (1)).
+
+> ⚠️ **Cowork(device_bash)에서 git 쓰기(add · commit · push · mv, `--dry-run` 포함)는 하지 않는다** — 인덱스 락이 남는다. 읽기 명령만 `git --no-optional-locks` 로 쓴다. ~~Cowork bash에서 git 명령은 동작하지 않습니다~~(2026-11-16 정정 — 읽기는 동작함)
 > 파일 편집은 Edit/Write 도구로, commit은 반드시 한경준님이 PowerShell에서 실행합니다.
 
 ---
@@ -147,7 +154,7 @@ sources:
 
 ```markdown
 초경 엔드밀 플루팅 권장 Q'w = 6-12 mm³/(mm·s) [VEN-ANCA-GRAF2011].
-Vc 상한은 18-25 m/s [VEN-NORTON-WINTER-2023], 초경+Resin Diamond ANCA 실측 case study 기준.
+Norton 실사용 대표 구간 Vc 17-22 m/s [VEN-NORTON-WINTER-2023] (제조사 기준), 사내 운용 상한 25 m/s (사내 경험값 · 자체 상한).
 ```
 
 새 출처가 등장하면 `wiki/_handoff/sources.md`에 먼저 ID를 등재한 후 본문에서 참조합니다.
@@ -362,7 +369,7 @@ updated: YYYY-MM-DD
 - 파일을 고쳤다고 기록하기 전에 그 파일을 다시 읽어(grep · 다시 열기) **바뀐 내용이 실제로 있는지** 확인한다.
 - 근거(2026-11-02 ~ 03 Claude 실수 3건): ① 창 프로그램 탭 「기타」 변경을 worklog · decisions 에 완료로 적었으나 파일에 저장 안 됨 ② 익명화 스크립트 주석에 실제 상호를 예시로 적어 공개 커밋에 들어감 ③ `Read-Host` 가 든 명령을 한 상자로 안내해 `.env` 토큰이 빈 값이 됨
 - PowerShell 안내: **입력을 받는 줄(`Read-Host` 등)은 따로 한 상자**로 낸다. 상자 안에는 주석 · 다른 셸 문법을 섞지 않는다(붙여 넣으면 그대로 실행된다).
-- 공개 저장소에 들어가는 파일은 커밋 전 `python scripts\anonymize_public.py --check` → 0개.
+- 공개 저장소에 들어가는 파일의 실명 검사는 커밋 때 pre-commit 훅이 자동으로 한다(`anonymize_public.py --check` → 0개, decisions 2026-11-16 (1)). ~~커밋 전 수동 `--check`~~(2026-11-16 까지)
 
 ### 15-2-A. 승인 요청 전 점검 (2026-11-03 추가)
 
