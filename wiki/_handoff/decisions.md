@@ -16,6 +16,7 @@
 - 근거: ① 프로젝트 메모 git-eol(CRLF 로 device_bash `M` 부풀음 · 경로 지정 add 가 안전, 2026-09-07 `9a8f7b1`) · decisions 2026-11-16 (1) 훅 · 이 PC `.git/config` `hooksPath = .githooks` 실측 ② [[tools/wheels/index]] 원주속도 표 · 2026-08-28 정정 ② (25 m/s = 자체 상한, 본드 한계 아님) · [[cadcam/연삭-테스트-방법]] §4.6 [VEN-ANCA-GRAF2011] ③ 실측 — 보유 휠 페이지 5개 `_template.md` 형식 · `원통연마-휠-12도-스펙` 1개만 스키마 §6-5 형식, 폴더별 type 에 repair · measurement · compliance · runbook 존재. 대안: 스키마를 스킬에 계속 복사(기각 — 두 곳 관리, 이미 실물과 어긋남)
 - 출처: Cowork (한경준님 「스킬 개정 후보 3건 진행」 2026-11-16)
 - 영향: `skills-custom/README.md` §2 · `테스트카드.md` #4 · #5 · #6. ⚠️ 남는 모순(이번에 안 고침, 승인 대기): `standards/위키-페이지-스키마.md` §6-5 휠 예시가 `_template.md` 와 필드 이름이 다르고 「Vc 권장 범위: 18-25 m/s [VEN-NORTON-WINTER-2023]」 묶음 표기가 남아 있음 · CLAUDE.md 57행 `git add .` · `git-commit.bat` `git add .` · §15-2 수동 `--check` 문구
+- 결과(11-16 같은 날): grinding-calc 새 대화 시험 3가지 통과 → 정상본 교체(md5 cc368c1a). 1판은 ② 「Ø100 4,900 rpm 원주속도」에 스킬이 안 불려 메모 요약으로 답함(「⚠️ 주의 · 검증 후 적용」 — 사내 상한 초과 금지 미적용) → description 에 RPM → Vc 예시를 넣은 2판으로 재시험 통과. cnc-handoff · wiki-new-page 는 계정 저장 확인, 시험 대기
 
 ## 2026-11-16 (3): 스킬 개정 후보 2건 개정안 제출 — scheduler-diagnose 휴무 소스 · wiki-lint 실행 방법
 
