@@ -2,7 +2,7 @@
 
 - 한 일: 개정안 작성 → 저장 카드 → 새 대화 시험 각 3가지 → 정상본 교체(테스트카드 #2 · #3 전부 통과)
 - 결과/산출물: `skills-custom/scheduler-diagnose/SKILL.md`(3069de6f) · `skills-custom/wiki-lint/SKILL.md`(5451aaa4, 3판) · README §1 · §2 · holidays.md §4 · decisions 2026-11-16 (3)
-- 미완·블로커: 개정 후보 3건 남음(cnc-handoff · grinding-calc · wiki-new-page) · 시험에서 나온 위키 수정 목록 미적용 — ~~빨간 링크 6곳~~(2026-11-16 완료, lint ⑤ 0건) · ~~index 미등재 3~~(2026-11-16 완료, lint ④ 0건) · 11-02 브리핑 머리말 · `wiki/CLAUDE.md` 처리 · 주간브리핑 10-26 · 11-09 파일 없음 · `공구-코팅.md` 검토 17건 중 남은 16건(`outputs/공구-코팅_검수표_20261116.xlsx` — No.1 BLUE 2026-11-16 정정 완료) · run.log 아침 `ERROR` → `SKIP` 문구
+- 미완·블로커: 개정 후보 3건 남음(cnc-handoff · grinding-calc · wiki-new-page) · 시험에서 나온 위키 수정 목록 미적용 — ~~빨간 링크 6곳~~(2026-11-16 완료, lint ⑤ 0건) · ~~index 미등재 3~~(2026-11-16 완료, lint ④ 0건) · ~~11-02 브리핑 머리말~~(2026-11-16 type · updated 추가) · `wiki/CLAUDE.md` 처리 · ~~주간브리핑 10-26 · 11-09 파일 없음~~(누락 아님 — 10-26 연차, 11-02 브리핑 머리말에 기재 · 11-09 는 아침 브리핑 예약 작업 11-02 중단, decisions 2026-11-02 (1)) · `공구-코팅.md` 검토 17건 중 남은 16건(`outputs/공구-코팅_검수표_20261116.xlsx` — No.1 BLUE 2026-11-16 정정 완료) · run.log 아침 `ERROR` → `SKIP` 문구
 - 다음 단계 제안: 위 위키 수정 목록 한 번에 처리(빨간 링크부터) · 공구-코팅 상 1건(BLUE = 울트라-X) 먼저
 - 챗으로 가져갈 질문: 없음
 
