@@ -80,6 +80,7 @@
 - **[IND-PVDCOATINGS-ROCKWELL]** pvd-coatings.co.uk — *Rockwell adhesion tester* 해설 페이지. VDI(Daimler-Benz) 시험 HF1~HF6 분류, 「HF1 · HF2 만 접착 양호」. ⚠️ 업체 해설 자료 — 보조 참고만, 단독 인용 금지. https://www.pvd-coatings.co.uk/pvd-coating-technology/testing-equipment/rockwell-adhesion-tester/ (2026-11-16 등재)
 - **[VEN-BOCOT-2024]** 보림시스템(주) — *bocot 코팅 종류 및 특성 / 추천코팅타입 / 코팅별 적용사례 / 그라핀코팅 기술자료*. 사내 보유 원본: `raw/notes/coating/` (보림코팅.png, 추천코팅타입.png, 코팅별 적용사례.png, 그라핀코팅_기술자료.pdf, 코팅 종류.pdf, 코팅(원본).pdf). 취득일: 2026-06-01. 사내 재코팅 외주 업체.
 - **[VEN-BOCOT-WEB]** 보림시스템(주) — *공구코팅 서비스 페이지*. https://bolimsys.com/공구코팅/ (2026-06-01 확인). 10종 라인업·공식 스펙(HV·마찰계수·두께·최대온도) 직접 인용.
+- **[VEN-HARVEY-COATINGS]** Harvey Tool (Harvey Performance Company) — *Tool Coatings*. https://www.harveytool.com/resources/tool-coatings (2026-11-16 확인). AlTiN · AlTiN Nano 「Not recommended for use in aluminum and aluminum alloys」, TiB2 「Recommended in Aluminum Alloys and Magnesium Alloys」. 공구 제조사 기술 안내. (2026-11-16 등재)
 
 ## 0-D. 피삭재 표준 — 탄소강·합금강
 
@@ -658,7 +659,7 @@
 
 | 위키 페이지 | 인용하는 출처 ID |
 |------------|----------------|
-| [[알루미늄]] | [STD-ISO209-1], [STD-EN573-3], [STD-EN515], [STD-ASTM-B221], [STD-JIS-H4000], [STD-AA-TEAL], [ACA-POLMEAR2017], [ACA-DAVIS1993-AL], [ACA-TRENTWRIGHT2000], [ACA-BOOTHROYD2006], [VEN-AA], [IND-MDS-AL] |
+| [[알루미늄]] | [STD-ISO209-1], [STD-EN573-3], [STD-EN515], [STD-ASTM-B221], [STD-JIS-H4000], [STD-AA-TEAL], [ACA-POLMEAR2017], [ACA-DAVIS1993-AL], [ACA-TRENTWRIGHT2000], [ACA-BOOTHROYD2006], [VEN-AA], [IND-MDS-AL], [VEN-HARVEY-COATINGS] |
 | [[sus304]] | [STD-ISO15510], [STD-EN10088-2], [STD-EN10088-3], [STD-JIS-G4304], [STD-JIS-G4305], [STD-ASTM-A276], [STD-ASTM-A479], [STD-AISI-J405], [ACA-DAVIS1994-SS], [ACA-DAVIM2014-SS], [ACA-ASTAKHOV2008], [ACA-TRENTWRIGHT2000], [ACA-BOOTHROYD2006], [ACA-LO2009], [ACA-MSAOUBI2008], [VEN-SSINA], [IND-MDS-SUS] |
 
 ### 연삭 테스트 방법론 페이지 매핑 (2026-05-18 등재)
@@ -692,7 +693,7 @@
 
 ### 공구 코팅 페이지 매핑 (2026-11-16 등재)
 
-- [[materials/공구-코팅]] → [STD-ISO14577] · [STD-ASTME2546] · [STD-ISO26423] · [STD-ISO20502] · [STD-ISO26443] · [ACA-VIDAKIS2003] · [ACA-HOLMBERG2009] · [ACA-BUNSHAH1994] · [ACA-MATTOX2010] · [ACA-ASMVOL5] · [ACA-PALDEY2003] · [ACA-VEPREK1999] · [ACA-BAKKEN2024] · [IND-PAT-US5143488] · [IND-PAT-US11377745] · [IND-PVDCOATINGS-ROCKWELL] · [VEN-MMC-TECHARCHIVE9] · [VEN-HYPERION] · [VEN-OERLIKON] · [VEN-IONBOND] · [VEN-PLATIT] · [VEN-CEMECON] · [VEN-SANDVIK] · [VEN-BOCOT-2024] · [VEN-BOCOT-WEB] · [INT-TOOLKOREA-PRODMANUAL-2026]
+- [[materials/공구-코팅]] → [STD-ISO14577] · [STD-ASTME2546] · [STD-ISO26423] · [STD-ISO20502] · [STD-ISO26443] · [ACA-VIDAKIS2003] · [ACA-HOLMBERG2009] · [ACA-BUNSHAH1994] · [ACA-MATTOX2010] · [ACA-ASMVOL5] · [ACA-PALDEY2003] · [ACA-VEPREK1999] · [ACA-BAKKEN2024] · [IND-PAT-US5143488] · [IND-PAT-US11377745] · [IND-PVDCOATINGS-ROCKWELL] · [VEN-MMC-TECHARCHIVE9] · [VEN-HYPERION] · [VEN-OERLIKON] · [VEN-IONBOND] · [VEN-PLATIT] · [VEN-CEMECON] · [VEN-SANDVIK] · [VEN-BOCOT-2024] · [VEN-BOCOT-WEB] · [VEN-HARVEY-COATINGS] · [INT-TOOLKOREA-PRODMANUAL-2026]
 
 ### 치수 공차 (0-K 추가분) 페이지 매핑 (2026-10-01 등재)
 

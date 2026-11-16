@@ -3,6 +3,13 @@
 > 무엇을(What), 왜(Why), 출처(Where)를 **시간 역순(최신이 맨 위)** 으로 기록합니다.
 > 챗에서 결정된 내용도 반드시 여기로 옮겨야 Code/Cowork가 따라옵니다.
 
+## 2026-11-16 (5): Al 가공 코팅 사내 기준 — 「가격 우선 → AlTiN(뮤)」 보류
+
+- 결정: 사내 Al 가공 코팅 기준(2026-06-01 확정) 중 1순위 무코팅 · 성능 우선 그라핀은 유지하고, 「가격 우선 → AlTiN(보림 뮤)」는 지우지 않고 **보류**로 돌린다. 사내가 코팅을 고를 때 Al 공구에 뮤를 고르지 않고, 고객이 뮤를 지정하면 그대로 의뢰한다. 가격 쪽 대체 후보는 DLC(단가 · 납기 확인 전 — 후보). 해제 조건: 무코팅 vs 뮤 vs DLC(또는 그라핀) 비교 시험에서 뮤가 무코팅보다 낫다는 실측. 보림시스템 문의(미세경도 단위 · 자료 발행처 · Al 코팅 의견)는 보류(한경준님).
+- 근거: ① 보림 자체 「추천코팅타입」 표 — 알루미늄 절삭 6개 공정 모두 1차 DLC · 2차 TiCN, 뮤 없음 [VEN-BOCOT-2024](제조사 기준) ② Harvey Tool — AlTiN 「Not recommended for use in aluminum and aluminum alloys」 [VEN-HARVEY-COATINGS](제조사 기준) ③ [[알루미늄]] §6.2 TiAlN/AlTiN 회피 [VEN-SANDVIK] ④ 사내 Al 에 뮤 시험 기록 0건 — 2026-06-01 근거 「TiAlN 보다 Al 함량 높아 내열 · 경도 우위」는 강 가공 쪽 장점. 대안: 기준 유지(기각 — 업체 자체 표와도 반대, 근거 없음) · 기준 삭제(기각 — 실측으로 뒤집힌 게 아니라 근거가 없는 상태, CLAUDE.md §2-8)
+- 출처: Cowork (한경준님 「뮤 추천안 승인」 2026-11-16) · 추천안 `outputs/공구-코팅_남은확인3_20261116.md` §3
+- 영향: `wiki/materials/공구-코팅.md` §8.1 · §8.2-B · §11 · §12 · `wiki/materials/알루미늄.md` §6.2 · §11 · `sources.md` [VEN-HARVEY-COATINGS] 등재 · tasks.md 「Al 코팅 비교 시험」 P3 · 검수표 No.6
+
 ## 2026-11-16 (4): 스킬 개정 후보 3건 개정안 제출 — cnc-handoff 커밋 안내 · grinding-calc 출처 · 신뢰도 · wiki-new-page 원본 읽기
 
 - 결정: ① `cnc-handoff` 종료 커밋 안내를 `git add -A` → 이번 세션에서 바꾼 파일만 `git add -- "경로"`(device_bash 읽기 명령 `diff --ignore-cr-at-eol --numstat` · `status ??` 로 대조)로, 수동 `--check` 단계는 빼고 pre-commit 훅에 맡김(`--no-verify` 금지), 끝에 `git log --oneline origin/main..HEAD` ② `grinding-calc` 기준값을 출처 · 신뢰도별로 나눔 — Norton 실사용 17 ~ 22 m/s(제조사 기준) · 25 m/s 사내 자체 상한(사내 경험값). **Vc > 25 m/s 는 「주의 · 단계적 상향」에서 「경고 · 사내 기준 초과 금지」로**(위키 원본 표 「초과 금지」에 맞춤) · MCT m/min 계산은 범위 밖 ③ `wiki-new-page` 유형별 스키마 본문을 지우고 원본(`standards/위키-페이지-스키마.md` 해당 절 · 휠은 `tools/wheels/_template.md` · type 은 같은 폴더 기존 페이지)을 읽어 쓰게 함 ④ 개정안은 `skills-custom/<스킬>/SKILL.개정안_20261116.md`, 정상본은 테스트카드 #4 ~ #6 새 대화 시험 통과 뒤 교체(2026-11-16 (2) 절차)
