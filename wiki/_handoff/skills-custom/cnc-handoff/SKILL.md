@@ -8,6 +8,7 @@ description: "[핸드오프] 세션 시작 시 위키 현황 요약, 종료 시 
 이 스킬은 cnc-wiki 세션 컨텍스트를 빠르게 복원하고 마무리하는 데 사용합니다.
 2026-11-03 개정: 기본은 **가볍게 시작**(CLAUDE.md §0-A). 큰 파일 전체 읽기는 「전체」를 요청할 때만. 종료 블록은 Claude 가 worklog 에 직접 쓴다.
 2026-11-03 2차 개정: P0 · P1 판정을 `(P0,` · `(P1,` 로 바꿈(내린 항목 · 양식 줄 제외) · 메모 목록 잘림 확인 추가(CLAUDE.md §15-4).
+2026-11-16 개정: 커밋 안내를 `git add -A` → **바꾼 파일만 경로로** add · 실명 검사는 pre-commit 훅이 대신(수동 `--check` 단계 삭제) · 끝에 push 확인 줄.
 
 ## 핸드오프 파일 경로
 
@@ -82,18 +83,37 @@ P1: [제목만, 최대 8개]
 
 결정 기록은 CLAUDE.md §5-A 기준(조건 · 안전 · 대외 · 돈 · 규칙)에 해당할 때만 decisions.md 맨 위에 직접 추가합니다. 나머지는 worklog 한 줄로 충분합니다.
 
-커밋 메시지는 한글이므로 `outputs/commit_msg_YYYYMMDD.txt` 파일로 만들어 두고, 아래 명령을 안내합니다. 명령 상자에는 주석을 넣지 않습니다.
+### 커밋 안내
+
+1. **add 할 파일 목록**을 만든다 — 이번 세션에서 직접 만들거나 고친 파일만. 놓친 것이 없는지 device_bash 읽기 명령으로 대조한다:
+
+   ```bash
+   cd $HOME/mnt/cnc-wiki
+   git --no-optional-locks -c core.quotepath=false diff --ignore-cr-at-eol --numstat | awk '$1!=0||$2!=0'
+   git --no-optional-locks -c core.quotepath=false status --short --untracked-files=all | grep '^??'
+   ```
+
+   - 첫 줄은 줄바꿈(CRLF)만 다른 파일을 뺀 실제 변경, 둘째 줄은 새 파일이다. device_bash 의 `git status` `M` 목록은 CRLF 때문에 부풀어 보이므로 근거로 쓰지 않는다.
+   - 이번 세션이 바꾸지 않은 파일(다른 세션 · 자동화 · 한경준님 수정)이 보이면 목록에 넣지 않고 「세션 밖 변경 N개 — 이번 커밋에서 뺌」 한 줄로 알린다.
+   - `.bak_*` · `outputs/` 는 .gitignore 대상이라 넣지 않는다.
+
+2. 커밋 메시지는 한글이므로 `outputs/commit_msg_YYYYMMDD.txt` 를 python 으로 UTF-8(BOM 없음)으로 만든다.
+
+3. 아래 명령을 안내한다. 경로는 저장소 기준 상대 경로 · 큰따옴표로 감싼다. 명령 상자에는 주석을 넣지 않는다.
 
 ```powershell
 cd C:\Users\TOOLKOREA\Desktop\cnc-wiki
-git add -A
+git add -- "wiki/_handoff/worklog.md" "바꾼/파일/경로.md"
 git commit -F outputs\commit_msg_YYYYMMDD.txt
 git push
+git log --oneline origin/main..HEAD
 ```
 
-커밋 전에 `python scripts\anonymize_public.py --check` 가 0개인지 먼저 확인합니다(공개 저장소 거래처 실명 방지).
+- 마지막 줄 출력이 비어 있으면 push 완료라고 함께 안내한다.
+- `git add -A` · `git add .` 는 쓰지 않는다 — 세션 밖 변경 · CRLF 노이즈가 같이 들어간다.
+- 거래처 실명 검사는 **pre-commit 훅이 커밋할 때 자동으로** 한다(`.githooks/pre-commit` → `anonymize_public.py --check`, decisions 2026-11-16 (1)). 커밋 전에 따로 돌리라고 안내하지 않는다. 커밋이 막히면 출력에 나온 파일을 고친 뒤 다시 커밋하고, `--no-verify` 로 건너뛰라고 안내하지 않는다.
 
-> ⚠️ Cowork bash에서 git 쓰기(add·commit·push)는 하지 않습니다. 반드시 한경준님 PowerShell에서 실행합니다.
+> ⚠️ Cowork bash(device_bash)에서 git 쓰기(add · commit · push · mv)는 하지 않습니다. `--dry-run` 도 인덱스 락을 남깁니다. 읽기 명령만 `git --no-optional-locks` 로 쓰고, 쓰기는 반드시 한경준님 PowerShell에서 실행합니다.
 
 ---
 

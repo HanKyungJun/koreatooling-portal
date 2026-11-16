@@ -10,7 +10,7 @@
 
 | 스킬 | 하는 일 | 부르는 말 | 정상본 | 마지막 시험 | md5(앞 8) |
 |---|---|---|---|---|---|
-| cnc-handoff | 세션 시작 요약 · 종료 블록 | 세션 시작 · 마무리해줘 | 2026-11-03 14:23 | 미확인 | 67be04cf |
+| cnc-handoff | 세션 시작 요약 · 종료 블록 | 세션 시작 · 마무리해줘 | 2026-11-16 10:37 | 2026-11-16 (카드 #4, 3가지 통과) | c07b49fa |
 | daily-report-check | 일일보고 누락 점검 | 일일보고서 확인 | 2026-09-21 13:29 | 미확인 | cde24c45 |
 | grinding-calc | 연삭 휠 Vc ↔ RPM · Q'w 계산 | D125 Vc 20 m/s RPM은? · Ø125 3,000 rpm 원주속도는? | 2026-11-16 13:09 | 2026-11-16 (카드 #5, 3가지 통과 · ② 2판 재시험) | cc368c1a |
 | refine-request | 요청문 다듬기 | 요청 다듬어 줘 | 2026-11-16 08:13 | 2026-11-16 (카드 #1 ① · ③ 통과) | 3c930646 |
@@ -28,7 +28,7 @@
 |---|---|---|---|
 | scheduler-diagnose — ✅ **반영 완료 11-16** ([[테스트카드]] #2 통과 · 정상본 교체) | 0단계 휴무 확인을 `decisions.md` · `worklog.md` grep 으로 함 | 휴무 단일 소스는 `holidays.md`(CLAUDE.md §13). §13 은 이 스킬이 holidays.md 를 본다고 적혀 있으나 실제 본문은 아님 | CLAUDE.md §13 |
 | wiki-lint — ✅ **반영 완료 11-16** ([[테스트카드]] #3 통과 · 3판 정상본 교체) | 실행 방법이 `mcp__workspace__bash` · `/sessions/.../` 경로 · 파일마다 Read | 옛 도구 · 경로 하드코딩(daily-report-check 가 금지한 방식). device_bash + `$HOME/mnt/cnc-wiki` 로 | daily-report-check §① |
-| cnc-handoff — 🟡 **개정안 제출 11-16** (`cnc-handoff/SKILL.개정안_20261116.md` · [[테스트카드]] #4 시험 대기) | 종료 안내가 `git add -A` · 커밋 전 `--check` 수동 확인 | ① add 는 실제 변경 파일만 경로로(프로젝트 메모 git-eol) ② `--check` 는 pre-commit 훅이 대신(2026-11-16 (1)) | decisions 2026-11-16 (1) |
+| cnc-handoff — ✅ **반영 완료 11-16** ([[테스트카드]] #4 통과 · 정상본 교체) | 종료 안내가 `git add -A` · 커밋 전 `--check` 수동 확인 | ① add 는 실제 변경 파일만 경로로(프로젝트 메모 git-eol) ② `--check` 는 pre-commit 훅이 대신(2026-11-16 (1)) | decisions 2026-11-16 (1) |
 | grinding-calc — ✅ **반영 완료 11-16** ([[테스트카드]] #5 통과 · 2판 정상본 교체 — 1판은 RPM → Vc 질문에 안 불림) | 「Vc 권장 18–25 m/s [VEN-NORTON-WINTER-2023] (제조사 기준)」 | 위키 원본은 Norton 실사용 17~22 m/s, 25 m/s 는 **사내 자체 상한** — 출처 · 신뢰도 표기가 섞임 | [[tools/wheels/index]] 113 · 115행 |
 | wiki-new-page — 🟡 **개정안 제출 11-16** (`wiki-new-page/SKILL.개정안_20261116.md` · [[테스트카드]] #6 시험 대기) | 페이지 스키마를 본문에 통째로 적음 | 원본 [[standards/위키-페이지-스키마]] 와 두 곳 관리(review-role 원칙 「두 곳 관리 금지」) | 2026-11-10 CLAUDE.md 다이어트 |
 
