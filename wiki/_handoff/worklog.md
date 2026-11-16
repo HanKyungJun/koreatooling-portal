@@ -1,4 +1,11 @@
-﻿## 2026-11-16 (#3) 핸드오프 — Cowork · 스킬 개정 후보 2건(scheduler-diagnose · wiki-lint) 반영
+﻿## 2026-11-16 (#4) 핸드오프 — Cowork (위키 수정 목록 처리)
+
+- 한 일: 빨간 링크 6 · index 미등재 3 · 11-02 브리핑 머리말 · `wiki/CLAUDE.md` → `_to_delete/20261116_wiki-CLAUDE/`(승인) · 공구-코팅 검수표 17건 반영 · 출처 7건 등재
+- 결과: 커밋 b6f81c2 · 7cde6d7 · 4163759 · 7cee87d · a2e49b4 — 위키 검수 ①③④⑤ 0건
+- 미완·블로커: 공구-코팅 확인 3(No.5 단위 · No.17 pdf 발행처 → 보림 문의, No.6 Al AlTiN 사내 기준 → 경준님) · run.log 아침 `ERROR` → `SKIP` · 스킬 개정 후보 3(cnc-handoff · grinding-calc · wiki-new-page)
+- 다음 단계 제안: run.log 문구 정리(스크립트 수정 — 새 세션 권장)
+
+## 2026-11-16 (#3) 핸드오프 — Cowork · 스킬 개정 후보 2건(scheduler-diagnose · wiki-lint) 반영
 
 - 한 일: 개정안 작성 → 저장 카드 → 새 대화 시험 각 3가지 → 정상본 교체(테스트카드 #2 · #3 전부 통과)
 - 결과/산출물: `skills-custom/scheduler-diagnose/SKILL.md`(3069de6f) · `skills-custom/wiki-lint/SKILL.md`(5451aaa4, 3판) · README §1 · §2 · holidays.md §4 · decisions 2026-11-16 (3)
