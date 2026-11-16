@@ -1,37 +1,52 @@
 ---
-name: wiki-new-page
-description: >
-  [위키 새 페이지] cnc-wiki 새 페이지를 올바른 스키마로 생성합니다.
-  "페이지 만들어줘", "X 페이지 추가해줘", "새 위키 작성" 으로 실행합니다.
+name: "wiki-new-page"
+description: "[위키 새 페이지] cnc-wiki 새 페이지를 올바른 스키마로 생성합니다. \"페이지 만들어줘\", \"X 페이지 추가해줘\", \"새 위키 작성\" 으로 실행합니다."
 ---
 
 # wiki-new-page 스킬
 
 cnc-wiki에 새 마크다운 페이지를 올바른 스키마로 생성합니다.
 
-## 기본 경로
+2026-11-16 개정: 유형별 스키마를 이 스킬에 적지 않고 **원본 문서를 읽어서** 씁니다(두 곳 관리 금지). 휠은 `tools/wheels/_template.md`, type 값은 같은 폴더 기존 페이지로 확인.
 
-```
-C:\Users\TOOLKOREA\Desktop\cnc-wiki\wiki\
-```
+## 기본 경로 · 실행 환경
 
-## 페이지 타입별 경로
+- 위키: `C:\Users\TOOLKOREA\Desktop\cnc-wiki\wiki\` — device_bash 에서는 `$HOME/mnt/cnc-wiki/wiki`
+- 읽기 · 쓰기는 device_bash 로 PC 에서 직접 한다(클라우드로 올리지 않음). 새 파일은 python 으로 UTF-8 저장.
 
-요청 키워드로 타입을 추론합니다. 모호하면 한 번만 확인합니다.
+## 원본 문서 (스키마는 여기서만 관리)
 
-| 타입 | 경로 | 키워드 힌트 |
-|------|------|------------|
-| `machine` | `wiki/machines/` | ANCA, VOLLMER, Rollomatic, 장비 |
-| `material` | `wiki/materials/` | 초경, SUS304, S45C, 알루미늄, WC-Co |
-| `tool` | `wiki/tools/` | 엔드밀, 드릴, 코어, 코팅, 수명, 공구 |
-| `wheel` | `wiki/tools/wheels/` | 휠, wheel, Diamond, CBN, Resin |
-| `gcode` | `wiki/gcode/` | G83, G코드, FANUC, 사이클 |
-| `cadcam` | `wiki/cadcam/` | e-Sharp, iBalance, 연삭 테스트 |
-| `troubleshoot` | `wiki/troubleshoot/` | 불량, 진동, 화상, 치핑, Ra 악화 |
-| `comparison` | `wiki/comparisons/` | 비교, KPI, 3사, vs |
-| `report` | `wiki/reports/` | 보고서, 체크리스트 |
-| `project` | `wiki/projects/` | 프로젝트, 실험, R&D |
-| `script` | `wiki/scripts/` | 스크립트, 자동화, Python |
+| 무엇 | 원본 | 읽는 법 |
+|---|---|---|
+| 공통 프론트매터 · 유형별 스키마 | `wiki/standards/위키-페이지-스키마.md` §6-1 ~ §6-10 | 해당 유형 절만 읽는다(`sed -n '/^### 6-1\./,/^### 6-2\./p'` 처럼) |
+| 휠 페이지 | `wiki/tools/wheels/_template.md` | 통째로 복사해 채운다 — 보유 휠 페이지 5개가 이 형식(2026-11-16 실측) |
+| 폴더 용도 | `wiki/standards/폴더-구조.md` | 폴더가 애매할 때만 |
+| type 값 | 같은 폴더의 기존 페이지 1 ~ 2개 프론트매터 | `repair` · `measurement` · `compliance` · `erp` · `runbook` 등 스키마 §6-1 목록에 없는 type 도 실제로 쓰인다 — 그 폴더에서 쓰는 값을 따른다 |
+
+원본 문서와 이 스킬이 다르면 **원본을 따릅니다**. 원본끼리 다르면(예: 스키마 §6-5 휠 필드 ↔ `_template.md`) 만들기 전에 한경준님께 먼저 알립니다.
+
+## 폴더 고르기 (힌트 — 폴더 설명 원본은 `standards/폴더-구조.md`)
+
+요청 키워드로 폴더를 추론합니다. 모호하면 한 번만 확인합니다.
+
+| 폴더 | 키워드 힌트 |
+|------|------------|
+| `machines/` | ANCA, VOLLMER, Rollomatic, 장비 |
+| `materials/` | 초경, SUS304, S45C, 알루미늄, WC-Co, 코팅 |
+| `tools/` | 엔드밀, 드릴, 코어, 수명, 공구, 연삭 조건 |
+| `tools/wheels/` | 휠, wheel, Diamond, CBN, Resin |
+| `gcode/` | G83, G코드, FANUC, 사이클, 매크로 |
+| `cadcam/` | e-Sharp, iBalance, 연삭 테스트, CAM |
+| `troubleshoot/` | 불량, 진동, 화상, 치핑, Ra 악화 |
+| `comparisons/` | 비교, KPI, 3사, vs |
+| `reports/` | 보고서, 체크리스트 |
+| `projects/` | 프로젝트, 실험, R&D, 고객 |
+| `scripts/` | 스크립트, 자동화, Python |
+| `erp/` | ERP, 업무 프로세스 |
+| `measurements/` | 측정 기록, 공수 |
+| `repairs/` | 설비 수리 이력 |
+| `compliance/` | 법정 점검 |
+| `standards/` · `templates/` | 사내 기준 · 양식 |
 
 ---
 
@@ -41,137 +56,24 @@ C:\Users\TOOLKOREA\Desktop\cnc-wiki\wiki\
 
 부족한 항목이 있으면 **한 번에 모아서** 질문합니다:
 - 페이지 제목
-- 페이지 타입 (추론 불가능한 경우만)
+- 폴더 (추론 불가능한 경우만)
 - 핵심 기록 내용 (간단히)
 - 참조 출처 ID (없으면 "없음" 가능 — 나중에 source-add로 추가 가능)
 
+같은 주제 페이지가 이미 있는지 `index.md` · 파일 이름으로 먼저 확인합니다. 있으면 새로 만들지 않고 알립니다.
+
 ### 2단계: 파일명 결정
 
-- 소문자 + 하이픈(-) 구분자 (한국어 그대로도 허용)
-- 휠 페이지: `휠-{각도}도-Ø{직경}-{스택번호}.md`
+- 원본 스키마 해당 절의 「파일명」 규칙을 따릅니다(예: §6-6 G-code `{코드}.md`).
+- 소문자 + 하이픈(-) 구분자 (한국어 그대로도 허용). 같은 폴더 기존 파일 이름 모양을 따릅니다.
 
-### 3단계: 타입별 스키마 적용
+### 3단계: 스키마 적용
 
-**machine:**
-```markdown
----
-type: machine
-manufacturer: ""
-model: ""
-controller: ""
-tags: []
-sources: []
-updated: YYYY-MM-DD
----
-# [장비명]
-## 회사 개요 / 시리즈 라인업 / 주요 사양 / 소프트웨어 생태계 / 사내 운영 현황 / 관련 페이지
-```
-
-**material:**
-```markdown
----
-type: material
-category: ""
-iso_group: ""
-hardness_range: ""
-tags: []
-sources: []
-updated: YYYY-MM-DD
----
-# [소재명]
-## 1. 규격·명칭 (★★★) / 2. 화학 조성 (★★★) / 3. 기계적 물성 (★★★)
-## 4. 가공 특성 (★★☆) / 5. 추천 가공 조건 (★★☆) / 6. 코팅 선택 (★★★)
-## 7. 절삭유 (★★☆) / 8. 사내 데이터 / 9. 트러블슈팅 / 10. 관련 페이지 / 11. 참고 문헌
-```
-
-**tool:**
-```markdown
----
-type: tool
-category: ""
-tags: []
-sources: []
-updated: YYYY-MM-DD
----
-# [공구명]
-## 1. 개요 / 2. 설계 기준 / 3. 권장 조건 / 4. 수명 관리 / 5. 사내 데이터 / 6. 관련 페이지
-```
-
-**wheel:**
-```markdown
----
-type: wheel
-bond: ""
-abrasive: ""
-shape_code: ""
-diameter_mm: 0
-angle_deg: 0
-stack: ""
-tags: []
-sources: []
-updated: YYYY-MM-DD
----
-# 휠 [각도]도 Ø[직경] (스택 [번호])
-## 1. 사양 (★★☆) / 2. 용도·사용 공구
-## 3. 원주속도 운영 정책 (★★★)
-   - Vc 권장 범위: 18–25 m/s [VEN-NORTON-WINTER-2023]
-   - 장비 최대 RPM 한계: — rpm
-## 4. 카탈로그 매칭 / 5. 드레싱 변수 / 6. 사내 측정 데이터 / 7. 관련 페이지
-```
-
-**gcode:**
-```markdown
----
-type: gcode
-controller: "FANUC"
-category: ""
-tags: []
-sources: []
-updated: YYYY-MM-DD
----
-# [코드] — [한 줄 설명]
-## 1. 기능 개요 / 2. 문법 형식 / 3. 파라미터 설명 / 4. 예시 / 5. 주의사항 / 6. 관련 페이지
-```
-
-**cadcam:**
-```markdown
----
-type: cadcam
-software: ""
-tags: []
-sources:
-  - "[VEN-ANCA-ESHARP-ARCHIVE]"
-updated: YYYY-MM-DD
----
-# [주제명]
-## 1. 개요 / 2. 설정 방법 / 3. 파라미터 설명 / 4. 사내 적용 사례 / 5. 주의사항 / 6. 관련 페이지
-```
-
-**troubleshoot:**
-```markdown
----
-type: troubleshoot
-tags: []
-sources: []
-updated: YYYY-MM-DD
----
-# [증상명] 트러블슈팅
-## 증상 설명 / 원인 분류 (표) / 해결 이력 (표) / 예방 조치 / 관련 페이지
-```
-
-**그 외 타입 (comparison / report / project / script):**
-```markdown
----
-type: [타입]
-tags: []
-sources: []
-updated: YYYY-MM-DD
----
-# [제목]
-## 개요 / 내용 / 결론·결과 / 관련 페이지
-```
-
----
+1. 위 「원본 문서」 표대로 해당 유형 원본을 읽습니다(휠이면 `_template.md`).
+2. 원본의 프론트매터 키 · 절 제목을 그대로 씁니다. type 값은 같은 폴더 기존 페이지와 맞춥니다.
+3. `sources` 는 `wiki/_handoff/sources.md` 의 ID 형식(`"[ID]"`). 등재 안 된 출처는 source-add 로 먼저 등재합니다.
+4. 원본의 예시 수치(예: 스키마 예시 속 원주속도 범위)는 새 페이지에 그대로 옮기지 않습니다. 원주속도 기준이 필요하면 [[tools/wheels/index]] 「원주속도 기준」으로 링크합니다.
+5. 모르는 값은 빈칸 또는 「확인 필요」로 둡니다(추측으로 채우지 않음).
 
 ### 4단계: 파일 저장 및 후처리
 
@@ -189,7 +91,7 @@ updated: YYYY-MM-DD
 
 ### 5단계: 완료 안내
 
-- 생성된 파일 경로 (computer:// 링크)
+- 생성된 파일 위치(폴더 · 파일 이름)
 - 채워야 할 빈 섹션 목록
 - 출처가 없을 경우 `source-add` 스킬로 등재 권고
 

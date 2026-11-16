@@ -26,8 +26,8 @@
 
 - 한 일: 개정안 3개 작성 · 사전 시험 · 테스트카드 #4 ~ #6 · 저장 카드 제출(한경준님 저장 대기)
 - 결과/산출물: `skills-custom/{cnc-handoff,grinding-calc,wiki-new-page}/SKILL.개정안_20261116.md` · README §2 · decisions 2026-11-16 (4)
-- 진행(11-16 오후): 3건 계정 저장 확인 · grinding-calc 3가지 통과 → 정상본 2판 교체(cc368c1a, 커밋 6bee37b — 1판은 RPM → Vc 질문에 안 불려 2판) · cnc-handoff ① 통과
-- 미완·블로커: ① cnc-handoff ② · ③ · wiki-new-page ① ~ ③ 새 대화 시험(입력문은 테스트카드 #4 · #6) → 통과 시 정상본 교체 ② 남는 모순(승인 대기): 스키마 §6-5 휠 예시 ↔ `_template.md` · 18-25 묶음 표기 / CLAUDE.md 57행 · `git-commit.bat` 의 `git add .`
+- 진행(11-16 오후): 3건 계정 저장 확인 · grinding-calc 3가지 통과 → 정상본 2판 교체(cc368c1a, 커밋 6bee37b — 1판은 RPM → Vc 질문에 안 불려 2판) · cnc-handoff · wiki-new-page 도 3가지 통과 → 정상본 교체(c07b49fa · 9898bf4d) — 개정 후보 5건 모두 완료
+- 미완·블로커: ① 각인 「125*6*9.8」 의 「6」 해석(경준님 실물 확인) ② 남는 모순(승인 대기): 스키마 §6-5 휠 예시 ↔ `_template.md` · 18-25 묶음 표기 / CLAUDE.md 57행 · `git-commit.bat` 의 `git add .`
 - 다음 단계 제안: 시험은 #5 grinding-calc 부터(짧음) · 스키마 §6-5 는 `_template.md` 가리키게 정리(추천)
 - 챗으로 가져갈 질문: 없음
 
