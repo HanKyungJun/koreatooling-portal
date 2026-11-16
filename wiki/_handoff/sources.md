@@ -46,14 +46,15 @@
 
 ### 표준
 - **[STD-ISO14577]** ISO 14577 (시리즈) — *Metallic materials — Instrumented indentation test for hardness and materials parameters*. 코팅 경도 측정 표준.
-- **[STD-ASTMC633]** ASTM C633-13 — *Standard Test Method for Adhesion or Cohesion Strength of Thermal Spray Coatings*. 접착력 표준.
+- **[STD-ASTMC633]** ASTM C633-13 — *Standard Test Method for Adhesion or Cohesion Strength of Thermal Spray Coatings*. ~~접착력 표준.~~ ⚠️ 2026-11-16 정정: 용사(thermal spray) 코팅 인장 접착 시험 — PVD 박막의 Rockwell 압흔 접착 평가에는 해당 없음. 그 용도는 [STD-ISO26443].
 - **[STD-ASTME2546]** ASTM E2546 — *Standard Practice for Instrumented Indentation Testing*. 박막 경도 절차.
 - **[STD-ISO26423]** ISO 26423:2009 — *Fine ceramics — Determination of coating thickness by crater grinding*. Calotest.
 - **[STD-ISO20502]** ISO 20502:2005 — *Fine ceramics — Determination of adhesion of ceramic coatings by scratch testing*.
+- **[STD-ISO26443]** ISO 26443:2023 (2판, 2023-10) — *Fine ceramics (advanced ceramics, advanced technical ceramics) — Rockwell indentation test for evaluation of adhesion of ceramic coatings*. 두께 20 μm 이하 세라믹 코팅의 정성 접착 평가(Rockwell 다이아몬드 압자). 탄성 코팅 · 경질 기재 조합에는 부적합. HF 등급 · VDI 3198 은 표준 소개문에 없음. https://www.iso.org/standard/86445.html (2026-11-16 등재)
 
 ### 교재·종합
 - **[ACA-HOLMBERG2009]** Holmberg, K. & Matthews, A. (2009). *Coatings Tribology: Properties, Mechanisms, Techniques and Applications in Surface Engineering* (2nd ed.). Tribology and Interface Engineering Series Vol. 56, Elsevier.
-- **[ACA-BUNSHAH1994]** Bunshah, R.F. (Ed.) (1994). *Handbook of Hard Coatings: Deposition Technologies, Properties and Applications*. William Andrew.
+- **[ACA-BUNSHAH1994]** Bunshah, R.F. (Ed.) (~~1994~~ 2000). *Handbook of Hard Coatings: Deposition Technologies, Properties and Applications*. Noyes Publications / Elsevier. ISBN 978-0-8155-1438-1. ⚠️ 2026-11-16 정정: Elsevier 도서 페이지 1판 2000-09-01 — ID 의 「1994」는 옛 오기이나 ID 는 그대로 둔다.
 - **[ACA-MATTOX2010]** Mattox, D.M. (2010). *Handbook of Physical Vapor Deposition (PVD) Processing* (2nd ed.). William Andrew.
 - **[ACA-ASMVOL5]** ASM International (1994). *ASM Handbook, Vol. 5: Surface Engineering*. ASM International.
 
@@ -62,6 +63,8 @@
 - **[ACA-MAYRHOFER2006]** Mayrhofer, P.H., Mitterer, C., Hultman, L., & Clemens, H. (2006). Microstructural design of hard coatings. *Progress in Materials Science*, 51(8), 1032-1114. doi:10.1016/j.pmatsci.2006.02.002.
 - **[ACA-SPROUL1996]** Sproul, W.D. (1996). New routes in the preparation of mechanically hard films. *Science*, 273(5277), 889-892.
 - **[ACA-VEPREK1999]** Veprek, S. (1999). The search for novel, superhard materials. *Journal of Vacuum Science & Technology A*, 17(5), 2401-2420.
+- **[ACA-BAKKEN2024]** Bakken, K., Bäcke, O., Roy Moulik, S., Stark, A., Manns, T., Stiens, D., Halvarsson, M., & Hörnqvist Colliander, M. (2024). Effect of post-annealing on the thermal stability and residual stresses in CVD (Al,Ti)N coatings investigated by in situ synchrotron diffraction. *International Journal of Refractory Metals and Hard Materials*, 124, 106810. doi:10.1016/j.ijrmhm.2024.106810. — CVD (Al,Ti)N 실온 인장 잔류응력, 사용 온도에서는 압축. (2026-11-16 등재)
+- **[ACA-VIDAKIS2003]** Vidakis, N. 외 2인 (2003). The VDI 3198 indentation test evaluation of a reliable qualitative control for layered compounds. *Journal of Materials Processing Technology*, pp. 481-485. — Rockwell C 압흔 접착 · 취성 정성 시험(VDI 3198). 권호 · DOI 는 조회 페이지에 없어 미기재. (2026-11-16 등재)
 - **[ACA-KNOTEK1987]** Knotek, O., Münz, W.D., & Leyendecker, T. (1987). Industrial deposition of binary, ternary, and quaternary nitrides of titanium, zirconium, and aluminum. *Journal of Vacuum Science & Technology A*, 5(4), 2173-2179.
 
 ### 산업 카탈로그·가이드
@@ -71,6 +74,10 @@
 - **[VEN-CEMECON]** CemeCon AG — *HSC/HPC Coatings Brochures*.
 - **[VEN-SANDVIK]** Sandvik Coromant — *CoroKey* (피삭재별 절삭공구·코팅 매칭).
 - **[VEN-WALTER]** Walter AG — Coatings overview.
+- **[VEN-MMC-TECHARCHIVE9]** Mitsubishi Materials — *TECHNOLOGY ARCHIVE vol.9* (CVD 코팅). https://www.mmc-carbide.com/us/download/magazine/vol09/tec_vol09 — 「1969년 세계 첫 CVD 코팅 초경 공구, WIDIA 출시」 · 「코팅 소재는 TiC 먼저, 이어 TiN」. (2026-11-16 등재)
+- **[IND-PAT-US5143488]** 미국 특허 US 5,143,488 — *CVD and PVD coated cutting tools*. — CVD 층 = 열균열 · 인장 잔류응력, PVD TiN = 열균열 없는 치밀 조직 · 압축 잔류응력. https://image-ppubs.uspto.gov/dirsearch-public/print/downloadPdf/5143488 (2026-11-16 등재)
+- **[IND-PAT-US11377745]** Oerlikon Surface Solutions AG — 미국 특허 US 11,377,745 B2 (2022-07-05). *Stripping of coatings Al-containing coatings*. — 초경 탈코팅 시 Co 바인더 용출(Co-leaching) · 장시간 침지 시 기재 표면 용해. https://uspto.report/patent/grant/11,377,745 (2026-11-16 등재)
+- **[IND-PVDCOATINGS-ROCKWELL]** pvd-coatings.co.uk — *Rockwell adhesion tester* 해설 페이지. VDI(Daimler-Benz) 시험 HF1~HF6 분류, 「HF1 · HF2 만 접착 양호」. ⚠️ 업체 해설 자료 — 보조 참고만, 단독 인용 금지. https://www.pvd-coatings.co.uk/pvd-coating-technology/testing-equipment/rockwell-adhesion-tester/ (2026-11-16 등재)
 - **[VEN-BOCOT-2024]** 보림시스템(주) — *bocot 코팅 종류 및 특성 / 추천코팅타입 / 코팅별 적용사례 / 그라핀코팅 기술자료*. 사내 보유 원본: `raw/notes/coating/` (보림코팅.png, 추천코팅타입.png, 코팅별 적용사례.png, 그라핀코팅_기술자료.pdf, 코팅 종류.pdf, 코팅(원본).pdf). 취득일: 2026-06-01. 사내 재코팅 외주 업체.
 - **[VEN-BOCOT-WEB]** 보림시스템(주) — *공구코팅 서비스 페이지*. https://bolimsys.com/공구코팅/ (2026-06-01 확인). 10종 라인업·공식 스펙(HV·마찰계수·두께·최대온도) 직접 인용.
 
@@ -682,6 +689,10 @@
 | [[고성능-엔드밀-제작-가이드-part1]] | [VEN-ANCA-MATHEW2022], [ACA-ENGIN2001], [ACA-SMITH2008-CTT], [ACA-INASAKI2001], [ACA-STEPHENSON2016], [ACA-TLUSTY1979] |
 | [[에너지효율-연삭-7가지팁]] | [VEN-ANCA-MULDER2024], [VEN-OELHELD-LOWERY2022], [VEN-NORTON-WINTER-2023], [ACA-MARINESCU2016], [ACA-BRINKSMEIER2006] |
 | [[anca-rfid-workflow]] | [VEN-ANCA-RFID-SCHUNK], [VEN-ANCA-RFID-CARBITOOLS] |
+
+### 공구 코팅 페이지 매핑 (2026-11-16 등재)
+
+- [[materials/공구-코팅]] → [STD-ISO14577] · [STD-ASTME2546] · [STD-ISO26423] · [STD-ISO20502] · [STD-ISO26443] · [ACA-VIDAKIS2003] · [ACA-HOLMBERG2009] · [ACA-BUNSHAH1994] · [ACA-MATTOX2010] · [ACA-ASMVOL5] · [ACA-PALDEY2003] · [ACA-VEPREK1999] · [ACA-BAKKEN2024] · [IND-PAT-US5143488] · [IND-PAT-US11377745] · [IND-PVDCOATINGS-ROCKWELL] · [VEN-MMC-TECHARCHIVE9] · [VEN-HYPERION] · [VEN-OERLIKON] · [VEN-IONBOND] · [VEN-PLATIT] · [VEN-CEMECON] · [VEN-SANDVIK] · [VEN-BOCOT-2024] · [VEN-BOCOT-WEB] · [INT-TOOLKOREA-PRODMANUAL-2026]
 
 ### 치수 공차 (0-K 추가분) 페이지 매핑 (2026-10-01 등재)
 

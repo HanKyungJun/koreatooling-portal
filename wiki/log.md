@@ -1,3 +1,10 @@
+## [2026-11-16] 업데이트 — 공구-코팅 검수표 17건 반영
+
+잔류 응력 PVD 압축 · CVD 인장으로 정정, 접착력 표준 ASTM C633 → ISO 26443 · VDI 3198, 1969 첫 CVD = WIDIA(TiC → TiN), 「최고」 표기 · 45HV 오기 · 탈코팅 Co-leaching 정정, 시장 · 효과 · 합부 기준은 추정값 표기, 4단계 신뢰도 표 · 프론트매터 출처 ID화. 알루미늄 §6.2 에 사내 기준(AlTiN 뮤) 병기. 옛 값은 취소선으로 남김.
+
+영향받은 페이지: [[materials/공구-코팅]], [[materials/알루미늄]]
+출처 추가: [STD-ISO26443], [ACA-BAKKEN2024], [ACA-VIDAKIS2003], [VEN-MMC-TECHARCHIVE9], [IND-PAT-US5143488], [IND-PAT-US11377745], [IND-PVDCOATINGS-ROCKWELL]
+
 ## [2026-11-16] 삭제 — wiki/CLAUDE.md 를 _to_delete 로 이동
 
 루트 CLAUDE.md 의 옛 줄임판(2,161 B). 세션 시작 때 핸드오프 3개 전체 읽기 등 현행 §0-A 「가볍게 시작」과 충돌하고, `wiki/` 에서 Claude Code 를 열면 자동으로 읽힐 수 있어 이동(한경준님 승인). 위치: `_to_delete/20261116_wiki-CLAUDE/CLAUDE.md`(md5 같음, .gitignore 대상). 참조하는 스크립트 없음(grep).
