@@ -1,4 +1,12 @@
-﻿## 2026-11-16 (#7) 핸드오프 — Cowork (holidays.md 조회 · 마무리)
+﻿## 2026-11-16 (#8) 핸드오프 — Cowork (G85 보링 사이클 페이지)
+
+- 한 일: wiki-new-page 스킬로 `wiki/gcode/g85-보링사이클.md` 신규(초안) · index G-code 절 · log · sources(새 ID 3 + 페이지 매핑) · 고정사이클 개요 §5 G85 · G82 「(미작성)」→ 링크
+- 결과/산출물: 새 출처 [VEN-HAAS-MILLWB] · [VEN-SIEMENS-PGZ0400] · [VEN-LINUXCNC-GCODE]. 사내 조건 표는 빈 양식
+- 미완·블로커: FANUC B-64604EN 원문 미열람(동작은 HAAS · Siemens · LinuxCNC 교차 확인) · Siemens CYCLE85 §2.1.7 본문 미열람 · Mazak 확인 필요
+- 다음 단계 제안: 사내 MCT(Fanuc 0i-M)에서 리밍 첫 가공 → §8.2 표 기록 · G76 · G86 · G89 페이지
+- 챗으로 가져갈 질문: 없음
+
+## 2026-11-16 (#7) 핸드오프 — Cowork (holidays.md 조회 · 마무리)
 
 - 한 일: `wiki/_handoff/holidays.md` 맨 아래 3줄 조회(총 120줄 · 118 · 120행 빈 줄 · 119행 2026-10-12 달력 아티팩트 정정 기록) — 읽기만, 수정 없음
 - 결과/산출물: 이 블록만 추가 · 테스트카드 #4 ② 입력과 같은 흐름(판정은 테스트카드에 따로 기록)

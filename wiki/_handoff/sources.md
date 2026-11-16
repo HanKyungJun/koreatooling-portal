@@ -492,6 +492,9 @@
 - **[VEN-SIEMENS-840D]** Siemens — *SINUMERIK 840D sl / 828D Programming Manual: Fundamentals* (6FC5398-1BP40-6BA0). Siemens AG.
 - **[VEN-HAAS-MILL]** HAAS — *Mill Operator's Manual*. Haas Automation Inc.
 - **[VEN-MAZAK-MAZATROL]** Mazak — *Mazatrol Programming Manual*. Yamazaki Mazak Corporation.
+- **[VEN-HAAS-MILLWB]** Haas Automation Inc. — *Mill Programming Workbook*. https://www.haascnc.com/content/dam/haascnc/en/service/reference/programming-workbooks/mill---programming-workbook.pdf (2026-11-16 접근). G-code 목록 G85 "Bore in~Bore out Canned Cycle" (X,Y,A,B,Z,R,L,F), L = 고정 사이클 반복 횟수, P = 초 단위 드웰(0.001~1000.0 s). [VEN-HAAS-MILL](Operator's Manual)과 별개 문서.
+- **[VEN-SIEMENS-PGZ0400]** Siemens AG — *SINUMERIK 840D/840Di/810D/FM-NC Programming Guide Cycles* (PGZ), Edition 04.00, Order No. 6FC5298-5AB40-0BP2. https://support.industry.siemens.com/cs/attachments/109439500/PGZ_0400_en.pdf (2026-11-16 접근). §2.1.7 Boring 1 – CYCLE85: 보링 · 복귀 이송을 따로 지정(FFR · RFF). 화면 항목 목록(RTP · RFP · SDIS · DP · DPR · DTB · FFR · RFF)까지 확인, §2.1.7 본문 표는 미열람.
+- **[VEN-LINUXCNC-GCODE]** LinuxCNC Project — *G-Code Reference* (2.5). https://linuxcnc.org/docs/2.5/html/gcode/gcode_de.html (2026-11-16 접근). G85: 이송 진입 "Move the Z-axis only at the current feed rate to the Z position" · 이송 복귀 "Retract the Z-axis at the current feed rate to clear Z". G89: G85 + P 초 드웰. RS274/NGC 계열 오픈소스 제어기 공식 문서.
 - **[VEN-DN-DNM]** 두산공작기계 (현 DN Solutions) — *DNM 시리즈 사양서*. (사용자 보유 매뉴얼 추가 필요)
 - **[VEN-ANCA]** ANCA Pty Ltd — *CNC Tool & Cutter Grinders*. 공식 사이트 https://anca.com — 제품군(MX/TX/FX/RX/GX/TG Linear 시리즈), iGrind / ToolRoom RN 소프트웨어, 일반 기술 자료. 1974년 멜버른 설립. (재연마·공구 연삭 전용)
 - **[VEN-ANCA-INTERNAL]** ANCA — *내부 매뉴얼·사양서*. **[대외비]** — `raw/manuals/` 추가 시 정확한 모델번호·발행연도·문서ID 등록 필요.
@@ -690,6 +693,10 @@
 | [[고성능-엔드밀-제작-가이드-part1]] | [VEN-ANCA-MATHEW2022], [ACA-ENGIN2001], [ACA-SMITH2008-CTT], [ACA-INASAKI2001], [ACA-STEPHENSON2016], [ACA-TLUSTY1979] |
 | [[에너지효율-연삭-7가지팁]] | [VEN-ANCA-MULDER2024], [VEN-OELHELD-LOWERY2022], [VEN-NORTON-WINTER-2023], [ACA-MARINESCU2016], [ACA-BRINKSMEIER2006] |
 | [[anca-rfid-workflow]] | [VEN-ANCA-RFID-SCHUNK], [VEN-ANCA-RFID-CARBITOOLS] |
+
+### G-code 페이지 매핑 (2026-11-16 등재)
+
+- [[gcode/g85-보링사이클]] → [STD-ISO6983] · [VEN-FANUC-0iMF] · [VEN-HAAS-MILLWB] · [VEN-SIEMENS-PGZ0400] · [VEN-LINUXCNC-GCODE] · [ACA-SMID2008]
 
 ### 공구 코팅 페이지 매핑 (2026-11-16 등재)
 
