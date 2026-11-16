@@ -3,6 +3,13 @@
 > 무엇을(What), 왜(Why), 출처(Where)를 **시간 역순(최신이 맨 위)** 으로 기록합니다.
 > 챗에서 결정된 내용도 반드시 여기로 옮겨야 Code/Cowork가 따라옵니다.
 
+## 2026-11-16 (7): `git-commit.bat` 은 수동 백업 버튼 — 목록 표시 + Y 확인 뒤 커밋
+
+- 결정: `git-commit.bat` 은 전체 `git add .` 를 유지하되, 커밋 전에 `git status --short` 목록을 보여 주고 Y 를 입력해야 add · commit 한다(그 외 입력은 취소, 변경 없으면 바로 종료). 세션 끝 커밋은 CLAUDE.md §0-B 「바꾼 파일만 add」 명령만 쓴다. decisions 2026-11-16 (6) ⑤ 「bat 안 바꿈」을 대신한다.
+- 근거: bat 은 어느 세션이 무엇을 바꿨는지 알 수 없어 경로 add 로 바꾸면 백업 기능이 사라진다. 남는 위험은 「모르는 변경이 조용히 같이 커밋」이라 확인 단계로 막는다. 실명은 pre-commit 훅이 이미 검사(`core.hooksPath=.githooks` 확인 2026-11-16). 대안: 경로 add 로 변경(기각 — 백업 버튼 역할 상실) · bat 폐기(기각 — 한경준님이 쓰는 파일) · 그대로 둠(기각 — §0-B 와 모순 남음)
+- 출처: Cowork (한경준님 「추천대로 진행」 승인 2026-11-16)
+- 영향: `git-commit.bat`(백업 `git-commit.bat.bak_20261116b`) · `CLAUDE.md` §0-B 한 줄 · Windows 첫 실행 확인 필요(Enter 만 → 「[취소]」 · Y → 커밋)
+
 ## 2026-11-16 (6): CLAUDE.md §0-B 커밋 명령 「바꾼 파일만 add」 · 스키마 §6-5 휠은 `_template.md` 로
 
 - 결정: ① CLAUDE.md §0-B 커밋 명령을 `git add .` → `git add -- "경로"`(이번 세션에서 바꾼 파일만) + `git push` · `git log --oneline origin/main..HEAD` 로. 「Cowork bash 에서 git 은 동작하지 않음」 → 「device_bash 는 git 읽기 명령만」 ② §15-2 수동 `--check` → pre-commit 훅이 자동 ③ CLAUDE.md §3 본문 인용 예시 「Vc 상한은 18-25 m/s [VEN-NORTON-WINTER-2023]」 → Norton 17-22 m/s(제조사 기준) · 사내 상한 25 m/s(사내 경험값)로 분리 ④ `standards/위키-페이지-스키마.md` §6-5 — 휠 페이지는 `tools/wheels/_template.md` 를 쓴다, 옛 예시는 접어서 보존(삭제 안 함) ⑤ `git-commit.bat`(`git add .`)은 한경준님이 직접 실행하는 파일이라 이번에 안 바꿈
