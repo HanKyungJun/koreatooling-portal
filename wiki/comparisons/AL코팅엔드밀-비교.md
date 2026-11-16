@@ -3,7 +3,7 @@ type: comparison
 category: "엔드밀 비교 — 코팅 AL 엔드밀 고속가공"
 tags: [AL6061, 엔드밀, D10, 3날, 코팅, AlCrSiN, TAC, 고속가공, MCT]
 sources: []
-updated: 2026-09-23
+updated: 2026-11-16
 ---
 
 # AL코팅 엔드밀 비교 — 코팅 후보 조사 + 고속가공 테스트
@@ -178,4 +178,4 @@ Vc·RPM·Vf·부하량이 완전히 동일하고 fz만 다른데, 그 fz(0.078)�
 - [[comparisons/AL엔드밀-3종-비교]] — 무코팅 3종 기준 테스트 (폴더 6)
 - [[comparisons/AL엔드밀-호닝-비교]] — 에지 호닝 비교 테스트 (폴더 13)
 - [[materials/알루미늄]] — AL6061 소재 특성
-- [[tools/공구-코팅]] — TiAlN·AlTiN·DLC·TAC 등 코팅 특성
+- [[materials/공구-코팅]] — TiAlN·AlTiN·DLC·TAC 등 코팅 특성

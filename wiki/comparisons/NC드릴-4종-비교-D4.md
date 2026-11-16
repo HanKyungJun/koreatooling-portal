@@ -3,7 +3,7 @@ type: comparison
 category: "드릴 비교"
 tags: [NC드릴, D4, S45C, SENO, HANDERK, JJ, WIDIN, 90도, TiSiN, AlTiN, 수명비교]
 sources: []
-updated: 2026-07-09
+updated: 2026-11-16
 ---
 
 # D4 NC드릴 4종 비교 — S45C 탄소강, 5차 테스트 이력
@@ -318,4 +318,4 @@ D4 NC드릴(90°) 4종 비교 및 D5 드릴 병행 수명 테스트.
 - [[comparisons/드릴-6종-비교-D5]] — D5 초경 드릴 6종 비교 (동일 장비)
 - [[s45c|S45C]] — S45C 탄소강 소재 특성
 - [[machines/chevalier-qp2040l]] — 장비 사양
-- [[tools/공구-코팅]] — TiSiN·AlTiN 코팅 특성 비교
+- [[materials/공구-코팅]] — TiSiN·AlTiN 코팅 특성 비교

@@ -1,3 +1,10 @@
+## [2026-11-16] 업데이트 — 빨간 링크 6곳 · 공구-코팅 BLUE 표기 정정
+
+빨간 링크 6곳: 옛 경로 `tools/공구-코팅` → `materials/공구-코팅` 5곳, `tools/wheels/휠RPM-정책-검증-노트` → `reports/05_검증·노트/휠RPM-정책-검증-노트` 1곳. 공구-코팅 §8.1 의 「AlCrN(BLUE) = 베타(β)」 2곳을 「TISIN-X(BLUE) = 울트라-X, TISIN-BASE」로 정정(§8.5 2026-07-28 현장 확인과 맞춤, 옛 표기 취소선 유지).
+
+영향받은 페이지: [[materials/공구-코팅]], [[comparisons/AL엔드밀-3종-비교]], [[comparisons/AL엔드밀-호닝-비교]], [[comparisons/AL코팅엔드밀-비교]], [[comparisons/NC드릴-4종-비교-D4]], [[troubleshoot/측면가공-파손-ae과다]], [[machines/anca-cnc-tool-grinder]]
+출처 추가: 없음
+
 ## [2026-11-13] 업데이트 — 공구 생성기 큰 공구 3D 시간 · 소재/코팅 빈칸
 
 코너R 4날 D10 Lc22 헬릭스45 시험 — 마지막 홈 107.6 s 여도 완성(부피 −0.019 %, FreeCAD 정상). 끊김 뒤 진행 순서 보강. 사양표 소재 · 코팅은 빈칸(작성할 때 채움).

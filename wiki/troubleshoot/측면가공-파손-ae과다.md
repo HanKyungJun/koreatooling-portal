@@ -3,7 +3,7 @@ type: troubleshoot
 category: "측면가공 파손"
 tags: [파손, ae, 측면가공, D12, 코너R, S45C, 재연마, 초경, 엔드밀, 절입과다]
 sources: []
-updated: 2026-07-09
+updated: 2026-11-16
 ---
 
 # 측면가공 공구 파손 — ae 과다 (D12 코너R 재연마 엔드밀, S45C)
@@ -180,6 +180,6 @@ fz = Vf / (날수 × N)
 
 - [[troubleshoot/표면조도-불량]] — 연삭·가공 후 표면 불량 진단
 - [[s45c|S45C]] — S45C 탄소강 소재 특성 (절삭성·BUE)
-- [[tools/공구-코팅]] — TiAlN·뮤코팅 특성 (비코팅 대비 내파손성)
+- [[materials/공구-코팅]] — TiAlN·뮤코팅 특성 (비코팅 대비 내파손성)
 - [[tools/공구-수명-관리]] — 재연마 공구 수명·강성 관리
 - [[machines/chevalier-qp2040l]] — 장비 사양

@@ -4,7 +4,7 @@ category: "엔드밀 비교"
 tags: [AL6061, 엔드밀, D10, 3날, YG-1, JJ, OKE, 알루미늄, 측면가공, MCT]
 sources:
   - "[VEN-YG1-ALUCUT]"
-updated: 2026-07-08
+updated: 2026-11-16
 ---
 
 # AL엔드밀 3종 비교 — D10 3날, AL6061 측면가공
@@ -165,7 +165,7 @@ Vc = π × D × N / 1000
 ## 관련 페이지
 
 - [[materials/알루미늄]] — AL6061 소재 특성
-- [[tools/공구-코팅]] — TiAlN·AlTiN·DLC 코팅 특성
+- [[materials/공구-코팅]] — TiAlN·AlTiN·DLC 코팅 특성
 - [[machines/chevalier-qp2040l]] — 장비 사양
 - [[comparisons/드릴-6종-비교-D5]] — 동일 장비 D5 드릴 비교 테스트
 - [[comparisons/AL엔드밀-JJ제품-종합비교]] — 이 페이지의 J.J. 데이터를 2026년 코팅비교(폴더13)와 시간순으로 통합 정리 (2026-07-10 신규)
