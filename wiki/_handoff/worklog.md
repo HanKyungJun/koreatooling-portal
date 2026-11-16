@@ -1,18 +1,27 @@
-﻿## 2026-11-16 (#5) 핸드오프 — Cowork · 스킬 개정 후보 3건(cnc-handoff · grinding-calc · wiki-new-page) 개정안 제출
+﻿## 2026-11-16 (#7) 핸드오프 — Cowork (holidays.md 조회 · 마무리)
 
-- 한 일: 개정안 3개 작성 · 사전 시험 · 테스트카드 #4 ~ #6 · 저장 카드 제출(한경준님 저장 대기)
-- 결과/산출물: `skills-custom/{cnc-handoff,grinding-calc,wiki-new-page}/SKILL.개정안_20261116.md` · README §2 · decisions 2026-11-16 (4)
-- 미완·블로커: ① 저장 카드 3개 저장 → 새 대화 시험 각 3가지(입력문은 테스트카드 표) → 통과 시 정상본 교체 ② 남는 모순(승인 대기): 스키마 §6-5 휠 예시 ↔ `_template.md` · 18-25 묶음 표기 / CLAUDE.md 57행 · `git-commit.bat` 의 `git add .`
-- 다음 단계 제안: 시험은 #5 grinding-calc 부터(짧음) · 스키마 §6-5 는 `_template.md` 가리키게 정리(추천)
+- 한 일: `wiki/_handoff/holidays.md` 맨 아래 3줄 조회(총 120줄 · 118 · 120행 빈 줄 · 119행 2026-10-12 달력 아티팩트 정정 기록) — 읽기만, 수정 없음
+- 결과/산출물: 이 블록만 추가 · 테스트카드 #4 ② 입력과 같은 흐름(판정은 테스트카드에 따로 기록)
+- 미완·블로커: 없음
+- 다음 단계 제안: #5 블록의 남은 시험(cnc-handoff ③ · wiki-new-page ① ~ ③)
 - 챗으로 가져갈 질문: 없음
 
-## 2026-11-16 (#5) 핸드오프 — Cowork (공구-코팅 남은 확인 3)
+## 2026-11-16 (#6) 핸드오프 — Cowork (공구-코팅 남은 확인 3)
 
 - 한 일: 검수표 No.5 · 17 → 보림 문의문 초안, No.6 → Al 가공 뮤 기준 추천안 — `outputs/공구-코팅_남은확인3_20261116.md`
 - 결과: 보림 「추천코팅타입」 표 Al = DLC 1차 · TiCN 2차(뮤 없음) 확인 · 미세경도를 GPa 로 보면 홈페이지 HV 보다 11~21 % 높음
 - 승인 반영: No.6 뮤 「보류」 — 공구-코팅 §8.1 · §8.2-B · 알루미늄 §6.2 · sources [VEN-HARVEY-COATINGS] · decisions 2026-11-16 (5) · tasks P3 「Al 코팅 비교 시험」 · log
 - 미완·블로커: No.5 · 17 보림 문의 보류(경준님) — 초안은 위 md §2 에 그대로
 - 다음 단계 제안: 문의 재개 시 회신 → §8.2-B 단위 · 발행처 확정
+
+## 2026-11-16 (#5) 핸드오프 — Cowork · 스킬 개정 후보 3건(cnc-handoff · grinding-calc · wiki-new-page) 개정안 제출
+
+- 한 일: 개정안 3개 작성 · 사전 시험 · 테스트카드 #4 ~ #6 · 저장 카드 제출(한경준님 저장 대기)
+- 결과/산출물: `skills-custom/{cnc-handoff,grinding-calc,wiki-new-page}/SKILL.개정안_20261116.md` · README §2 · decisions 2026-11-16 (4)
+- 진행(11-16 오후): 3건 계정 저장 확인 · grinding-calc 3가지 통과 → 정상본 2판 교체(cc368c1a, 커밋 6bee37b — 1판은 RPM → Vc 질문에 안 불려 2판) · cnc-handoff ① 통과
+- 미완·블로커: ① cnc-handoff ② · ③ · wiki-new-page ① ~ ③ 새 대화 시험(입력문은 테스트카드 #4 · #6) → 통과 시 정상본 교체 ② 남는 모순(승인 대기): 스키마 §6-5 휠 예시 ↔ `_template.md` · 18-25 묶음 표기 / CLAUDE.md 57행 · `git-commit.bat` 의 `git add .`
+- 다음 단계 제안: 시험은 #5 grinding-calc 부터(짧음) · 스키마 §6-5 는 `_template.md` 가리키게 정리(추천)
+- 챗으로 가져갈 질문: 없음
 
 ## 2026-11-16 (#4) 핸드오프 — Cowork (위키 수정 목록 처리)
 
