@@ -3,6 +3,13 @@
 > 무엇을(What), 왜(Why), 출처(Where)를 **시간 역순(최신이 맨 위)** 으로 기록합니다.
 > 챗에서 결정된 내용도 반드시 여기로 옮겨야 Code/Cowork가 따라옵니다.
 
+## 2026-11-16 (4): 스킬 개정 후보 3건 개정안 제출 — cnc-handoff 커밋 안내 · grinding-calc 출처 · 신뢰도 · wiki-new-page 원본 읽기
+
+- 결정: ① `cnc-handoff` 종료 커밋 안내를 `git add -A` → 이번 세션에서 바꾼 파일만 `git add -- "경로"`(device_bash 읽기 명령 `diff --ignore-cr-at-eol --numstat` · `status ??` 로 대조)로, 수동 `--check` 단계는 빼고 pre-commit 훅에 맡김(`--no-verify` 금지), 끝에 `git log --oneline origin/main..HEAD` ② `grinding-calc` 기준값을 출처 · 신뢰도별로 나눔 — Norton 실사용 17 ~ 22 m/s(제조사 기준) · 25 m/s 사내 자체 상한(사내 경험값). **Vc > 25 m/s 는 「주의 · 단계적 상향」에서 「경고 · 사내 기준 초과 금지」로**(위키 원본 표 「초과 금지」에 맞춤) · MCT m/min 계산은 범위 밖 ③ `wiki-new-page` 유형별 스키마 본문을 지우고 원본(`standards/위키-페이지-스키마.md` 해당 절 · 휠은 `tools/wheels/_template.md` · type 은 같은 폴더 기존 페이지)을 읽어 쓰게 함 ④ 개정안은 `skills-custom/<스킬>/SKILL.개정안_20261116.md`, 정상본은 테스트카드 #4 ~ #6 새 대화 시험 통과 뒤 교체(2026-11-16 (2) 절차)
+- 근거: ① 프로젝트 메모 git-eol(CRLF 로 device_bash `M` 부풀음 · 경로 지정 add 가 안전, 2026-09-07 `9a8f7b1`) · decisions 2026-11-16 (1) 훅 · 이 PC `.git/config` `hooksPath = .githooks` 실측 ② [[tools/wheels/index]] 원주속도 표 · 2026-08-28 정정 ② (25 m/s = 자체 상한, 본드 한계 아님) · [[cadcam/연삭-테스트-방법]] §4.6 [VEN-ANCA-GRAF2011] ③ 실측 — 보유 휠 페이지 5개 `_template.md` 형식 · `원통연마-휠-12도-스펙` 1개만 스키마 §6-5 형식, 폴더별 type 에 repair · measurement · compliance · runbook 존재. 대안: 스키마를 스킬에 계속 복사(기각 — 두 곳 관리, 이미 실물과 어긋남)
+- 출처: Cowork (한경준님 「스킬 개정 후보 3건 진행」 2026-11-16)
+- 영향: `skills-custom/README.md` §2 · `테스트카드.md` #4 · #5 · #6. ⚠️ 남는 모순(이번에 안 고침, 승인 대기): `standards/위키-페이지-스키마.md` §6-5 휠 예시가 `_template.md` 와 필드 이름이 다르고 「Vc 권장 범위: 18-25 m/s [VEN-NORTON-WINTER-2023]」 묶음 표기가 남아 있음 · CLAUDE.md 57행 `git add .` · `git-commit.bat` `git add .` · §15-2 수동 `--check` 문구
+
 ## 2026-11-16 (3): 스킬 개정 후보 2건 개정안 제출 — scheduler-diagnose 휴무 소스 · wiki-lint 실행 방법
 
 - 결정: ① `scheduler-diagnose` 0단계 휴무 확인을 `holidays.md` 표 행 grep 하나로 바꾸고 `decisions.md` · `worklog.md` grep 은 뺀다. 등재 없는 휴무가 확인되면 holidays.md §3 대로 먼저 추가(승인 후) ② `wiki-lint` 실행을 `device_bash` 한 번 도는 스크립트로 바꾸고(옛 `mcp__workspace__bash` · `/sessions/...` · 파일마다 Read 폐기) 제외 폴더에 `_private` · `_backup` 추가, 링크 해석은 Obsidian 처럼 경로 끝 일치 ③ 개정안은 `skills-custom/<스킬>/SKILL.개정안_20261116.md` 에 두고 정상본은 그대로 — 저장 카드 저장 + 새 대화 시험(테스트카드 #2 · #3) 통과 뒤 교체

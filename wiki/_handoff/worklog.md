@@ -1,4 +1,12 @@
-﻿## 2026-11-16 (#4) 핸드오프 — Cowork (위키 수정 목록 처리)
+﻿## 2026-11-16 (#5) 핸드오프 — Cowork · 스킬 개정 후보 3건(cnc-handoff · grinding-calc · wiki-new-page) 개정안 제출
+
+- 한 일: 개정안 3개 작성 · 사전 시험 · 테스트카드 #4 ~ #6 · 저장 카드 제출(한경준님 저장 대기)
+- 결과/산출물: `skills-custom/{cnc-handoff,grinding-calc,wiki-new-page}/SKILL.개정안_20261116.md` · README §2 · decisions 2026-11-16 (4)
+- 미완·블로커: ① 저장 카드 3개 저장 → 새 대화 시험 각 3가지(입력문은 테스트카드 표) → 통과 시 정상본 교체 ② 남는 모순(승인 대기): 스키마 §6-5 휠 예시 ↔ `_template.md` · 18-25 묶음 표기 / CLAUDE.md 57행 · `git-commit.bat` 의 `git add .`
+- 다음 단계 제안: 시험은 #5 grinding-calc 부터(짧음) · 스키마 §6-5 는 `_template.md` 가리키게 정리(추천)
+- 챗으로 가져갈 질문: 없음
+
+## 2026-11-16 (#4) 핸드오프 — Cowork (위키 수정 목록 처리)
 
 - 한 일: 빨간 링크 6 · index 미등재 3 · 11-02 브리핑 머리말 · `wiki/CLAUDE.md` → `_to_delete/20261116_wiki-CLAUDE/`(승인) · 공구-코팅 검수표 17건 반영 · 출처 7건 등재
 - 결과: 커밋 b6f81c2 · 7cde6d7 · 4163759 · 7cee87d · a2e49b4 — 위키 검수 ①③④⑤ 0건

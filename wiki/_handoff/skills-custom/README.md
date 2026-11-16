@@ -28,9 +28,9 @@
 |---|---|---|---|
 | scheduler-diagnose — ✅ **반영 완료 11-16** ([[테스트카드]] #2 통과 · 정상본 교체) | 0단계 휴무 확인을 `decisions.md` · `worklog.md` grep 으로 함 | 휴무 단일 소스는 `holidays.md`(CLAUDE.md §13). §13 은 이 스킬이 holidays.md 를 본다고 적혀 있으나 실제 본문은 아님 | CLAUDE.md §13 |
 | wiki-lint — ✅ **반영 완료 11-16** ([[테스트카드]] #3 통과 · 3판 정상본 교체) | 실행 방법이 `mcp__workspace__bash` · `/sessions/.../` 경로 · 파일마다 Read | 옛 도구 · 경로 하드코딩(daily-report-check 가 금지한 방식). device_bash + `$HOME/mnt/cnc-wiki` 로 | daily-report-check §① |
-| cnc-handoff | 종료 안내가 `git add -A` · 커밋 전 `--check` 수동 확인 | ① add 는 실제 변경 파일만 경로로(프로젝트 메모 git-eol) ② `--check` 는 pre-commit 훅이 대신(2026-11-16 (1)) | decisions 2026-11-16 (1) |
-| grinding-calc | 「Vc 권장 18–25 m/s [VEN-NORTON-WINTER-2023] (제조사 기준)」 | 위키 원본은 Norton 실사용 17~22 m/s, 25 m/s 는 **사내 자체 상한** — 출처 · 신뢰도 표기가 섞임 | [[tools/wheels/index]] 113 · 115행 |
-| wiki-new-page | 페이지 스키마를 본문에 통째로 적음 | 원본 [[standards/위키-페이지-스키마]] 와 두 곳 관리(review-role 원칙 「두 곳 관리 금지」) | 2026-11-10 CLAUDE.md 다이어트 |
+| cnc-handoff — 🟡 **개정안 제출 11-16** (`cnc-handoff/SKILL.개정안_20261116.md` · [[테스트카드]] #4 시험 대기) | 종료 안내가 `git add -A` · 커밋 전 `--check` 수동 확인 | ① add 는 실제 변경 파일만 경로로(프로젝트 메모 git-eol) ② `--check` 는 pre-commit 훅이 대신(2026-11-16 (1)) | decisions 2026-11-16 (1) |
+| grinding-calc — 🟡 **개정안 제출 11-16** (`grinding-calc/SKILL.개정안_20261116.md` · [[테스트카드]] #5 시험 대기) | 「Vc 권장 18–25 m/s [VEN-NORTON-WINTER-2023] (제조사 기준)」 | 위키 원본은 Norton 실사용 17~22 m/s, 25 m/s 는 **사내 자체 상한** — 출처 · 신뢰도 표기가 섞임 | [[tools/wheels/index]] 113 · 115행 |
+| wiki-new-page — 🟡 **개정안 제출 11-16** (`wiki-new-page/SKILL.개정안_20261116.md` · [[테스트카드]] #6 시험 대기) | 페이지 스키마를 본문에 통째로 적음 | 원본 [[standards/위키-페이지-스키마]] 와 두 곳 관리(review-role 원칙 「두 곳 관리 금지」) | 2026-11-10 CLAUDE.md 다이어트 |
 
 ## 3. 개정 절차 (13-7 을 사내에 맞춤)
 
