@@ -3,6 +3,14 @@
 > 무엇을(What), 왜(Why), 출처(Where)를 **시간 역순(최신이 맨 위)** 으로 기록합니다.
 > 챗에서 결정된 내용도 반드시 여기로 옮겨야 Code/Cowork가 따라옵니다.
 
+## 2026-11-16 (3): 스킬 개정 후보 2건 개정안 제출 — scheduler-diagnose 휴무 소스 · wiki-lint 실행 방법
+
+- 결정: ① `scheduler-diagnose` 0단계 휴무 확인을 `holidays.md` 표 행 grep 하나로 바꾸고 `decisions.md` · `worklog.md` grep 은 뺀다. 등재 없는 휴무가 확인되면 holidays.md §3 대로 먼저 추가(승인 후) ② `wiki-lint` 실행을 `device_bash` 한 번 도는 스크립트로 바꾸고(옛 `mcp__workspace__bash` · `/sessions/...` · 파일마다 Read 폐기) 제외 폴더에 `_private` · `_backup` 추가, 링크 해석은 Obsidian 처럼 경로 끝 일치 ③ 개정안은 `skills-custom/<스킬>/SKILL.개정안_20261116.md` 에 두고 정상본은 그대로 — 저장 카드 저장 + 새 대화 시험(테스트카드 #2 · #3) 통과 뒤 교체
+- 근거: CLAUDE.md §13 휴무 단일 소스와 스킬 본문이 어긋남(옛 기록은 아카이브로 옮겨져 grep 에 빠짐 · 2026-08-26 오판 사례). wiki-lint 는 이 환경에 없는 도구 · 경로를 적어 둠(daily-report-check §① 이 금지한 방식). 사전 시험(이 세션): 0단계 명령 3날짜 기대대로 · lint 스크립트 190개 약 5 s, 실제 빨간 링크 12건 검출. 대안: 남은 3건(cnc-handoff · grinding-calc · wiki-new-page)도 함께(보류 — 한 번에 2건만, 표 순서대로)
+- 출처: Cowork (한경준님 「스킬 개정 후보 2건 진행」 2026-11-16)
+- 영향: `skills-custom/README.md` §2 상태 · `테스트카드.md` #2 · #3 · 통과 후 `holidays.md` §4 의 scheduler-diagnose 설명 문장(「decisions · worklog 뿐 아니라」) 정리 필요
+- 결과(11-16 같은 날): 두 스킬 모두 새 대화 시험 3가지 통과 → 정상본 교체(scheduler-diagnose md5 3069de6f · wiki-lint 5451aaa4) · holidays.md §4 정리 완료. wiki-lint 는 시험 중 2판(주간브리핑 제외 — CLAUDE.md §8-4 를 1판에서 빠뜨림) · 3판(④ 이름 글자 겹침 · ⑤ 주석 안 예시 링크 오판) 을 거침
+
 ## 2026-11-16 (2): 사내 스킬 정상본을 `wiki/_handoff/skills-custom/` 에 보관 · 개정은 테스트카드 3가지 시험 뒤 교체
 
 - 결정: ① 사내 스킬 11개 원본(계정 저장본 그대로 복사 · md5 대조)과 목록 · 개정 후보 · 개정 절차를 `skills-custom/README.md` 에 둔다 ② 개정 때 기존 요청 · 바뀐 규칙 · 범위 밖 요청 3가지를 새 대화에서 시험해 `테스트카드.md` 에 남긴 뒤 정상본을 교체한다 ③ 원본을 읽으며 찾은 개정 후보 5건(scheduler-diagnose 휴무 소스 · wiki-lint 옛 경로 · cnc-handoff add -A · grinding-calc 출처 표기 · wiki-new-page 두 곳 관리)은 고치지 않고 승인 대기

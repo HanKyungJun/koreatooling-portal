@@ -1,4 +1,22 @@
-﻿## 2026-11-16 (#2) 핸드오프 — Cowork · refine-request 범위 밖 시험
+﻿## 2026-11-16 (#3) 핸드오프 — Cowork · 스킬 개정 후보 2건(scheduler-diagnose · wiki-lint) 반영
+
+- 한 일: 개정안 작성 → 저장 카드 → 새 대화 시험 각 3가지 → 정상본 교체(테스트카드 #2 · #3 전부 통과)
+- 결과/산출물: `skills-custom/scheduler-diagnose/SKILL.md`(3069de6f) · `skills-custom/wiki-lint/SKILL.md`(5451aaa4, 3판) · README §1 · §2 · holidays.md §4 · decisions 2026-11-16 (3)
+- 미완·블로커: 개정 후보 3건 남음(cnc-handoff · grinding-calc · wiki-new-page) · 시험에서 나온 위키 수정 목록 미적용 — 빨간 링크 6곳(`tools/공구-코팅` → `materials/` 5 · 휠RPM 노트 1) · index 미등재 3 · 11-02 브리핑 머리말 · `wiki/CLAUDE.md` 처리 · 주간브리핑 10-26 · 11-09 파일 없음 · `공구-코팅.md` 검토 17건(`outputs/공구-코팅_검수표_20261116.xlsx`) · run.log 아침 `ERROR` → `SKIP` 문구
+- 다음 단계 제안: 위 위키 수정 목록 한 번에 처리(빨간 링크부터) · 공구-코팅 상 1건(BLUE = 울트라-X) 먼저
+- 챗으로 가져갈 질문: 없음
+
+## 2026-11-16 스케줄러 진단 — Cowork (스킬 시험 · scheduler-diagnose 개정 ② — `skills-custom/테스트카드.md` #2)
+
+- 대상: 2026-11-13(금) 일일보고 누락 의심
+- 0단계(휴무 대조): holidays.md 등재 없음(영업일)
+- 1단계(run.log): 16:00 KST 정기 실행 정상 — run.log 8406~8429 「보고서 저장 완료」 · calendar OK · step5 rc=0 · generate.py push OK. 07:57 아침 실행의 `[calendar] ERROR - report not found` 는 16:00 전이라 생기는 평소 줄(run.log 누적 17회)
+- 2단계(파일): `wiki/reports/daily/2026-11-13_일일보고.xlsx` 있음(8,789 B · 16:00 생성 · NC 40개 = 양품 39 · 불량 1 · 9건) · git ef31d26 커밋됨 · 11-16 generate.log 직전 영업일 점검 「✅ 있음」
+- 3단계(Task Scheduler): 생략 — 실행 흔적이 로그로 확인됨
+- 결론: 누락 아님(4분류 해당 없음)
+- 조치: 없음. 아침 실행의 오해 소지 ERROR 줄은 정리 후보(승인 전 미수정)
+
+## 2026-11-16 (#2) 핸드오프 — Cowork · refine-request 범위 밖 시험
 
 - 한 일: 범위 밖 입력문 3개를 미리 정함 → 새 대화에서 시험 → 결과 확인
 - 결과: ③-1 · ③-2 · ③-3 모두 통과(refine-request 호출 0회) — `skills-custom/테스트카드.md` #1 · README 목록(fb92138). SKILL.md md5 3c930646 그대로

@@ -1,13 +1,6 @@
 ---
-name: scheduler-diagnose
-description: |
-  [스케줄러 진단] 일일보고 자동화(CNC_Daily_Report 등)가 누락·오류로 보일 때 근본 원인을 심층 진단합니다.
-  run.log·generate.log 실측 대조, 원본 재연마_월간생산일지 xls의 해당 일자 시트 직접 확인(무실적 vs 입력누락 vs
-  스크립트 오류 구분), Task Scheduler PowerShell 진단(LastRunTime/LastTaskResult/History 로그), 휴무일·공지된
-  휴가 일정 대조까지 수행합니다.
-  "스케줄러 확인", "스케줄러 진단", "자동화 왜 안 도는지", "누락 원인 확인해줘", "왜 보고서가 안 만들어졌는지" 등으로
-  실행합니다. daily-report-check에서 누락·오류가 발견됐을 때 이어서 사용하거나, 사용자가 바로 이 스킬을 지정해
-  호출할 수 있습니다.
+name: "scheduler-diagnose"
+description: "[스케줄러 진단] 일일보고 자동화(CNC_Daily_Report 등)가 누락·오류로 보일 때 근본 원인을 심층 진단합니다. run.log·generate.log 실측 대조, 원본 재연마_월간생산일지 xls의 해당 일자 시트 직접 확인(무실적 vs 입력누락 vs 스크립트 오류 구분), Task Scheduler PowerShell 진단(LastRunTime/LastTaskResult/History 로그), 휴무일·공지된 휴가 일정 대조까지 수행합니다. \"스케줄러 확인\", \"스케줄러 진단\", \"자동화 왜 안 도는지\", \"누락 원인 확인해줘\", \"왜 보고서가 안 만들어졌는지\" 등으로 실행합니다. daily-report-check에서 누락·오류가 발견됐을 때 이어서 사용하거나, 사용자가 바로 이 스킬을 지정해 호출할 수 있습니다."
 ---
 
 # 스케줄러 심층 진단 스킬
@@ -24,18 +17,28 @@ description: |
 
 ## 실행 순서
 
-### 0단계 — 선행 확인: 이미 알려진 휴무일과 먼저 대조
+### 0단계 — 선행 확인: 휴무 단일 소스 `holidays.md` 와 먼저 대조
 
-깊은 진단에 들어가기 전에, 이미 기록된 휴무 이력과 겹치지 않는지부터 확인해 오탐을 거릅니다.
+깊은 진단에 들어가기 전에, 그 날이 이미 등재된 휴무인지부터 확인해 오탐을 거릅니다.
+휴무 판단은 **`wiki/_handoff/holidays.md` 하나만** 봅니다(CLAUDE.md §13 단일 소스) — §1 법정공휴일,
+§2 사내 임시휴무·하계휴가·**개인 연차(한경준님 부재 = 생산 정지, 2026-08-27 개정)**.
+`decisions.md`·`worklog.md` 를 grep 하지 않습니다(옛 기록은 아카이브로 옮겨져 빠지고, 휴무 정보가 분산됨).
+
+모든 명령은 `device_bash` 에서 `$HOME/mnt/cnc-wiki` 기준으로 실행합니다(경로 하드코딩 금지).
 
 ```bash
-grep -n "휴가\|휴무\|공휴일\|하계" wiki/_handoff/decisions.md wiki/_handoff/worklog.md
+cd "$HOME/mnt/cnc-wiki" && for d in YYYY-MM-DD YYYY-MM-DD; do
+  grep -n "^| $d |" wiki/_handoff/holidays.md || echo "$d — holidays.md 등재 없음"
+  TZ=Asia/Seoul date -d "$d" '+  요일: %a'
+done
 ```
 
-- 법정공휴일 여부도 함께 확인합니다(예: 제헌절 2026-05-11 재지정 등 — 과거 decisions.md에 이미 등재된 사례 있음).
-- 이미 기록된 휴무·공지된 휴가와 날짜가 일치하면 → 그 시점에서 "무실적(휴무)"로 잠정 결론, 아래 1~4단계는
-  생략하고 5단계(기록)로 바로 이동해도 됩니다.
-- 일치하지 않으면(신규 휴무이거나 원인 불명) 아래 단계를 이어갑니다.
+- 표 행이 나오면 → "무실적(휴무)"로 잠정 결론, 아래 1~4단계는 생략하고 5단계(기록)로 바로 이동해도 됩니다.
+- 「등재 없음」이면 아래 단계를 이어갑니다. 진단 중 사용자가 "그날 쉬었다"고 확인해 주면, 결론을 내기 전에
+  `holidays.md` §3 절차대로 **이 파일에 먼저 행을 추가**합니다(추가는 사용자 승인 후 — 아티팩트에만 넣으면
+  다음 진단이 또 오판, 2026-08-26 사례).
+- 법정공휴일이 정부 발표로 바뀐 의심이 들면(예: 제헌절 2026-05-11 재지정) holidays.md §1 을 갱신하자고
+  제안합니다 — 스킬 안에 날짜를 따로 적지 않습니다.
 
 ### 1단계 — run.log / generate.log 실측 대조
 
@@ -163,7 +166,7 @@ wevtutil sl Microsoft-Windows-TaskScheduler/Operational /e:true
 - Cowork는 Windows PowerShell을 직접 실행할 수 없습니다 — 항상 정확한 명령을 사용자에게 안내하고, 결과를
   받아서 해석하는 역할을 합니다.
 - 공휴일·휴가 오탐은 실제로 반복 발생한 이력이 있습니다(2026-07-24, 제헌절 오탐 3연속) — 0단계를 생략하지
-  않습니다.
+  않습니다. 휴무 근거는 `holidays.md` 한 곳뿐입니다(CLAUDE.md §13).
 
 ## 주의사항
 

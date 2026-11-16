@@ -87,7 +87,7 @@ updated: 2026-10-19
 
 - `daily-report-check`: 누락 파일 탐지 전, 이 파일(`wiki/_handoff/holidays.md`)의 §1·§2 날짜와 먼저 대조해
   법정공휴일·사내 휴무로 이미 설명되는 날짜는 "누락"이 아닌 "휴무(정상)"로 분류합니다.
-- `scheduler-diagnose`: 0단계(선행 확인)에서 `decisions.md`·`worklog.md`뿐 아니라 이 파일도 함께 확인합니다.
+- `scheduler-diagnose`: 0단계(선행 확인)에서 **이 파일만** 확인합니다(날짜별 표 행 grep). `decisions.md`·`worklog.md` 는 보지 않습니다 — 2026-11-16 개정(decisions 2026-11-16 (3)). 옛 문장: 「decisions.md·worklog.md뿐 아니라 이 파일도 함께 확인」.
 - "Weekly Calendar Overview" 아티팩트: `CO_EVENTS`에 이 파일의 §1·§2 항목이 모두 반영되어 있어야
   `isMissing()` 판정이 정확합니다. 이 파일과 아티팩트의 `CO_EVENTS`가 어긋나면 반드시 이 파일을 기준으로
   아티팩트를 고칩니다(반대 아님).
