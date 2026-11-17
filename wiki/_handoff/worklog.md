@@ -5,6 +5,7 @@
 - 추가: AI 탑재 공작기계 · CNC 동향 자료 수집 → `wiki/comparisons/AI-탑재-공작기계-동향-2026-11.md` 신규 · sources §5 26건 · index · log (일본 JIMTOF 상세 · 「AI 머시닝센터」 아룸 TTMC 보강)
 - 추가 2: 자료 조사 방법 검수(보완 8건) → 스킬 research-deep 초안 · 저장 카드 · 테스트카드 #7(시험 전) · decisions 2026-11-17 (1) 신뢰도 표기 · CLAUDE.md §2 1줄
 - 추가 3: research-deep 로 2차 조사 → AI 동향 페이지 §2-4(새로 찾은 것 10건 · 세 층 정리) · sources 15건 · 테스트카드 #7 ① 사전 실행 기록
+- 추가 4: 보고서 `wiki/reports/04_비교·분석/AI공작기계_동향조사_보고_20261117.pdf`(.docx 같이, 14쪽 · 참고 문헌 33건 링크 · 스타일 점검 0) · 스크립트 `scripts/report_ai_trend/`
 - 미완·블로커: 없음
 - 다음 단계 제안: P0 넥 휠 D 이 빠짐 측정값 기록 · GX7 녹색 마커 제거 종결 · 보고서 규칙 tasks 항목 종결(CLAUDE.md §14 확정과 어긋남)
 - 챗으로 가져갈 질문: 없음

@@ -1,3 +1,10 @@
+## [2026-11-17] 신규 — AI 탑재 공작기계 업계 동향 조사 보고(PDF)
+
+위키 동향 페이지 내용을 사내 보고서(양식 A 뼈대를 조사 보고에 맞춤, 코고툴 B안)로 정리. 참고 문헌 33건 링크 포함 · doc_style_check 기준 넘은 항목 0.
+
+영향받은 페이지: [[comparisons/AI-탑재-공작기계-동향-2026-11]]
+출처 추가: 없음(기존 등재 ID)
+
 ## [2026-11-17] 업데이트 — AI 탑재 공작기계 동향 2차 조사(research-deep)
 
 §2-4 신설: 기계 · CNC / CAM / 상담 세 층으로 재정리 — 미쓰비시 NC MachiningAID · DMG 모리 AI Chip Removal · DN 열변위 보정 · Hexagon ProPlanAI · CloudNC CAM Assist · Siemens NX · 마작-ABEJA 상세 · 하이덴하인 HEIDI · 화낙 AMB. 요약 · 정리 1번 정정, 행사 표에 AMB · TMTS 2026, 사내 관계(0i-M · CAM) 추가.
