@@ -7,7 +7,7 @@ sources:
   - "[VEN-FREECAD-CAM-SRC]"
   - "[VEN-BLENDER-LAB-MCP]"
   - "[SYS-COWORK]"
-updated: 2026-11-12
+updated: 2026-11-17
 ---
 
 # CAD · 3D 프로그램 역할 정의 (CADCraft · SolidCraft · FreeCAD · Blender)
@@ -98,6 +98,7 @@ SolidCraft STEP 은 원을 **반원 자유곡선(B-spline) 2개**로 저장한�
 5. FreeCAD 는 한글 경로 DXF 가져오기가 아무 말 없이 0개 → 영문 임시 경로로 복사해서 연다(06_FreeCAD_CAM README §7-4). 변환 스크립트도 `%TEMP%` 를 거친다.
 6. SolidCraft Windows 설치본은 코드 서명 없음(설치 시 SmartScreen 경고) · 2026-10 공개 · MIT/Apache-2.0 [VEN-SOLIDCRAFT-MCP].
 7. ⚠️ 주의: SolidCraft 화면 없는 방식은 **한 작업이 약 90 s 를 넘으면 서버가 다시 시작되어 저장 안 한 작업이 사라진다**(2026-11-12 실측: D6 코너R 4날 나선 홈 — 50 mm 몸체에 홈 4개 순서대로 깎기 39 → 90 s → 3 · 4번째 및 코너 R 회전 깎기에서 끊김, 오류 보고 0건). 대처: ① 단계마다 `.sc` 저장 ② 날부만 짧은 몸체(코너 R 포함 회전체 z 0 ~ 9)로 만들어 홈을 하나씩 깎기(6.5 · 17.8 · 25.6 · 22.2 s) ③ 넥 · 생크는 별도 몸체로 두기(합치기도 시간 초과 — STEP 은 솔리드 2개). 부피는 계산값과 −0.015 % (SMP-02).
+8. ⚠️ 주의: FreeCAD 1.1.4 Face(MillFace) 「Line」 패턴은 **CutMode(상향 · 하향)가 직선 패스에 안 먹는다** — CutMode 는 닫힌 윤곽용(`orientation`)이고, 직선 방향은 `Path.fromShapes` 의 `direction`(1 = +X) 이 정하는데 화면 설정에 없다. 그대로 두면 패스마다 방향이 바뀌어 상향 70 · 하향 71 로 섞임. 해결: 스크립트로 `areaOpPathParams` 에 `direction` 을 넣어 다시 계산 → 상향 141 · 결과 면 손코드와 차이 0.000 mm(2026-11-17 실측, O0003 측면가공 재현). 이 고침은 FCStd 에 저장되지 않아 **다시 계산하면 풀린다** → 포스트 출력 직전에 매번 적용 · 출력 G코드에서 방향을 확인한다. `outputs/02_도면_3D_CAM/07_O0003_측면가공_FreeCAD/README.md`
 
 ## 5. 시험 파일 (`outputs/02_도면_3D_CAM/`, 2026-11-12)
 
