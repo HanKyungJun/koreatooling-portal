@@ -3,7 +3,7 @@
 2026 전시회에서 공개된 AI 탑재 공작기계 · CNC · 연삭기를 업체별로 정리(마작 · 화낙 · 오쿠마 · 미쓰비시 · DMG 모리 · DN솔루션즈 · 스맥 · 위아 · 오카모토 · VOLLMER · Adelbert Haas · ANCA). 오쿠마 출시 시기 두 기사 병기.
 
 영향받은 페이지: [[comparisons/AI-탑재-공작기계-동향-2026-11]], [[index]]
-출처 추가: [IND-MONOIST-MAZAK-AI-20261029] 외 14건(sources.md §5 「AI 탑재 공작기계 · CNC 동향」)
+출처 추가: [IND-MONOIST-MAZAK-AI-20261029] 외 25건(sources.md §5 「AI 탑재 공작기계 · CNC 동향」) — 같은 날 §1-A 일본 박람회 · §2-0 「AI 머시닝센터」 아룸 TTMC 보강(요약 · 정리 2번 정정)
 
 ## [2026-11-16] 업데이트 — 휠 D 각인 「6」 = 연삭층 깊이 X 6 mm (실측)
 
