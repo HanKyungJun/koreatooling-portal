@@ -591,6 +591,24 @@
 - **[IND-KIDD-REGRIND-2025]** 산업일보 (2025-10-29). *마모된 드릴·엔드밀 절삭 날, 제조현장서 연마한다*. https://kidd.co.kr/news/243735 — 현장 재생 연마기 업체 기사. 「제조사에 재연마를 맡기면 통상 일주일」 언급(업계 통념 수준 — 보조 참고)
 - **[IND-LAWTALK-PRIVACY-2022]** 김동우 변호사 (2022-01-15, 이데일리 기고 → 로톡). *개인정보처리방침, 어떻게 작성할까*. https://www.lawtalk.co.kr/posts/38307 — 개인정보보호법 제30조 처리방침 수립·공개 의무 · 필수 기재 10항목. ⚠️ 법령 원문 아님(5순위 성격) — 공개 전 법령·전문가 확인
 
+### AI 탑재 공작기계 · CNC 동향 — 2026 전시회 (2026-11-17 등재, 확인일 2026-11-17)
+
+- **[IND-MONOIST-MAZAK-AI-20261029]** MONOist (2026-10-29). *しゃべるNCとエラーに対処、後で要約も確認 マザックが"声"生かすAI活用:JIMTOF2026*. https://monoist.itmedia.co.jp/mn/articles/2610/29/news041.html — 마작 AI 챗봇(iCONNECT, 2026-11 중순) · AI 콜센터 · MAZATROL DX AI 에이전트(2027 봄) · 말하는 NC(2027 여름). 수치 없음. [[comparisons/AI-탑재-공작기계-동향-2026-11]]
+- **[IND-MONOIST-MAZAK-SEMINAR-20261104]** MONOist (2026-11-04). *製造業の「秘伝のタレ」はAIに奪われるのか、競争力の源泉はどこにある？:JIMTOF2026*. https://monoist.itmedia.co.jp/mn/spv/2611/04/news064.html — 마작 기반 모델(사내 사전학습 → 고객 데이터 조정) · 에이전트 전개 약 2년. [[comparisons/AI-탑재-공작기계-동향-2026-11]]
+- **[IND-MONOIST-JIMTOF-OPEN-20261027]** MONOist (2026-10-27). *最新鋭の工作機械とAI、ロボティクスで製造業の課題に挑む JIMTOF2026が開幕*. https://monoist.itmedia.co.jp/mn/articles/2610/27/news043.html — 회기 · 규모(22개국 · 1,134사) · 마작-ABEJA 공정 설계 AI(2028년도) · 미쓰비시 휴머노이드-CNC. [[comparisons/AI-탑재-공작기계-동향-2026-11]]
+- **[IND-NEWSWITCH-AI-MT-20261028]** 日刊工業新聞 / ニュースイッチ (2026-10-28). *オークマ・ファナック・ヤマザキマザック…工作機械で導入進む、AIの生かし方*. https://newswitch.jp/p/50642 — 오쿠마 MB-46VEⅡ AI 에이전트(2027년도 상품화) · 화낙 Physical AI CNC · MCP 서버 · AI 마스터리스 비전(2027-01 출하) · 미쓰비시 AI 에이전트 · DMG 모리 서비스 에이전트. [[comparisons/AI-탑재-공작기계-동향-2026-11]]
+- **[IND-KOJOMAG-JIMTOF-20261029]** 工場マガジンラック(日刊工業新聞社) (2026-10-29). *〈展示会レポート〉JIMTOF2026開幕 各社が提案する最新技術を紹介 Part1*. https://kojomag.nikkan.co.jp/exibition/exh/740 — 오카모토 PSG63SA1 + Quick Knowledge(AI 가공 조건 조언, 2027년도) · 오쿠마 AI 에이전트(2027년도 실증 → 2028년도 공개 — newswitch 와 시기 다름). [[comparisons/AI-탑재-공작기계-동향-2026-11]]
+- **[IND-KEZURIBA-JIMTOF2026]** kezuriba.net. *JIMTOF 2026 New Products & World Premieres* · *Live Report*. https://kezuriba.net/en/articles/jimtof2026-new-products/ · https://kezuriba.net/en/articles/jimtof2026-report/ — 신제품 목록(화낙 · 미쓰비시 MG12R · 오카모토 · Nidec LAMDA500). ⚠️ 업계 정리 사이트 — 보조 참고. [[comparisons/AI-탑재-공작기계-동향-2026-11]]
+- **[VEN-FANUC-JIMTOF2026]** FANUC — *JIMTOF2026* 전시 안내. https://www.fanuc.co.jp/en/JIMTOF2026/ — Physical AI CNC · Smart Digital Twin · iHMI2 Programming. 수치 없음. [[comparisons/AI-탑재-공작기계-동향-2026-11]]
+- **[IND-RT-FANUC-IMTS2026]** Robotics Tomorrow (2026-09-04). *FANUC America Brings Robotics, Automation, Physical AI and CNC Innovation to IMTS 2026*. https://www.roboticstomorrow.com/news/2026/09/04/fanuc-america-brings-robotics-automation-physical-ai-and-cnc-innovation-to-imts-2026/27049 — AI 공구경로 · 프로그램 생성 데모 · 500i-A CNC. [[comparisons/AI-탑재-공작기계-동향-2026-11]]
+- **[IND-MTN-OKUMA-IMTS2026]** machinetoolnews.ai (2026-07-28). *Okuma IMTS 2026: Four CNC Debuts and AI Robot Cell*. https://machinetoolnews.ai/okuma-imts-2026-ai-robot-cell-cnc-launches/ — Intrinsic 협업 AI 로봇 셀(세부 미공개). ⚠️ 뉴스 정리 사이트 — 보조 참고. [[comparisons/AI-탑재-공작기계-동향-2026-11]]
+- **[IND-KIDD-DN-ROBOTWORLD-20261108]** 산업일보 (2026-11-08). DN솔루션즈 로보월드 2026 기사. https://kidd.co.kr/news/248065 — DVF 5000 2세대 + 협동로봇 · 비전 공구 상태 진단 · DNVS · iDOO RMS+. [[comparisons/AI-탑재-공작기계-동향-2026-11]]
+- **[IND-MEGAECON-DN-ROBOTWORLD-20261104]** 메가경제 (2026-11-04). *"공작기계에 AI 두뇌 심었다"…DN솔루션즈, 로봇 넘어 '자율제조' 승부수*. https://megaeconomy.co.kr/news/newsview.php?ncode=1065591147162542 — 「AI-Ready」 머신 · iDOO RMS+ Vanguard 수상. [[comparisons/AI-탑재-공작기계-동향-2026-11]]
+- **[IND-SEDAILY-SMAC-SIMTOS-20260413]** 서울경제 (2026-04-13). *스맥, SIMTOS 2026서 '5G+AI 자율제조' 통합 솔루션 공개*. https://www.sedaily.com/article/20031793 — STX 2600 · AI 모니터링 · 가공 조건 실시간 분석(세부 미공개). [[comparisons/AI-탑재-공작기계-동향-2026-11]]
+- **[IND-NEWSPIM-WIA-SIMTOS-20260331]** 뉴스핌 (2026-03-31). *위아공작기계, SIMTOS 2026 참가… '피지컬 AI' 기반 스마트 제조 구현*. https://www.newspim.com/news/view/20260331000785 — KF6500/5A · HS10000 + AGV. [[comparisons/AI-탑재-공작기계-동향-2026-11]]
+- **[IND-IDT-GRINDINGHUB-20260429]** IDT media (2026-04-29). *Grinding Hub 2026 in Stuttgart: Grinding technology with elastic diamond tools, hybrid machines, and AI*. https://www.idt.media/markets/rethinking-grinding-precision-meets-intelligence/2655194 — VOLLMER AI 챗봇 · Adelbert Haas AI 에이전트 예지 서비스. 수치 없음. [[comparisons/AI-탑재-공작기계-동향-2026-11]]
+- **[IND-AM-ANCA-IMTS2026]** American Machinist (2026-08-06). *Connected Regrinding Workflow Helps Combat Rising Carbide Costs* (ANCA, IMTS 2026). https://www.americanmachinist.com/machining-cutting/product/55396123/connected-regrinding-workflow-helps-combat-rising-carbide-costs-anca-imts-2026 — AI 명칭 기능 없음 · ANCA Machine Intelligence(MicroX Ultra) · AIMS Connect 최대 20 % · Performance+ 10 % 이상(제조사 주장). [[comparisons/AI-탑재-공작기계-동향-2026-11]]
+
 ## 6. 핸드오프 시스템 자체의 근거
 
 - **[SYS-NYGARD]** Nygard, M. (2011). *Documenting Architecture Decisions*. Cognitect Blog. https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions
@@ -712,6 +730,10 @@
 ### 기존 페이지 매핑 (이전 세션 등재 — 변동 없음)
 
 - *(0-A ~ 0-H 섹션의 페이지 매핑은 각 섹션 헤더 주석 참조)*
+
+### AI 탑재 공작기계 동향 페이지 매핑 (2026-11-17 등재)
+
+- [[comparisons/AI-탑재-공작기계-동향-2026-11]] → [IND-MONOIST-MAZAK-AI-20261029] · [IND-MONOIST-MAZAK-SEMINAR-20261104] · [IND-MONOIST-JIMTOF-OPEN-20261027] · [IND-NEWSWITCH-AI-MT-20261028] · [IND-KOJOMAG-JIMTOF-20261029] · [IND-KEZURIBA-JIMTOF2026] · [VEN-FANUC-JIMTOF2026] · [IND-RT-FANUC-IMTS2026] · [IND-MTN-OKUMA-IMTS2026] · [IND-KIDD-DN-ROBOTWORLD-20261108] · [IND-MEGAECON-DN-ROBOTWORLD-20261104] · [IND-SEDAILY-SMAC-SIMTOS-20260413] · [IND-NEWSPIM-WIA-SIMTOS-20260331] · [IND-IDT-GRINDINGHUB-20260429] · [IND-AM-ANCA-IMTS2026]
 
 ## 8. 용어집 (Glossary) — 핵심 약어
 
