@@ -7,7 +7,7 @@
   python erp\\sales_board.py                 오늘(KST) 기준으로 만들고 끝
   python erp\\sales_board.py --open          만든 뒤 브라우저로 연다 (매출현황판.bat)
   python erp\\sales_board.py 2026-11-17      기준일 지정
-  python erp\\sales_board.py --py same       전년 비교를 「같은 달 전체」 대신 「같은 기간(1일 ~ 기준일)」로
+  python erp\\sales_board.py --py full       전년 비교를 「같은 기간(1일 ~ 기준일)」 대신 「같은 달 전체」로
   python erp\\sales_board.py --refresh       지난달 이전 캐시까지 ERP 에서 다시 받음
   python erp\\sales_board.py --offline       ERP 조회 없이 캐시만으로 (시험용)
 
@@ -589,7 +589,8 @@ erp/sales_board.py · 결과 wiki/_private/sales_board/ (git 추적 제외)
 def main(argv=None):
     ap = argparse.ArgumentParser(description="매출 현황판 (재연마, 경준님 PC 전용)")
     ap.add_argument("date", nargs="?", help="기준일 YYYY-MM-DD (기본 오늘 KST)")
-    ap.add_argument("--py", choices=("full", "same"), default="full", help="전년 비교: full=같은 달 전체, same=같은 기간")
+    ap.add_argument("--py", choices=("full", "same"), default="same",
+                    help="전년 비교: same=같은 기간(기본, 수기 시트와 같음 — 2026-11-18 경준님 확인), full=같은 달 전체")
     ap.add_argument("--refresh", action="store_true", help="지난 달 캐시도 ERP 에서 다시 받음")
     ap.add_argument("--offline", action="store_true", help="ERP 조회 없이 캐시만")
     ap.add_argument("--open", action="store_true", help="만든 뒤 브라우저로 열기")
@@ -612,16 +613,52 @@ def main(argv=None):
         f.write(render(r, now))
     os.replace(OUT_HTML + ".tmp", OUT_HTML)
 
-    # 콘솔 — 수기 시트와 대조용 (화면에만, 파일 · 로그에 남기지 않음)
-    c, pf, ps = r["cur"], r["py_full"], r["py_same"]
-    f = lambda s, k: won(s[k]) if s else "기록 없음"
-    print(f"[sales_board] 기준일 {base} · {r['cur_ym']} vs {r['py_ym']}")
-    print(f"  올해  매출 mov_amt {f(c,'amt')} · tot_amt {f(c,'tot')} · 출고 {f(c,'own')} · 출고합계 {f(c,'qty')} · {c['rows'] if c else 0}행")
-    print(f"  전년(달 전체)  매출 {f(pf,'amt')} · 출고 {f(pf,'own')} · 출고합계 {f(pf,'qty')}")
-    print(f"  전년(1~{r['same_day']}일) 매출 {f(ps,'amt')} · 출고 {f(ps,'own')} · 출고합계 {f(ps,'qty')}")
+    # 대조용 요약 — 콘솔 + wiki/_private/sales_board/last_run.txt (git 제외. run.log 등 다른 로그에는 쓰지 않음)
+    # 여기 숫자는 ERP 값만(입력표 수기 값 섞지 않음) — 수기 시트와 맞춰 보기 위해
+    c = summarize(months[r["cur_ym"]][0], upto=base.isoformat())
+    pf = summarize(months[r["py_ym"]][0])
+    ps = summarize(months[r["py_ym"]][0], upto=f"{r['py_ym']}-{r['same_day']:02d}")
+    f = lambda s_, k: won(s_[k]) if (s_ and s_.get(k) is not None) else "기록 없음"
+    L = [f"[sales_board] 기준일 {base} · {r['cur_ym']} vs {r['py_ym']} · 만든 시각 {now:%Y-%m-%d %H:%M} KST",
+         f"  올해 {r['m']}월 1~{base.day}일   매출 mov_amt {f(c,'amt')} · tot_amt {f(c,'tot')} · vat {f(c,'vat')}"
+         f" · 출고 {f(c,'own')} · 출고합계 {f(c,'qty')} · {c['rows'] if c else 0}행",
+         f"  전년 {r['m']}월 1~{r['same_day']}일   매출 mov_amt {f(ps,'amt')} · tot_amt {f(ps,'tot')}"
+         f" · 출고 {f(ps,'own')} · 출고합계 {f(ps,'qty')} · {ps['rows'] if ps else 0}행",
+         f"  전년 {r['m']}월 전체     매출 mov_amt {f(pf,'amt')} · tot_amt {f(pf,'tot')}"
+         f" · 출고 {f(pf,'own')} · 출고합계 {f(pf,'qty')}",
+         f"  두 기간 합계        mov_amt {won((c or {}).get('amt',0) + (ps or {}).get('amt',0))}"
+         f" · tot_amt {won((c or {}).get('tot',0) + (ps or {}).get('tot',0))}"]
     if c and c.get("amt_check_bad", 0) > 0:
-        print(f"  [확인 필요] 공급가+부가세≠합계 행 {c['amt_check_bad']}개")
-    print(f"  → {OUT_HTML}")
+        L.append(f"  [확인 필요] 공급가+부가세≠합계 행 {c['amt_check_bad']}개")
+    # 월 평균 출하 수량 후보 (수기 시트 맨 아래 값의 기준 찾기용)
+    L.append("  월별 출고 / 출고합계 (ERP):")
+    per = []
+    for ym in sorted(months):
+        s_ = summarize(months[ym][0])
+        if s_ is None:
+            L.append(f"    {ym}  기록 없음 ({months[ym][1]})")
+            continue
+        part = ym == r["cur_ym"]
+        if not part:
+            per.append((ym, s_["own"], s_["qty"]))
+        L.append(f"    {ym}  출고 {won(s_['own'])} · 출고합계 {won(s_['qty'])} · 매출 {won(s_['amt'])}{' (진행 중)' if part else ''}")
+
+    def avg(sel, label):
+        if sel:
+            L.append(f"  월평균 {label} ({len(sel)}개월): 출고 {won(sum(x[1] for x in sel)/len(sel))}"
+                     f" · 출고합계 {won(sum(x[2] for x in sel)/len(sel))}")
+    py_, cy = str(base.year - 1), str(base.year)
+    avg([x for x in per if x[0].startswith(py_)], f"{py_}년")
+    avg([x for x in per if x[0].startswith(cy)], f"{cy}년 1~{base.month-1}월")
+    avg(per[-12:], "최근 마감 12개월")
+    avg(per, "받은 달 전체")
+    L.append(f"  → {OUT_HTML}")
+    print("\n".join(L))
+    try:
+        with open(os.path.join(OUT_DIR, "last_run.txt"), "w", encoding="utf-8") as fh:
+            fh.write("\n".join(L) + "\n")
+    except OSError:
+        pass
     if a.open:
         try:
             os.startfile(OUT_HTML)   # Windows
