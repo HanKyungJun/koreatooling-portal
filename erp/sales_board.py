@@ -13,9 +13,13 @@
 
 데이터
 - 매출 · 수량: ERP 재연마 출하등록 lem120_jae_g00 (chk_detail=1) — 월 출하 마감(save_shipment.py)과 같은 원본.
-    매출 = mov_amt 합 (공급가로 추정 — 첫 실행 때 수기 시트와 대조해 확정. 화면 아래 「확인 필요」)
+    매출 = mov_amt 합 (공급가, 부가세 제외 — 2026-11-18 수기 시트와 대조 일치 [실측 검증])
     수량 = mov_own_qty 합 (출고, 연마불가 제외) — 출고합계(mov_qty)는 참고로 같이 보인다.
-- 목표 · 외주 매입: 입력.xlsx 「월별입력」 시트 (경준님이 손으로 채움 — 외주 매입 ERP 조회 이름은 아직 캡처 전).
+- 외주 매입: ERP 매입(입고) 조회 lea110_g00 (2026-11-18 Fiddler 캡처 → probe_purchase.py --parse 가 만든
+    wiki/_private/sales_board/purchase_spec.json 의 파라미터 그대로, 날짜만 바꿈) 의 in_amt(공급가) 를
+    외주업체.json(같은 폴더, git 제외)에 적은 업체명으로 묶어 더한다. 둘 중 하나라도 없으면 입력표 값을 쓴다.
+    2026-11-18 대조: 25년 · 26년 11월 1~17일 외주 2곳 4칸이 수기 시트와 일치 [실측 검증].
+- 목표: 입력.xlsx 「월별입력」 시트 (경준님이 손으로 채움).
     이익 = 매출 − 외주합계, 이익률 = 이익 ÷ 매출 (수기 「생산팀 매출 현황」 시트 계산과 같게).
 
 🔴 가격 열 차단 예외 (decisions 2026-11-13 (2) 와 같은 방식):
@@ -38,6 +42,10 @@ OUT_HTML = os.path.join(OUT_DIR, "매출현황판.html")
 WORK_SET = "lem120_jae_g00"
 KEEP = ("out_dt", "cust_nm", "mov_own_qty", "mov_qty", "bad_qty", "mov_amt", "vat_amt", "tot_amt")
 NEED = {"out_dt", "cust_nm", "mov_own_qty", "mov_qty", "mov_amt"}
+PUR_KEEP = ("in_dt", "cust_nm", "in_amt", "vat_amt")
+PUR_NEED = {"in_dt", "cust_nm", "in_amt"}
+PUR_SPEC = os.path.join(OUT_DIR, "purchase_spec.json")     # probe_purchase.py --parse 결과 (캡처 파라미터)
+VENDOR_CFG = os.path.join(OUT_DIR, "외주업체.json")         # {"항목 이름": ["ERP 거래처명", ...]} — 업체명은 여기에만
 INPUT_SHEET = "월별입력"
 FIXED_COLS = ("월", "매출목표", "이익목표")   # 그 뒤 「메모」 전까지 = 외주 매입 항목
 # ERP 에 그 달 출하 기록이 없을 때만 쓰는 수기 값(예: ERP 이전 달). 열 위치는 상관없음 — 이름으로 찾는다
@@ -78,8 +86,23 @@ def fetch_month(client, ym: str):
     return df[[c for c in KEEP if c in df.columns]].copy()
 
 
-def load_months(yms, today_ym, refresh=False, offline=False, log=print):
-    """달마다 (DataFrame | None, 출처). 지난달 이전 = 캐시 우선, 이번 달 · 지난달 = 매번 ERP."""
+def fetch_pur_month(client, ym: str, spec: dict):
+    import pandas as pd
+    p = {k: v for k, v, *_ in spec["params"]}
+    p["@fr_dt"], p["@to_dt"] = f"{ym}-01", month_end(ym).isoformat()
+    df = client.query(spec["workset"], p, block_price=False)   # 🔴 매입 금액 — 바로 아래에서 PUR_KEEP 만 남긴다
+    if df is None or df.empty:
+        return pd.DataFrame(columns=list(PUR_KEEP))
+    df.columns = [str(c) for c in df.columns]
+    miss = PUR_NEED - set(df.columns)
+    if miss:
+        raise RuntimeError(f"missing columns {sorted(miss)}")
+    return df[[c for c in PUR_KEEP if c in df.columns]].copy()
+
+
+def load_months(yms, today_ym, refresh=False, offline=False, log=print, kind="ship", spec=None):
+    """달마다 (DataFrame | None, 출처). 지난달 이전 = 캐시 우선, 이번 달 · 지난달 = 매번 ERP.
+    kind="ship" 출하(매출 · 수량) / "pur" 매입(외주, spec 필요)."""
     import pandas as pd
     os.makedirs(CACHE_DIR, exist_ok=True)
     client = None
@@ -87,7 +110,7 @@ def load_months(yms, today_ym, refresh=False, offline=False, log=print):
     fails = 0
     last_closed = prev_ym(today_ym)
     for ym in yms:
-        path = os.path.join(CACHE_DIR, f"ship_{ym}.csv")
+        path = os.path.join(CACHE_DIR, f"{kind}_{ym}.csv")
         has = os.path.exists(path)
         closed = ym < last_closed
         if has and (offline or (closed and not refresh)):
@@ -100,15 +123,15 @@ def load_months(yms, today_ym, refresh=False, offline=False, log=print):
         try:
             if client is None:
                 from trico_client import TricoClient
-                client = TricoClient()
-            df = fetch_month(client, ym)
+                client = TricoClient(macro=(spec or {}).get("macro") or None) if kind == "pur" else TricoClient()
+            df = fetch_pur_month(client, ym, spec) if kind == "pur" else fetch_month(client, ym)
             df.to_csv(path + ".tmp", index=False, encoding="utf-8-sig")
             os.replace(path + ".tmp", path)
             out[ym] = (df.astype(str).fillna(""), "ERP")
             fails = 0
         except Exception as e:
             fails += 1
-            log(f"  [경고] {ym} ERP 조회 실패: {type(e).__name__}: {str(e)[:120]}")
+            log(f"  [경고] {kind} {ym} ERP 조회 실패: {type(e).__name__}: {str(e)[:120]}")
             if fails == 2:
                 log("  [경고] 연속 2번 실패 — 남은 달은 ERP 조회를 건너뛰고 캐시만 씀(사내망 · ERP 접속 확인)")
             if has:
@@ -252,11 +275,26 @@ def ratio(a, b):
     return a / b
 
 
-def outs_total(inp):
-    if not inp:
+def read_vendors(path=None):
+    try:
+        with open(path or VENDOR_CFG, encoding="utf-8") as f:
+            cfg = json.load(f)
+        return {str(k): [str(n).strip() for n in v] for k, v in cfg.items() if not str(k).startswith("_")}
+    except (OSError, ValueError):
         return None
-    vals = [v for v in inp["outs"].values() if v is not None]
-    return sum(vals) if vals else None
+
+
+def erp_outs(pur, vendors, ym, upto=None):
+    """ERP 매입에서 항목별 외주 금액. 그 달 매입 자료가 없으면 None."""
+    import pandas as pd
+    if not vendors or not pur or ym not in pur or pur[ym][0] is None:
+        return None
+    d = pur[ym][0]
+    if upto is not None and len(d):
+        d = d[d["in_dt"].astype(str).str[:10] <= upto]
+    amt = pd.to_numeric(d["in_amt"], errors="coerce").fillna(0) if len(d) else pd.Series(dtype=float)
+    names = d["cust_nm"].astype(str).str.strip() if len(d) else pd.Series(dtype=str)
+    return {k: float(amt[names.isin(v)].sum()) if len(d) else 0.0 for k, v in vendors.items()}
 
 
 def month_sum(months, inputs, ym, upto=None):
@@ -271,7 +309,7 @@ def month_sum(months, inputs, ym, upto=None):
     return s
 
 
-def build(base: date, months, inputs, out_names, py_mode="full"):
+def build(base: date, months, inputs, out_names, py_mode="full", pur=None, vendors=None):
     y, m = base.year, base.month
     cur_ym, py_ym = f"{y}-{m:02d}", f"{y-1}-{m:02d}"
     base_iso = base.isoformat()
@@ -284,9 +322,26 @@ def build(base: date, months, inputs, out_names, py_mode="full"):
     py = py_same if py_mode == "same" else py_full
 
     i_cur, i_py = inputs.get(cur_ym), inputs.get(py_ym)
+
+    def outs_of(ym, upto=None):
+        """(항목별 dict | None, 출처) — ERP 매입 우선, 없으면 입력표."""
+        e = erp_outs(pur, vendors, ym, upto)
+        if e is not None:
+            return e, "ERP"
+        inp = inputs.get(ym)
+        if inp and any(v is not None for v in inp["outs"].values()):
+            return dict(inp["outs"]), "입력표"
+        return None, "없음"
+
+    def tot(d):
+        vals = [v for v in (d or {}).values() if v is not None]
+        return sum(vals) if vals else None
+
+    outs_cur, src_cur = outs_of(cur_ym, base_iso)
+    outs_py, src_py = outs_of(py_ym, py_same_iso if py_mode == "same" else None)
     s_cur = cur["amt"] if cur else None
     s_py = py["amt"] if py else None
-    o_cur, o_py = outs_total(i_cur), outs_total(i_py)
+    o_cur, o_py = tot(outs_cur), tot(outs_py)
     p_cur = s_cur - o_cur if (s_cur is not None and o_cur is not None) else None
     p_py = s_py - o_py if (s_py is not None and o_py is not None) else None
     t_s = i_cur["sales_target"] if i_cur else None
@@ -303,7 +358,8 @@ def build(base: date, months, inputs, out_names, py_mode="full"):
         else: ytd["miss_cur"].append(a)
         if sb: ytd["py_amt"] += sb["amt"]; ytd["py_qty"] += sb["own"] or 0
         else: ytd["miss_py"].append(b)
-        oa, ob = outs_total(inputs.get(a)), outs_total(inputs.get(b))
+        oa = tot(outs_of(a, base_iso if mm == m else None)[0])
+        ob = tot(outs_of(b, py_same_iso if mm == m else None)[0])
         if oa is None: ytd["miss_out"].append(a)
         else: ytd["cur_out"] += oa
         if ob is None: ytd["miss_out"].append(b)
@@ -325,7 +381,8 @@ def build(base: date, months, inputs, out_names, py_mode="full"):
         base=base, y=y, m=m, cur_ym=cur_ym, py_ym=py_ym, py_mode=py_mode, same_day=same_day,
         cur=cur, py=py, py_full=py_full, py_same=py_same,
         s_cur=s_cur, s_py=s_py, t_s=t_s, t_p=t_p, p_cur=p_cur, p_py=p_py, o_cur=o_cur, o_py=o_py,
-        i_cur=i_cur, i_py=i_py, out_names=out_names,
+        i_cur=i_cur, i_py=i_py, outs_cur=outs_cur, outs_py=outs_py, outs_src=(src_py, src_cur),
+        out_names=list(vendors) if vendors else out_names,
         elapsed=base.day / days_in, days_in=days_in,
         ytd=ytd, trend=trend,
         top=top_customers(months[cur_ym][0], base_iso),
@@ -412,10 +469,10 @@ def sheet_table(r):
     row("이익", "전년대비이익", pct(rp_py))
     row("이익", "목표대비이익", pct(rp_t), low(rp_t))
     # 매입
-    for label, inp, s, o, p in ((f"{r['y']-1}<br>매입", r["i_py"], r["s_py"], r["o_py"], r["p_py"]),
-                                (f"{r['y']}<br>매입", r["i_cur"], r["s_cur"], r["o_cur"], r["p_cur"])):
+    for label, od, s, o, p in ((f"{r['y']-1}<br>매입", r["outs_py"], r["s_py"], r["o_py"], r["p_py"]),
+                               (f"{r['y']}<br>매입", r["outs_cur"], r["s_cur"], r["o_cur"], r["p_cur"])):
         for name in r["out_names"] or ["외주"]:
-            v = inp["outs"].get(name) if inp else None
+            v = od.get(name) if od else None
             row(label, esc(name), won(v) if v is not None else need)
         row(label, "외주합계", won(o) if o is not None else need)
         row(label, "이익률", pct(ratio(p, s)), ' class="n p-rate"')
@@ -564,7 +621,7 @@ def render(r, generated: datetime):
 <div class="sub">만든 시각 {generated:%Y-%m-%d %H:%M} KST</div></header>
 <div class="grid">
 <section class="card"><h2>{r['m']}월 현황 ({period})</h2>{sheet_table(r)}
-<div class="note">빨간 % = 달 경과율 {pct(r['elapsed'])} ({base.day}/{r['days_in']}일, 달력일)보다 낮음. 「입력 필요」 = 입력.xlsx 빈칸.</div></section>
+<div class="note">빨간 % = 달 경과율 {pct(r['elapsed'])} ({base.day}/{r['days_in']}일, 달력일)보다 낮음. 「입력 필요」 = 입력.xlsx 빈칸(목표) 또는 매입 자료 없음.</div></section>
 <div>
 <section class="card" style="margin-bottom:14px"><div class="tiles">{tiles}</div>
 <h2>월별 매출 — {r['y']-1}년 vs {r['y']}년</h2>
@@ -578,8 +635,10 @@ def render(r, generated: datetime):
 <section class="card"><h2>{r['m']}월 거래처별 매출 (상위 10)</h2>{top_html}</section>
 </div></div>
 <footer>
-매출 = ERP 재연마 출하등록({WORK_SET}, 상세) 출하금액 mov_amt 합 — 공급가(부가세 제외)로 추정, 수기 시트와 첫 대조 전 「확인 필요」.
-수량 = 출고 mov_own_qty(연마불가 제외). 이익 = 매출 − 외주 매입 합계(입력.xlsx), 이익률 = 이익 ÷ 매출 — 수기 「생산팀 매출 현황」과 같은 계산.<br>
+매출 = ERP 재연마 출하등록({WORK_SET}, 상세) 출하금액 mov_amt 합 — 공급가(부가세 제외).
+수량 = 출고 mov_own_qty(연마불가 제외). 외주 매입 = ERP 매입 lea110_g00 in_amt(공급가) 중 외주업체.json 업체
+(출처 전년 {r['outs_src'][0]} · 올해 {r['outs_src'][1]}). 이익 = 매출 − 외주 매입 합계, 이익률 = 이익 ÷ 매출 — 수기 「생산팀 매출 현황」과 같은 계산.
+2026-11-18 수기 시트(11월 1~17일)와 매출 · 수량 · 외주 8칸 대조 일치.<br>
 {'<br>'.join(check)}{'<br>' if check else ''}이번 실행에서 ERP 로 받은 달: {esc(src) or '없음(모두 캐시)'}<br>
 erp/sales_board.py · 결과 wiki/_private/sales_board/ (git 추적 제외)
 </footer></div><div id="tip"></div><script>{JS}</script></body></html>"""
@@ -607,7 +666,14 @@ def main(argv=None):
     yms = [f"{y}-{m:02d}" for y in (base.year - 1, base.year) for m in range(1, 13)
            if (y, m) <= (base.year, base.month)]
     months = load_months(yms, ym_of(now.date()), refresh=a.refresh, offline=a.offline)
-    r = build(base, months, inputs, out_names, py_mode=a.py)
+    vendors, pur = read_vendors(), None
+    if vendors and os.path.exists(PUR_SPEC):
+        with open(PUR_SPEC, encoding="utf-8") as fh:
+            spec = json.load(fh)
+        pur = load_months(yms, ym_of(now.date()), refresh=a.refresh, offline=a.offline, kind="pur", spec=spec)
+    elif vendors:
+        print(f"  [경고] {PUR_SPEC} 없음 — 외주 매입은 입력표 값을 씀 (probe_purchase.py --parse 먼저)")
+    r = build(base, months, inputs, out_names, py_mode=a.py, pur=pur, vendors=vendors)
 
     with open(OUT_HTML + ".tmp", "w", encoding="utf-8") as f:
         f.write(render(r, now))
@@ -628,6 +694,11 @@ def main(argv=None):
          f" · 출고 {f(pf,'own')} · 출고합계 {f(pf,'qty')}",
          f"  두 기간 합계        mov_amt {won((c or {}).get('amt',0) + (ps or {}).get('amt',0))}"
          f" · tot_amt {won((c or {}).get('tot',0) + (ps or {}).get('tot',0))}"]
+    for lab, ym, up in ((f"올해 {r['m']}월 1~{base.day}일", r["cur_ym"], base.isoformat()),
+                        (f"전년 {r['m']}월 1~{r['same_day']}일", r["py_ym"], f"{r['py_ym']}-{r['same_day']:02d}")):
+        e = erp_outs(pur, vendors, ym, up)
+        L.append(f"  외주 {lab}  " + (" · ".join(f"{k} {won(v)}" for k, v in e.items()) + f" · 합계 {won(sum(e.values()))}"
+                                       if e is not None else "ERP 매입 자료 없음(입력표 사용)"))
     if c and c.get("amt_check_bad", 0) > 0:
         L.append(f"  [확인 필요] 공급가+부가세≠합계 행 {c['amt_check_bad']}개")
     # 월 평균 출하 수량 후보 (수기 시트 맨 아래 값의 기준 찾기용)
