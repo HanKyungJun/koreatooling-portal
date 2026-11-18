@@ -3,7 +3,7 @@
 - 한 일: 제1판 참고문헌(REFS 60건) 중 sources.md 에 없던 23건 등재 — 일본 2 · 한국 5 · CAM 6 · 대만 7 · 중국 3
 - 결과/산출물: `wiki/_handoff/sources.md` §5 「AI 탑재 공작기계 동향 — 보고 제1판 추가분」 + §7 매핑 1줄(git diff +38 −0)
 - 확인: REFS URL 60건 대조 → 미등재 0(MONOist 10-19 는 같은 기사 다른 경로 — 기존 ID 로 대신) · 새 ID 중복 0
-- 미완·블로커: 일자 미상 2건(화천 산업일보 · 헬로티) · IT Leaders 제목 미확인 · 기존 중복 ID 2개(VEN-ANCA-GRAF2011 · VEN-NORTON-DRESSSTICK, 이번 작업 전부터)
+- 미완·블로커: 없음(일자 2건 · IT Leaders 제목 원문 확인 완료) · 보고 PDF 참고문헌 표기는 옛 값 그대로 · 기존 중복 ID 2개(VEN-ANCA-GRAF2011 · VEN-NORTON-DRESSSTICK, 이번 작업 전부터)
 - 다음 단계 제안: 2026-12-03 첫 월간 실행 결과 검토 → 양식 D 확정
 - 챗으로 가져갈 질문: 없음
 
