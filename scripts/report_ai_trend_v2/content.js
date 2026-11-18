@@ -26,10 +26,10 @@ const REFS = [
   /* 23 */ ['산업일보', '2026. 11. 8.', '[2026 로보월드] DN솔루션즈, 로봇 부품 가공부터 AI 기반 자율제조까지 영역 확장', 'https://kidd.co.kr/news/248065'],
   /* 24 */ ['메가경제', '2026. 11. 4.', '「공작기계에 AI 두뇌 심었다」 DN솔루션즈, 로봇 넘어 자율제조 승부수', 'https://megaeconomy.co.kr/news/newsview.php?ncode=1065591147162542'],
   /* 25 */ ['서울경제', '2026. 4. 13.', '스맥, SIMTOS 2026서 5G+AI 자율제조 통합 솔루션 공개', 'https://www.sedaily.com/article/20031793'],
-  /* 26 */ ['산업일보', '2026. 4.', '화천, 심토스서 80주년 비전으로 4S PROVIDER 제시', 'https://kidd.co.kr/news/245721'],
+  /* 26 */ ['산업일보', '2026. 4. 19.', '화천, 심토스서 80주년 비전으로 4S PROVIDER 제시', 'https://kidd.co.kr/news/245721'],
   /* 27 */ ['산업일보', '2026. 4. 18.', '한화세미텍, AI로 공작기계 공구 파손 실시간 감시한다', 'https://kidd.co.kr/news/245722'],
   /* 28 */ ['산업일보', '2026. 4. 15.', '인터엑스, 완전자율머신 공개, AI와 디지털트윈 결합된 4세대 공작기계', 'https://kidd.co.kr/news/245672'],
-  /* 29 */ ['헬로티', '2026. 3.', '엔비디아, 프라운호퍼와 손잡은 인터엑스 SIMTOS 2026서 자율제조 레벨 4.0 공개', 'https://hellot.net/news/article.html?no=111764'],
+  /* 29 */ ['헬로티', '2026. 3. 31.', '엔비디아, 프라운호퍼와 손잡은 인터엑스 SIMTOS 2026서 자율제조 레벨 4.0 공개', 'https://hellot.net/news/article.html?no=111764'],
   /* 30 */ ['전자신문', '2026. 4. 23.', '[SIMTOS 2026] 인터엑스 완전자율머신으로 제조 산업 4세대 열었다', 'https://m.etnews.com/20260423000278'],
   /* 31 */ ['뉴스핌', '2026. 3. 31.', '위아공작기계, SIMTOS 2026 참가, 피지컬 AI 기반 스마트 제조 구현', 'https://www.newspim.com/news/view/20260331000785'],
   /* 32 */ ['Hexagon', '2026. 11. 18. 확인', 'AI-powered CAM, ProPlanAI', 'https://hexagon.com/solutions/ai-powered-cam'],
@@ -59,7 +59,7 @@ const REFS = [
   /* 56 */ ['科技日报, 环球网 전재', '2025. 4. 21.', '全球首台具备自主学习能力的智能数控系统「华中10型」发布', 'https://tech.huanqiu.com/article/4MNP8U9lvvG'],
   /* 57 */ ['第一财经', '2025. 4. 21.', '发布多个全球全国「首台套」湖北打造工业母机产业高地', 'https://www.yicai.com/news/102581658.html'],
   /* 58 */ ['证券时报', '2025. 10. 5.', '华中数控 世界首台具备自主学习能力的「华中10型」智能数控系统研制成功', 'https://www.stcn.com/article/detail/3367868.html'],
-  /* 59 */ ['IT Leaders', '2026. 10. 16.', '제목 미확인, 검색 결과 요약으로 내용 확인', 'https://it.impress.co.jp/articles/-/29900'],
+  /* 59 */ ['IT Leaders', '2026. 10. 16.', '工作機械のヤマザキマザック、加工工程と生産スケジュールをAIが提案、2028年度内の製品化目指す', 'https://it.impress.co.jp/articles/-/29900'],
   /* 60 */ ['Office of the Director of National Intelligence', '2015, 2022 기술 개정', 'Intelligence Community Directive 203, Analytic Standards', 'https://www.dni.gov/files/documents/ICD/ICD-203.pdf'],
 ];
 module.exports = { REFS };
