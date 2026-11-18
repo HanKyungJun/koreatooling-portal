@@ -1,10 +1,10 @@
 ﻿## 2026-11-18 (#13) 핸드오프 — Cowork (매출 현황판)
 
 - 한 일: 수기 「생산팀 매출 현황」 시트를 ERP 출하 금액 · 수량 + 입력표로 자동 계산하는 HTML 판 제작(decisions 2026-11-18 (4))
-- 결과/산출물: `erp/sales_board.py` · `erp/probe_purchase.py` · `매출현황판.bat` · `wiki/_private/sales_board/입력.xlsx`(11월 목표 · 외주 · 전년 수기값 입력해 둠)
+- 결과/산출물: `erp/sales_board.py`(엑셀 · --weekly) · `erp/probe_purchase.py` · `scripts/register_sales_weekly_task.ps1` · `매출현황판.bat` · `wiki/_private/sales_board/입력.xlsx`(11월 목표 · 외주 · 전년 수기값 입력해 둠)
 - 미완·블로커: 11-18 PC 실행 대조 — 매출(mov_amt = 공급가) · 수량 4칸 수기 시트와 일치 · 2025년 ERP 기록 있음. 월평균 2,357 은 경준님 「내가 틀린 것 같음」 → 판에 넣지 않음. 외주 매입도 ERP(`lea110_g00`)에서 4칸 일치 → 현황판이 ERP 매입을 씀(업체 설정 `_private/sales_board/외주업체.json`). 11-18 15:27 현황판 재실행 — 월 단위로 받아 입고일로 거른 값도 같음, 시트 21칸 전부 일치(매출 · 외주 출처 ERP). 손 입력은 매출목표 · 이익목표만. 전년 비교는 같은 기간(1일 ~ 기준일)으로 확정(경준님) → 기본값 same, 대조 결과는 `_private/sales_board/last_run.txt`
-- 다음 단계 제안: 매달 매출목표 · 이익목표만 입력표에 넣고 「매출현황판.bat」 실행
-- 검토: R4 주 · R5 — 통과 11 · 확인 필요 0 · 통과 뒤 지적 0
+- 다음 단계 제안: 경준님 `scripts/register_sales_weekly_task.ps1 -Apply` 로 수요일 09:00 예약 등록(decisions (5)) → 11-25(수) 첫 실행 뒤 `weekly.log` 확인 · 매달 매출목표 · 이익목표만 입력표에
+- 검토: R4 주 · R5 — 통과 13 · 확인 필요 1(예약 등록 · 첫 실행) · 통과 뒤 지적 0
 - 챗으로 가져갈 질문: 없음
 
 ## 2026-11-18 (#12) 핸드오프 — Cowork (주간활동 정리 · 마이다스 몰 견적 계산기 방향)

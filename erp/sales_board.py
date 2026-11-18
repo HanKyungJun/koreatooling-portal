@@ -10,6 +10,11 @@
   python erp\\sales_board.py --py full       전년 비교를 「같은 기간(1일 ~ 기준일)」 대신 「같은 달 전체」로
   python erp\\sales_board.py --refresh       지난달 이전 캐시까지 ERP 에서 다시 받음
   python erp\\sales_board.py --offline       ERP 조회 없이 캐시만으로 (시험용)
+  python erp\\sales_board.py --weekly        주간 실행 — 기준일 = 직전 화요일, 엑셀을 화면에 연다
+                                            (예약 작업 CNC_Sales_Weekly · 수 09:00 KST, scripts/register_sales_weekly_task.ps1)
+
+엑셀(2026-11-18~): 실행마다 wiki/_private/sales_board/엑셀/매출현황_YYYYMMDD.xlsx (기준일) — 수기 「생산팀 매출 현황」
+시트와 같은 모양 · 같은 칸. 입력 값(매출 · 목표 · 외주 · 수량)만 숫자이고 이익 · 비율은 엑셀 수식.
 
 데이터
 - 매출 · 수량: ERP 재연마 출하등록 lem120_jae_g00 (chk_detail=1) — 월 출하 마감(save_shipment.py)과 같은 원본.
@@ -38,6 +43,8 @@ OUT_DIR = os.path.join(BASE, "wiki", "_private", "sales_board")
 CACHE_DIR = os.path.join(OUT_DIR, "cache")
 INPUT_XLSX = os.path.join(OUT_DIR, "입력.xlsx")
 OUT_HTML = os.path.join(OUT_DIR, "매출현황판.html")
+XLSX_DIR = os.path.join(OUT_DIR, "엑셀")
+WEEKLY_LOG = os.path.join(OUT_DIR, "weekly.log")
 
 WORK_SET = "lem120_jae_g00"
 KEEP = ("out_dt", "cust_nm", "mov_own_qty", "mov_qty", "bad_qty", "mov_amt", "vat_amt", "tot_amt")
@@ -282,6 +289,15 @@ def read_vendors(path=None):
         return {str(k): [str(n).strip() for n in v] for k, v in cfg.items() if not str(k).startswith("_")}
     except (OSError, ValueError):
         return None
+
+
+def read_vendor_labels():
+    """외주업체.json 의 "_표시": {"항목": ["전년 칸 이름", "올해 칸 이름"]} (수기 시트 표기). 없으면 항목 이름."""
+    try:
+        with open(VENDOR_CFG, encoding="utf-8") as f:
+            return {str(k): list(v) for k, v in (json.load(f).get("_표시") or {}).items()}
+    except (OSError, ValueError, AttributeError):
+        return {}
 
 
 def erp_outs(pur, vendors, ym, upto=None):
@@ -644,6 +660,129 @@ erp/sales_board.py · 결과 wiki/_private/sales_board/ (git 추적 제외)
 </footer></div><div id="tip"></div><script>{JS}</script></body></html>"""
 
 
+# ── 엑셀 (수기 「생산팀 매출 현황」 시트와 같은 모양) ─────────────────────
+def write_sheet_xlsx(r, path, generated: datetime, notes=()):
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    F = "맑은 고딕"
+    thin = Side(style="thin", color="808080")
+    box = Border(left=thin, right=thin, top=thin, bottom=thin)
+    fills = {"title": "BDD7EE", "매출": "DDEBF7", "이익": "DAEEF3", "py": "E7E6E6", "cur": "DCE6F1", "수량": "D8E4BC"}
+    fill = lambda k: PatternFill("solid", fgColor=fills[k])
+    NUM, PCT = "#,##0", "0.0%"
+    red, blue = "FF0000", "0070C0"
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "매출현황"
+    ws.column_dimensions["A"].width = 9
+    ws.column_dimensions["B"].width = 16
+    ws.column_dimensions["C"].width = 15
+    ws.merge_cells("A1:C1")
+    ws["A1"] = "생산팀 매출 현황"
+    ws["A1"].font = Font(name=F, bold=True, size=13)
+    ws["A1"].alignment = Alignment(horizontal="center", vertical="center")
+    base = r["base"]
+    ws["B2"] = f"{r['y']}년"
+    ws["C2"] = f"{r['m']}월 {base.day}일"
+    ws["B2"].font = Font(name=F, bold=True)
+    ws["C2"].font = Font(name=F, bold=True, color=red)
+    for c in ("A1", "B1", "C1", "A2", "B2", "C2"):
+        ws[c].fill = fill("title"); ws[c].border = box
+    ws["B2"].alignment = ws["C2"].alignment = Alignment(horizontal="center")
+    ws.row_dimensions[1].height = 22
+
+    py2, yy = str(r["y"] - 1)[2:], str(r["y"])[2:]
+    labels = read_vendor_labels()
+    names = r["out_names"] or ["외주"]
+    row = [3]
+    cell = {}
+
+    def put(key, label, value, fmt=NUM, color=None, bold=False):
+        n = row[0]
+        ws.cell(n, 2, label).font = Font(name=F, bold=bold)
+        c = ws.cell(n, 3, value)
+        c.number_format = fmt
+        c.font = Font(name=F, bold=bold, color=color)
+        cell[key] = f"C{n}"
+        row[0] += 1
+        return n
+
+    def group(title, k, start):
+        end = row[0] - 1
+        ws.merge_cells(start_row=start, start_column=1, end_row=end, end_column=1)
+        a = ws.cell(start, 1, title)
+        a.font = Font(name=F, bold=True)
+        a.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        for n in range(start, end + 1):
+            for col in (1, 2, 3):
+                ws.cell(n, col).fill = fill(k)
+                ws.cell(n, col).border = box
+
+    v = lambda x: None if x is None else round(x)
+    q_py = r["py"]["own"] if r["py"] else None
+    q_cur = r["cur"]["own"] if r["cur"] else None
+    # 매출 · 이익 칸 번호를 먼저 정해야 수식을 쓸 수 있다 — 매입 칸은 고정 순서로 뒤에 온다
+    nv = len(names)
+    r_sales = 3; r_profit = r_sales + 5; r_py = r_profit + 5; r_cur = r_py + nv + 2
+    py_tot, cur_tot = f"C{r_py + nv}", f"C{r_cur + nv}"
+    py_rng, cur_rng = f"C{r_py}:C{r_py + nv - 1}", f"C{r_cur}:C{r_cur + nv - 1}"
+
+    s0 = row[0]
+    put("s_py", f"{py2}년 매출", v(r["s_py"]))
+    put("t_s", f"{py2}년 매출목표", v(r["t_s"]), bold=True)
+    put("s_cur", f"{yy}년 매출", v(r["s_cur"]))
+    put("rs_py", "전년대비매출", f'=IFERROR({cell["s_cur"]}/{cell["s_py"]},"")', PCT)
+    put("rs_t", "목표대비매출", f'=IFERROR({cell["s_cur"]}/{cell["t_s"]},"")', PCT, color=red, bold=True)
+    group("매출", "매출", s0)
+    s0 = row[0]
+    put("p_py", f"{py2}년 이익", f'=IF(COUNT({py_rng})=0,"",{cell["s_py"]}-{py_tot})')
+    put("t_p", f"{py2}년 이익목표", v(r["t_p"]), bold=True)
+    put("p_cur", f"{yy}년 이익", f'=IF(COUNT({cur_rng})=0,"",{cell["s_cur"]}-{cur_tot})')
+    put("rp_py", "전년대비이익", f'=IFERROR({cell["p_cur"]}/{cell["p_py"]},"")', PCT)
+    put("rp_t", "목표대비이익", f'=IFERROR({cell["p_cur"]}/{cell["t_p"]},"")', PCT, color=red, bold=True)
+    group("이익", "이익", s0)
+    for title, k, od, pkey, skey, idx in ((f"{r['y']-1}\n매입", "py", r["outs_py"], "p_py", "s_py", 0),
+                                         (f"{r['y']}\n매입", "cur", r["outs_cur"], "p_cur", "s_cur", 1)):
+        s0 = row[0]
+        for nm in names:
+            lab = (labels.get(nm) or [nm, nm])[idx] if len(labels.get(nm) or []) > idx else nm
+            put(f"{k}_{nm}", lab, v(od.get(nm)) if od else None)
+        put(f"{k}_tot", "외주합계", f"=IF(COUNT(C{s0}:C{row[0]-1})=0,\"\",SUM(C{s0}:C{row[0]-1}))")
+        put(f"{k}_rate", "이익률", f'=IFERROR({cell[pkey]}/{cell[skey]},"")', PCT, color=blue, bold=True)
+        group(title, k, s0)
+    assert (cell["py_tot"], cell["cur_tot"]) == (py_tot, cur_tot), "수식 칸 번호 어긋남"
+    s0 = row[0]
+    put("q_py", f"{r['y']-1}년", v(q_py))
+    put("q_cur", f"{r['y']}년", v(q_cur))
+    put("q_r", "전년대비", f'=IFERROR({cell["q_cur"]}/{cell["q_py"]},"")', PCT)
+    group("수량", "수량", s0)
+
+    n = row[0] + 1
+    small = Font(name=F, size=8, color="808080")
+    lines = [f"기간: {r['m']}월 1일 ~ {base.day}일 · 전년 같은 기간 ({r['y']-1}년 {r['m']}월 1일 ~ {r['same_day']}일)",
+             "매출 = ERP 재연마 출하 공급가 · 외주 = ERP 매입 공급가 (부가세 제외) · 수량 = 출고(연마불가 제외)",
+             "목표 = 입력.xlsx · 이익 = 매출 − 외주합계 · 대외비 (회사 밖 · 공유폴더로 보내지 말 것)",
+             f"만든 시각 {generated:%Y-%m-%d %H:%M} KST · erp/sales_board.py"] + list(notes)
+    for i, t in enumerate(lines):
+        c = ws.cell(n + i, 1, t)
+        c.font = Font(name=F, size=8, color="C00000" if t.startswith("⚠") else "808080") if t else small
+    ws.sheet_view.showGridLines = False
+    ws.print_area = f"A1:C{row[0]-1}"
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    try:
+        wb.save(path)
+    except PermissionError:          # 같은 파일이 엑셀에 열려 있으면 다른 이름으로
+        path = path[:-5] + f"_{generated:%H%M}.xlsx"
+        wb.save(path)
+    return path
+
+
+def last_tuesday(today: date) -> date:
+    back = (today.weekday() - 1) % 7 or 7      # 화요일=1. 수 → 1일 전, 목 → 2일 전, 화 → 7일 전
+    return today - timedelta(days=back)
+
+
 # ── 실행 ──────────────────────────────────────────────────────────────────
 def main(argv=None):
     ap = argparse.ArgumentParser(description="매출 현황판 (재연마, 경준님 PC 전용)")
@@ -653,10 +792,24 @@ def main(argv=None):
     ap.add_argument("--refresh", action="store_true", help="지난 달 캐시도 ERP 에서 다시 받음")
     ap.add_argument("--offline", action="store_true", help="ERP 조회 없이 캐시만")
     ap.add_argument("--open", action="store_true", help="만든 뒤 브라우저로 열기")
+    ap.add_argument("--weekly", action="store_true", help="주간 실행: 기준일 = 직전 화요일, 엑셀을 화면에 연다")
     a = ap.parse_args(argv)
+    if a.weekly:
+        try:
+            return _main(a)
+        except Exception:
+            import traceback
+            os.makedirs(OUT_DIR, exist_ok=True)
+            with open(WEEKLY_LOG, "a", encoding="utf-8") as fh:
+                fh.write(f"{datetime.now(KST):%Y-%m-%d %H:%M} KST FAILED\n{traceback.format_exc()}\n")
+            return 1
+    return _main(a)
+
+
+def _main(a):
 
     now = datetime.now(KST)
-    base = date.fromisoformat(a.date) if a.date else now.date()
+    base = date.fromisoformat(a.date) if a.date else (last_tuesday(now.date()) if a.weekly else now.date())
     os.makedirs(OUT_DIR, exist_ok=True)
     if not os.path.exists(INPUT_XLSX):
         make_input_template(INPUT_XLSX, (base.year - 1, base.year))
@@ -730,6 +883,20 @@ def main(argv=None):
             fh.write("\n".join(L) + "\n")
     except OSError:
         pass
+    # 엑셀 — 실행마다 기준일 이름으로 (같은 날 다시 돌리면 덮어씀)
+    notes = []
+    if r["src"].get(r["cur_ym"]) != "ERP" and not a.offline:
+        notes.append(f"⚠ 이번 달 출하 ERP 조회 실패 — {r['src'].get(r['cur_ym'])}")
+    xp = write_sheet_xlsx(r, os.path.join(XLSX_DIR, f"매출현황_{base:%Y%m%d}.xlsx"), now, notes)
+    print(f"  → {xp}")
+    if a.weekly:
+        with open(WEEKLY_LOG, "a", encoding="utf-8") as fh:
+            fh.write(f"{now:%Y-%m-%d %H:%M} KST ok · 기준일 {base} · {os.path.basename(xp)}"
+                     f"{' · ' + ' / '.join(notes) if notes else ''}\n")
+        try:
+            os.startfile(xp)         # Windows — 엑셀로 화면에 띄움
+        except AttributeError:
+            pass
     if a.open:
         try:
             os.startfile(OUT_HTML)   # Windows
