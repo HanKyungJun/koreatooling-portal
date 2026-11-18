@@ -1,6 +1,6 @@
 # Weekly sales board task: every Wednesday 09:00 (PC local time = KST).
 # Runs "erp\sales_board.py --weekly" -> base date = last Tuesday, writes Excel to
-# wiki\_private\sales_board\<excel folder>, then opens it on screen. 2026-11-18, Cowork.
+# private_local\sales_board\<excel folder>, then opens it on screen. 2026-11-18, Cowork.
 # ERP is reachable only from this PC, so this is a Windows task (not a cloud task).
 # ASCII only - no Korean text in this file.
 #

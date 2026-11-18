@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """매출 현황판 — 재연마 출하 금액 · 수량 → HTML 한 장 (2026-11-18 신설, Cowork)
 
-경준님 PC 전용. 결과 · 입력 · 캐시는 모두 wiki/_private/sales_board/ (git 추적 제외) 에만 쓴다.
+경준님 PC 전용. 결과 · 입력 · 캐시는 모두 private_local/sales_board/ (git 추적 제외) 에만 쓴다.
 공유폴더 현황판 · dist(github.io) 로 보내지 않는다 — 금액은 대외비(CLAUDE.md §4).
 
   python erp\\sales_board.py                 오늘(KST) 기준으로 만들고 끝
@@ -13,7 +13,7 @@
   python erp\\sales_board.py --weekly        주간 실행 — 기준일 = 직전 화요일, 엑셀을 화면에 연다
                                             (예약 작업 CNC_Sales_Weekly · 수 09:00 KST, scripts/register_sales_weekly_task.ps1)
 
-엑셀(2026-11-18~): 실행마다 wiki/_private/sales_board/엑셀/매출현황_YYYYMMDD.xlsx (기준일) — 수기 「생산팀 매출 현황」
+엑셀(2026-11-18~): 실행마다 private_local/sales_board/엑셀/매출현황_YYYYMMDD.xlsx (기준일) — 수기 「생산팀 매출 현황」
 시트와 같은 모양 · 같은 칸. 입력 값(매출 · 목표 · 외주 · 수량)만 숫자이고 이익 · 비율은 엑셀 수식.
 
 데이터
@@ -21,7 +21,7 @@
     매출 = mov_amt 합 (공급가, 부가세 제외 — 2026-11-18 수기 시트와 대조 일치 [실측 검증])
     수량 = mov_own_qty 합 (출고, 연마불가 제외) — 출고합계(mov_qty)는 참고로 같이 보인다.
 - 외주 매입: ERP 매입(입고) 조회 lea110_g00 (2026-11-18 Fiddler 캡처 → probe_purchase.py --parse 가 만든
-    wiki/_private/sales_board/purchase_spec.json 의 파라미터 그대로, 날짜만 바꿈) 의 in_amt(공급가) 를
+    private_local/sales_board/purchase_spec.json 의 파라미터 그대로, 날짜만 바꿈) 의 in_amt(공급가) 를
     외주업체.json(같은 폴더, git 제외)에 적은 업체명으로 묶어 더한다. 둘 중 하나라도 없으면 입력표 값을 쓴다.
     2026-11-18 대조: 25년 · 26년 11월 1~17일 외주 2곳 4칸이 수기 시트와 일치 [실측 검증].
 - 목표: 입력.xlsx 「월별입력」 시트 (경준님이 손으로 채움).
@@ -29,7 +29,7 @@
 
 🔴 가격 열 차단 예외 (decisions 2026-11-13 (2) 와 같은 방식):
    trico_client.query(..., block_price=False) 는 fetch_month() 한 곳뿐이고, 받자마자 KEEP 8열만 남긴다.
-   단가(*_up) · 할인 · 거래처 코드 · 담당자 등은 버린다. 콘솔 · 파일 모두 _private 밖으로 금액을 쓰지 않는다.
+   단가(*_up) · 할인 · 거래처 코드 · 담당자 등은 버린다. 콘솔 · 파일 모두 private_local 밖으로 금액을 쓰지 않는다(git · Drive 동기화 모두 제외되는 곳).
 """
 import sys, os, json, argparse, calendar, html as _html
 from datetime import datetime, date, timedelta, timezone
@@ -39,7 +39,7 @@ BASE = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 
 KST = timezone(timedelta(hours=9))
-OUT_DIR = os.path.join(BASE, "wiki", "_private", "sales_board")
+OUT_DIR = os.path.join(BASE, "private_local", "sales_board")   # wiki/ 밖 — 16:30 Drive 동기화가 wiki/ 전체(_private 포함)를 올리기 때문 (2026-11-18)
 CACHE_DIR = os.path.join(OUT_DIR, "cache")
 INPUT_XLSX = os.path.join(OUT_DIR, "입력.xlsx")
 OUT_HTML = os.path.join(OUT_DIR, "매출현황판.html")
@@ -226,7 +226,7 @@ def make_input_template(path, years, outs=("외주1", "외주2")):
         "이익 = 매출(ERP 출하 금액) − 외주 매입 합계. 이익률 = 이익 ÷ 매출.",
         "이번 달 외주 매입은 그날까지 들어온 금액을 넣는다 (수기 시트와 같게).",
         "매출(수기) · 수량(수기): ERP 에 그 달 출하 기록이 없을 때만 쓴다(ERP 이전 달 등). ERP 기록이 있으면 무시된다.",
-        "이 파일은 wiki/_private/ 안이라 git 에 올라가지 않는다. 다른 곳으로 복사 · 메일 금지(대외비).",
+        "이 파일은 private_local/ 안이라 git · Drive 동기화에 올라가지 않는다. 다른 곳으로 복사 · 메일 금지(대외비).",
     ]:
         info.append([line])
     info.column_dimensions["A"].width = 110
@@ -670,7 +670,7 @@ def render(r, generated: datetime):
 (출처 전년 {r['outs_src'][0]} · 올해 {r['outs_src'][1]}). 이익 = 매출 − 외주 매입 합계, 이익률 = 이익 ÷ 매출 — 수기 「생산팀 매출 현황」과 같은 계산.
 2026-11-18 수기 시트(11월 1~17일)와 매출 · 수량 · 외주 8칸 대조 일치.<br>
 {'<br>'.join(check)}{'<br>' if check else ''}이번 실행에서 ERP 로 받은 달: {esc(src) or '없음(모두 캐시)'}<br>
-erp/sales_board.py · 결과 wiki/_private/sales_board/ (git 추적 제외)
+erp/sales_board.py · 결과 private_local/sales_board/ (git 추적 제외)
 </footer></div><div id="tip"></div><script>{JS}</script></body></html>"""
 
 
@@ -847,7 +847,7 @@ def _main(a):
         f.write(render(r, now))
     os.replace(OUT_HTML + ".tmp", OUT_HTML)
 
-    # 대조용 요약 — 콘솔 + wiki/_private/sales_board/last_run.txt (git 제외. run.log 등 다른 로그에는 쓰지 않음)
+    # 대조용 요약 — 콘솔 + private_local/sales_board/last_run.txt (git 제외. run.log 등 다른 로그에는 쓰지 않음)
     # 여기 숫자는 ERP 값만(입력표 수기 값 섞지 않음) — 수기 시트와 맞춰 보기 위해
     c = summarize(months[r["cur_ym"]][0], upto=base.isoformat())
     pf = summarize(months[r["py_ym"]][0])

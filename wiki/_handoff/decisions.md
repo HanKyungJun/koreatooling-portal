@@ -3,20 +3,28 @@
 > 무엇을(What), 왜(Why), 출처(Where)를 **시간 역순(최신이 맨 위)** 으로 기록합니다.
 > 챗에서 결정된 내용도 반드시 여기로 옮겨야 Code/Cowork가 따라옵니다.
 
+## 2026-11-18 (6): 매출 현황판 자료 위치를 wiki/ 밖 `private_local/sales_board/` 로 — 16:30 Drive 동기화 제외
+
+- 결정: ① 매출 현황판의 결과 · 입력 · 캐시 · 주간 엑셀을 `wiki/_private/sales_board/` → 저장소 루트 `private_local/sales_board/` 로 옮긴다(`.gitignore` 에 `private_local/` 추가) ② `erp/sales_board.py` · `erp/probe_purchase.py` 경로를 바꾸고 `scripts/sync_to_gdrive.py` 는 건드리지 않는다
+- 근거: 검토(11-18 16:0x KST) 중 `scripts/sync_to_gdrive.py` 가 `wiki/` 를 제외 목록 없이 통째로 올림을 확인(`sync_folder` 재귀, 건너뛰는 것은 `~$` 잠금 파일뿐) — 매일 16:30 「cnc-wiki Drive 동기화」로 거래처별 매출 · 전체 매입처 금액 캐시가 Google Drive 에 올라갈 뻔함(첫 업로드 16:30 전에 옮김). 앞서 「금액이 PC 밖으로 안 나간다」는 안내가 틀렸음(Claude 실수). 대안: 동기화 스크립트에 제외 줄 추가 — 기존 자동화 수정이라 뺌 · 그대로 둠 — 대외비 원칙과 어긋남. 한경준님 「wiki 밖으로 옮김」(추천안) 선택
+- 확인 필요: 다른 `wiki/_private/` 파일(단가 · 할인율 · 실명판 등)도 같은 방식으로 Drive 에 올라가고 있음 — 의도한 백업인지 한경준님 확인
+- 출처: Cowork
+- 영향: `.gitignore` · `erp/sales_board.py` · `erp/probe_purchase.py` · `scripts/register_sales_weekly_task.ps1`(주석만, 등록된 예약 작업은 그대로) · decisions (4) (5) · worklog #13 경로 표기
+
 ## 2026-11-18 (5): 매출 현황 주간 엑셀 — 매주 수요일 09:00 경준님 PC 예약 작업(CNC_Sales_Weekly)
 
-- 결정: ① `erp/sales_board.py --weekly` 를 Windows 예약 작업 `CNC_Sales_Weekly`(수 09:00 KST · 로그온 중에만 · 놓치면 켜질 때 실행)로 돌린다 — 기준일 = 직전 화요일, 기간 = 그달 1일 ~ 화요일(수기 시트와 같은 월 누계), 전년 같은 기간 ② 결과는 수기 「생산팀 매출 현황」 시트와 같은 모양의 엑셀(`wiki/_private/sales_board/엑셀/매출현황_YYYYMMDD.xlsx`, 입력 값만 숫자 · 이익 · 비율은 수식)을 만들어 화면에 연다. 월평균 출하 수량 줄은 뺌(11-18 경준님 「내가 틀린 것 같음」) ③ 클라우드 예약 작업 · 푸시 · 공유폴더는 쓰지 않는다
+- 결정: ① `erp/sales_board.py --weekly` 를 Windows 예약 작업 `CNC_Sales_Weekly`(수 09:00 KST · 로그온 중에만 · 놓치면 켜질 때 실행)로 돌린다 — 기준일 = 직전 화요일, 기간 = 그달 1일 ~ 화요일(수기 시트와 같은 월 누계), 전년 같은 기간 ② 결과는 수기 「생산팀 매출 현황」 시트와 같은 모양의 엑셀(`private_local/sales_board/엑셀/매출현황_YYYYMMDD.xlsx`, 입력 값만 숫자 · 이익 · 비율은 수식)을 만들어 화면에 연다. 월평균 출하 수량 줄은 뺌(11-18 경준님 「내가 틀린 것 같음」) ③ 클라우드 예약 작업 · 푸시 · 공유폴더는 쓰지 않는다
 - 근거: ERP 는 경준님 PC 에서만 닿음(Cowork VM · 클라우드 403 blocked-by-allowlist, 11-18 재확인) · 금액 대외비라 PC 밖으로 안 내보냄 · 푸시는 거의 안 봄(2026-11-02 아침 브리핑 중단 사유). 대안 검토(11-18): Claude 예약 작업만 — ERP 접속 불가로 기각 · Windows 생성 + Claude 알림 — 금액이 클라우드를 거쳐 보류 · ERP 허용 목록 추가 — HTTP 비암호화로 보류 중인 C안 → 한경준님 「1번(Windows 만)으로 해」. 실데이터 엑셀(11-17 기준)을 수식까지 계산해 시트 21칸 일치 [실측 검증]
 - 출처: Cowork (경준님 요청 「매주 수요일 오전 9시 … 전날 화요일까지」 2026-11-18)
-- 영향: `erp/sales_board.py`(--weekly · 엑셀) · 신규 `scripts/register_sales_weekly_task.ps1`(등록 · 확인 · 되돌리기 1줄) · `wiki/_private/sales_board/weekly.log`(실행 기록). 💰 금액 미기재
+- 영향: `erp/sales_board.py`(--weekly · 엑셀) · 신규 `scripts/register_sales_weekly_task.ps1`(등록 · 확인 · 되돌리기 1줄) · `private_local/sales_board/weekly.log`(실행 기록). 💰 금액 미기재
 
 ## 2026-11-18 (4): 매출 현황판(재연마) — 출하 금액 열 차단의 두 번째 예외 · 결과는 경준님 PC `_private` 에만
 
-- 결정: ① 신규 `erp/sales_board.py` 한 곳에서만 `lem120_jae_g00`(재연마 출하등록, 상세)을 `block_price=False` 로 받고, 받자마자 8열(출하일 · 거래처명 · 출고 · 출고합계 · 연마불가 · 공급가 · 부가세 · 합계금액)만 남긴다 — `trico_client` 기본 차단은 그대로(decisions 2026-11-13 (2) 와 같은 방식) ② 결과 · 입력 · 캐시는 `wiki/_private/sales_board/`(git 추적 제외)에만 쓰고, 공유폴더 현황판 · dist(github.io) · 예약 작업에는 넣지 않는다 — 실행은 저장소 루트 「매출현황판.bat」 손으로만 ③ 범위는 재연마만(영업팀 출하 `lem120_g00` 제외) ④ 계산은 수기 「생산팀 매출 현황」 시트와 같게 — 이익 = 매출 − 외주 매입 합계, 이익률 = 이익 ÷ 매출, 수량 = 출고(연마불가 제외). 목표 · 외주 매입은 입력표(`입력.xlsx`)에 손으로 넣는다(외주 매입 ERP 조회 이름은 캡처 전이라 추측하지 않음)
+- 결정: ① 신규 `erp/sales_board.py` 한 곳에서만 `lem120_jae_g00`(재연마 출하등록, 상세)을 `block_price=False` 로 받고, 받자마자 8열(출하일 · 거래처명 · 출고 · 출고합계 · 연마불가 · 공급가 · 부가세 · 합계금액)만 남긴다 — `trico_client` 기본 차단은 그대로(decisions 2026-11-13 (2) 와 같은 방식) ② 결과 · 입력 · 캐시는 `private_local/sales_board/`(git 추적 제외)에만 쓰고, 공유폴더 현황판 · dist(github.io) · 예약 작업에는 넣지 않는다 — 실행은 저장소 루트 「매출현황판.bat」 손으로만 ③ 범위는 재연마만(영업팀 출하 `lem120_g00` 제외) ④ 계산은 수기 「생산팀 매출 현황」 시트와 같게 — 이익 = 매출 − 외주 매입 합계, 이익률 = 이익 ÷ 매출, 수량 = 출고(연마불가 제외). 목표 · 외주 매입은 입력표(`입력.xlsx`)에 손으로 넣는다(외주 매입 ERP 조회 이름은 캡처 전이라 추측하지 않음)
 - 근거: 한경준님 선택(2026-11-18) — 기준 「금액 + 수량」 · 위치 「경준님 PC 전용」 · 범위 「재연마만」(모두 추천안). 금액은 실거래 금액이라 대외비(CLAUDE.md §4) — 공유폴더에 두면 생산팀 누구나 열 수 있어 뺌. 시트 사진(11-17 기준)의 21칸을 모의 데이터로 재현해 21 / 21 같음 [실측 — 계산식 검증, ERP 금액 칸 뜻은 아님]
-- 대조(2026-11-18 15:03 KST, PC 실행 `last_run.txt`): 11-01 ~ 17 매출 `mov_amt` 합 · 출고 수량이 수기 시트 26년 · 25년 값 4칸 모두 일치 [실측 검증] — 매출 = 공급가(부가세 제외) 확정, ERP 에 2025-01 부터 출하 기록 있음. ~~확인 필요: 매출 = `mov_amt`(공급가로 추정) 합이 수기 시트 값과 같은지~~ · ~~전년 비교 기준~~ → 같은 기간(1일 ~ 기준일)으로 확정(한경준님 2026-11-18, 기본값 `--py same`) · 시트 맨 아래 월평균 출하 수량(2,357)은 ERP 평균 후보 4개와 모두 달랐고 한경준님 「내가 틀린 것 같음」(11-18) → 판에 넣지 않음 · 외주 매입 = ERP 매입(입고) 조회 `lea110_g00`(11-18 한경준님 Fiddler 캡처, `erp/probe_purchase.py --parse` → `_private/sales_board/purchase_spec.json`)의 `in_amt`(공급가) 를 업체별로 더함 — 25년 · 26년 11월 1 ~ 17일 외주 2곳 4칸 수기 시트와 일치 [실측 검증, 11-18 15:24 KST]. 업체명은 `_private/sales_board/외주업체.json` 에만 두고, 없으면 입력표 값을 씀(같은 차단 예외 · 결과 `_private`)
+- 대조(2026-11-18 15:03 KST, PC 실행 `last_run.txt`): 11-01 ~ 17 매출 `mov_amt` 합 · 출고 수량이 수기 시트 26년 · 25년 값 4칸 모두 일치 [실측 검증] — 매출 = 공급가(부가세 제외) 확정, ERP 에 2025-01 부터 출하 기록 있음. ~~확인 필요: 매출 = `mov_amt`(공급가로 추정) 합이 수기 시트 값과 같은지~~ · ~~전년 비교 기준~~ → 같은 기간(1일 ~ 기준일)으로 확정(한경준님 2026-11-18, 기본값 `--py same`) · 시트 맨 아래 월평균 출하 수량(2,357)은 ERP 평균 후보 4개와 모두 달랐고 한경준님 「내가 틀린 것 같음」(11-18) → 판에 넣지 않음 · 외주 매입 = ERP 매입(입고) 조회 `lea110_g00`(11-18 한경준님 Fiddler 캡처, `erp/probe_purchase.py --parse` → `private_local/sales_board/purchase_spec.json`)의 `in_amt`(공급가) 를 업체별로 더함 — 25년 · 26년 11월 1 ~ 17일 외주 2곳 4칸 수기 시트와 일치 [실측 검증, 11-18 15:24 KST]. 업체명은 `private_local/sales_board/외주업체.json` 에만 두고, 없으면 입력표 값을 씀(같은 차단 예외 · 결과 `_private`)
 - 출처: Cowork
-- 영향: 신규 `erp/sales_board.py` · `매출현황판.bat`(공개 저장소 — 금액 · 실명 없음, `anonymize_public.py --check` 0) · `wiki/_private/sales_board/`(입력.xlsx · 매출현황판.html · cache/). 💰 금액 미기재
+- 영향: 신규 `erp/sales_board.py` · `매출현황판.bat`(공개 저장소 — 금액 · 실명 없음, `anonymize_public.py --check` 0) · `private_local/sales_board/`(입력.xlsx · 매출현황판.html · cache/). 💰 금액 미기재
 
 ## 2026-11-18 (3): 마이다스 몰 재연마 견적 — 이름 「재연마 견적 계산기」 · 몰 안 페이지 1개로 넣는 방향
 

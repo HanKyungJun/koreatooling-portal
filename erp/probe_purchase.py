@@ -12,11 +12,11 @@
   ① ERP 에서 외주 매입이 보이는 화면을 열고 기간 2026-11-01 ~ 2026-11-17 로 「조회」 1번
      → Fiddler 에서 그 요청(FillDataSetEx)의 Raw 전체를 outputs\\erp_capture_purchase.txt 로 저장
   ② python erp\\probe_purchase.py --parse
-       캡처를 해석해 wiki/_private/sales_board/purchase_spec.json 을 만든다(조회 이름 · 파라미터 · 매크로).
+       캡처를 해석해 private_local/sales_board/purchase_spec.json 을 만든다(조회 이름 · 파라미터 · 매크로).
        조회가 여러 개면 목록을 보여 주고 멈춘다 → --workset <이름> 으로 하나를 고른다.
   ③ python erp\\probe_purchase.py --check
        캡처의 날짜 칸만 바꿔 「2026-11-01 ~ 17」 · 「2025-11-01 ~ 17」 두 번 조회하고,
-       거래처별로 금액 열을 모두 더해 wiki/_private/sales_board/purchase_check.txt 에 쓴다(Cowork 가 읽고 시트와 대조).
+       거래처별로 금액 열을 모두 더해 private_local/sales_board/purchase_check.txt 에 쓴다(Cowork 가 읽고 시트와 대조).
 
 🔴 금액
   - 매입 금액은 대외비(CLAUDE.md §4). 이 스크립트에서만 block_price=False 로 받고, 결과는 git 추적 제외 폴더에만 쓴다.
@@ -30,7 +30,7 @@ HERE = Path(__file__).resolve().parent
 BASE = HERE.parent
 sys.path.insert(0, str(HERE))
 
-OUT_DIR = BASE / "wiki" / "_private" / "sales_board"
+OUT_DIR = BASE / "private_local" / "sales_board"   # wiki/ 밖 — Drive 동기화 제외 (2026-11-18)
 SPEC = OUT_DIR / "purchase_spec.json"
 RESULT = OUT_DIR / "purchase_check.txt"
 CAPTURE = BASE / "outputs" / "erp_capture_purchase.txt"
