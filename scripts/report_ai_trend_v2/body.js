@@ -117,25 +117,25 @@ module.exports = (H) => {
   // 3장 사례 표
   const caseT = (rows) => table(W(1.5, 8.5), rows.map(([a, b]) => [{ t: a, fill: LAV, bold: true }, b]), false, SMALL);
   const case1 = caseT([
-    ['넣는 것', '부품 3D 파일. 사람은 소재와 공구만 장착함[1]'],
-    ['AI가 하는 일', '형상을 분석해 공정 설정을 제안함. 대화형 AI 「KAYA」가 드릴 교환과 공작물 재배치 같은 작업을 음성으로 한 단계씩 안내함[1]'],
-    ['나오는 것', '가공된 부품. 화낙 ROBODRILL 기반 장비, 동시 3축에 5축 대응[1][3]'],
+    ['입력', '부품 3D 파일. 사람은 소재와 공구만 장착함[1]'],
+    ['AI 처리', '형상을 분석해 공정 설정을 제안함. 대화형 AI 「KAYA」가 드릴 교환과 공작물 재배치 같은 작업을 음성으로 한 단계씩 안내함[1]'],
+    ['결과', '가공된 부품. 화낙 ROBODRILL 기반 장비, 동시 3축에 5축 대응[1][3]'],
     ['상태', '개발. 2026. 7. 예약 시작, 2027년 봄 출시 예정. 가격 3,000만 엔(2026. 1. 발표)과 3,500만 엔(2026. 11. 기사)으로 다름, 세금 별도[1][3]'],
     ['제약', '아룸 장비는 현재 알루미늄만, 200 mm 각 이하 부품만 다룸(2026. 11. 기사)[3]'],
     ['사내와 비교', '별도 장비라 사내 머시닝센터를 개조하는 방식이 아님. 초경 공구 가공은 소재 제약으로 대상 밖. 한국 진출은 2027년 이후 계획[1]'],
   ]);
   const case2 = caseT([
-    ['넣는 것', '회사가 지금까지 ESPRIT EDGE로 만든 프로그램 파일과 새 부품 모델[32]'],
-    ['AI가 하는 일', '과거 파일에서 그 회사가 공정을 짜는 방식을 배우고 새 부품에 맞는 가공 공정을 제안함[32]'],
-    ['나오는 것', 'ESPRIT 안의 공정 초안. 프로그래머가 확인하고 고침[32]'],
+    ['입력', '회사가 지금까지 ESPRIT EDGE로 만든 프로그램 파일과 새 부품 모델[32]'],
+    ['AI 처리', '과거 파일에서 그 회사가 공정을 짜는 방식을 배우고 새 부품에 맞는 가공 공정을 제안함[32]'],
+    ['결과', 'ESPRIT 안의 공정 초안. 프로그래머가 확인하고 고침[32]'],
     ['상태', '판매 중. 2026. 3. ESPRIT EDGE 갱신판에 포함되어 전 세계 제공[33][34]'],
     ['제약', '2.5축 밀링만 지원하고 선삭은 시험판. 학습할 과거 파일이 충분해야 하므로 새 고객은 바로 쓰지 못함. 「프로그래밍 시간 최대 75 % 단축」은 근거를 공개하지 않은 제조사 주장[32]'],
     ['사내와 비교', '사내 CAM은 ESPRIT를 쓰지 않아 바로 붙일 수 없음. 회사 자신의 과거 프로그램이 학습 재료라는 점은 조건과 G코드를 쌓는 사내 위키 방향과 같음'],
   ]);
   const case3 = caseT([
-    ['넣는 것', '작업자가 앱에 적은 개선 요청과 서보 데이터, 가공 프로그램. 예: 가공면에 줄무늬가 생김[11]'],
-    ['AI가 하는 일', '대형 언어 모델이 원인을 추정하고 가감속 파라미터 같은 설정 수정안을 만듦. 수정안은 기계로 바로 가지 않고 PC 디지털 트윈에서 먼저 시뮬레이션함[11]'],
-    ['나오는 것', '작업자가 시뮬레이션 결과를 보고 승인해야 CNC에 반영됨. MCP 서버로 외부 AI가 CNC 데이터를 읽고 설정을 바꿀 수 있게 함[11][12]'],
+    ['입력', '작업자가 앱에 적은 개선 요청과 서보 데이터, 가공 프로그램. 예: 가공면에 줄무늬가 생김[11]'],
+    ['AI 처리', '대형 언어 모델이 원인을 추정하고 가감속 파라미터 같은 설정 수정안을 만듦. 수정안은 기계로 바로 가지 않고 PC 디지털 트윈에서 먼저 시뮬레이션함[11]'],
+    ['결과', '작업자가 시뮬레이션 결과를 보고 승인해야 CNC에 반영됨. MCP 서버로 외부 AI가 CNC 데이터를 읽고 설정을 바꿀 수 있게 함[11][12]'],
     ['상태', '컨셉. JIMTOF 2026에서 데모 3종(면 품질 조정, 알람 진단, 손글씨 각인)을 보임. 출시 시기 없음[11]'],
     ['제약', '기존 0i 계열 대응 여부는 발표 자료에 없음[11][12]'],
     ['사내와 비교', '사내 머시닝센터 CNC가 화낙 0i-M이라 가장 관련이 큼. 적용 가능 여부는 확인 필요. AI 제안을 시험과 사람 승인을 거쳐 반영하는 구조는 사내 원칙(테스트, 측정, 검증 뒤 적용)과 같음'],
@@ -233,10 +233,17 @@ module.exports = (H) => {
     ['제1판', '2026. 11. 18.', '동향 조사 작성법(양식 D 초안)으로 처음부터 다시 작성. 범위 합의, 검색 29회 기록, 정량 그래프 4개, 사례 3건, 조사 방법은 부록. 비교 대상은 기존 「AI 탑재 공작기계 업계 동향 조사 보고」 제5판'],
   ], true, SMALL);
 
+  const CASE_MEDIA = {
+    1: [['영상 1, 대화형 AI 「KAYA」 화면과 장비, Microsoft 촬영', 'https://news.microsoft.com/source/asia/wp-content/uploads/2026/03/260318_Microsoft_Foundry_ARUM_DH01_Low.mp4'],
+        ['영상 2, TTMC 장비 운용, Microsoft 촬영', 'https://news.microsoft.com/source/asia/wp-content/uploads/2026/03/260318_Microsoft_Foundry_ARUM_DH02_Low.mp4'],
+        ['사진 2장, 아룸 제공 시연 사진, SBbit', 'https://www.sbbit.jp/article/st/186632']],
+    2: [['운용 영상과 사진은 찾지 못함. 제조사 한국어 설명 글(화면 사진 없음), Hexagon', 'https://hexagon.com/ko/resources/resource-library/hexagons-proplanai--new-artificial-intelligence-technology-is-the-next-step-in-the-evolution-of-cam-programming']],
+    3: [['사진 7장, 구성도와 면 품질 조정, 알람 진단 화면, 손글씨 각인 결과, MONOist. 영상은 찾지 못함', 'https://monoist.itmedia.co.jp/mn/articles/2610/30/news047.html']],
+  };
+  const caseMedia = (k) => [new Paragraph({ spacing: { before: 60, after: 30 }, keepNext: true, children: [run('참고 영상 및 사진', { size: SMALL, bold: true })] }),
+    ...CASE_MEDIA[k].map(([t, u], i) => new Paragraph({ indent: { left: 560, hanging: 560 }, spacing: { after: 50, line: 280 },
+      children: [run(`${i + 1}) `, { size: SMALL }), run(`${t} `, { size: SMALL }), new ExternalHyperlink({ link: u, children: [new TR({ text: u, font: LATIN, size: 18, color: '1F4E9A', underline: {} })] })] }))];
   const MEDIA = [
-    ['아룸 TTMC Origin 대화형 AI 화면 영상, Microsoft 촬영', 'https://news.microsoft.com/source/asia/wp-content/uploads/2026/03/260318_Microsoft_Foundry_ARUM_DH01_Low.mp4'],
-    ['아룸 TTMC Origin 시연 사진, SBbit', 'https://www.sbbit.jp/article/st/186632'],
-    ['화낙 Physical AI CNC 구성도와 데모 화면 사진 7장, MONOist', 'https://monoist.itmedia.co.jp/mn/articles/2610/30/news047.html'],
     ['마작 말하는 NC 현장 데모 영상, ITmedia', 'https://www.youtube.com/watch?v=QFvki0A4SqM'],
     ['미쓰비시 휴머노이드와 CNC 데모 영상, ITmedia', 'https://www.youtube.com/watch?v=v187_E_qsGQ'],
     ['오쿠마 MB-46VEⅡ 출품 사진, ニュースイッチ', 'https://newswitch.jp/p/50642'],
@@ -282,13 +289,13 @@ module.exports = (H) => {
     item('2)', `제조사 원문으로 확인한 것은 ${cnt((r) => r[8] === '제조사')}건이고 나머지 ${cnt((r) => r[8] === '추정')}건은 기사로만 확인함`),
 
     h1('3. 정성 분석'),
-    p('분류마다 대표 사례를 하나씩 골라 무엇을 넣고 AI가 무엇을 하며 무엇이 나오는지 정리했다. 자율 장비는 아룸, 프로그래밍은 판매 중인 Hexagon, 상담과 설정 변경은 사내 CNC와 같은 화낙을 골랐다.'),
+    p('분류마다 대표 사례를 하나씩 골라 입력과 AI 처리, 결과로 나눠 정리했다. 자율 장비는 아룸, 프로그래밍은 판매 중인 Hexagon, 상담과 설정 변경은 사내 CNC와 같은 화낙을 골랐다. 표 아래에는 운용 모습을 볼 수 있는 영상과 사진 주소를 달았으며 시연은 전시 데모라 성능 검증이 아니다.'),
     h2('가. 사례 1 아룸 TTMC Origin'),
-    caption('표 4. 아룸 TTMC Origin, 분류 D 자율 장비'), case1,
+    caption('표 4. 아룸 TTMC Origin, 분류 D 자율 장비'), case1, ...caseMedia(1),
     h2('나. 사례 2 Hexagon ProPlanAI'),
-    caption('표 5. Hexagon ProPlanAI, 분류 B 프로그래밍'), case2,
+    caption('표 5. Hexagon ProPlanAI, 분류 B 프로그래밍'), case2, ...caseMedia(2),
     h2('다. 사례 3 화낙 Physical AI CNC'),
-    caption('표 6. 화낙 Physical AI CNC, 분류 C 상담과 설정 변경'), case3,
+    caption('표 6. 화낙 Physical AI CNC, 분류 C 상담과 설정 변경'), case3, ...caseMedia(3),
     p('세 사례는 AI가 맡는 범위가 다르다. 아룸은 장비 전체를 맡고 Hexagon은 프로그래머의 초안 작업을 맡으며 화낙은 원인 추정과 수정안 작성을 맡는다. 셋 모두 사람이 확인하는 단계를 남겨 두었고 아룸과 Hexagon은 그 회사가 쌓은 데이터가 성능을 좌우한다.'),
 
     h1('4. 시사점'),
@@ -349,7 +356,7 @@ module.exports = (H) => {
     caption('표 14. 읽지 못한 자료'), tUnread,
     caption('표 15. 조사했으나 제외한 자료'), tExcl,
     h2('사. 참고 영상 및 사진'),
-    note('※ 장비 모습과 시연 확인용임. 저작권이 제조사와 언론사에 있어 주소만 적음. 시연은 전시 데모이며 성능 검증이 아님'),
+    note('※ 정성 분석 사례 3건의 영상과 사진은 3장 각 표 아래로 옮김. 저작권이 제조사와 언론사에 있어 주소만 적음. 시연은 전시 데모이며 성능 검증이 아님'),
     ...mediaParas(),
     h2('아. 개정 이력'),
     caption('표 16. 개정 이력'), tRev,
