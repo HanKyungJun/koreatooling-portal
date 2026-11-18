@@ -36,5 +36,6 @@ const REFS = [
   ['Zerspanungstechnik', '2026. 6. 10.', 'KI in der Fertigung: Von der Pilotphase in die Praxis', 'https://www.zerspanungstechnik.com/bericht/amb/ki-in-der-fertigung-von-der-pilotphase-in-die-praxis_2026-06-10'],
   ['DMG MORI', '2026. 11. 17. 확인', 'AI Chip Removal, Handling cycles', 'https://us.dmgmori.com/products/digitization/technology-cycles/milling-and-mill-turn/handling/ai-chip-removal'],
   ['AutoDCSTech', '2026. 10. 23.', 'Mitsubishi Electric unveils industry-first humanoid robot CNC machine tool collaboration system', 'https://www.autodcstech.com/mitsubishi-electric-unveils-industry-first-humanoid-robot-cnc-machine-tool-collaboration-system/'],
+  ['Office of the Director of National Intelligence', '2015, 2022 기술 개정', 'Intelligence Community Directive 203, Analytic Standards', 'https://www.dni.gov/files/documents/ICD/ICD-203.pdf'],
 ];
 module.exports = { REFS };
