@@ -1,4 +1,13 @@
-﻿## 2026-11-18 (#7) 핸드오프 — Cowork (AI 동향 보고 새 작성법 제1판 — 비교 견본)
+﻿## 2026-11-18 (#8) 핸드오프 — Cowork (AI 동향 보고 제1판 출처 등재)
+
+- 한 일: 제1판 참고문헌(REFS 60건) 중 sources.md 에 없던 23건 등재 — 일본 2 · 한국 5 · CAM 6 · 대만 7 · 중국 3
+- 결과/산출물: `wiki/_handoff/sources.md` §5 「AI 탑재 공작기계 동향 — 보고 제1판 추가분」 + §7 매핑 1줄(git diff +38 −0)
+- 확인: REFS URL 60건 대조 → 미등재 0(MONOist 10-19 는 같은 기사 다른 경로 — 기존 ID 로 대신) · 새 ID 중복 0
+- 미완·블로커: 일자 미상 2건(화천 산업일보 · 헬로티) · IT Leaders 제목 미확인 · 기존 중복 ID 2개(VEN-ANCA-GRAF2011 · VEN-NORTON-DRESSSTICK, 이번 작업 전부터)
+- 다음 단계 제안: 2026-12-03 첫 월간 실행 결과 검토 → 양식 D 확정
+- 챗으로 가져갈 질문: 없음
+
+## 2026-11-18 (#7) 핸드오프 — Cowork (AI 동향 보고 새 작성법 제1판 — 비교 견본)
 
 - 한 일: 작성법(양식 D)대로 처음부터 — 범위 합의 4문항 · 검색 29회 기록 · 37건 분류 · 그래프 4 · 사례 3 · 방법은 부록
 - 결과/산출물: `wiki/reports/04_비교·분석/AI공작기계_동향공유_보고_20261118.pdf`(.docx, 25쪽, doc_style_check 0) · `scripts/report_ai_trend_v2/`(build · body · content · items.csv · search_log.csv · charts.py · fig/) · 비교표 [[standards/동향조사-보고서-작성법]] §8-A
