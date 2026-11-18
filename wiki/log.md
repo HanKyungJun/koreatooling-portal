@@ -1,3 +1,10 @@
+## [2026-11-18] 신규 — 동향 · 조사 보고서 작성 방법(참고 초안)
+
+국가 운용 보고서(KOSIS 온라인간행물 · 통계청 보고서 구성 · 국가통계 품질 6차원) · 특허 동향조사(KISTA 2020 가이드라인 · 特許庁 · 크몽 업체 서비스) · 국제 지침(ICD 203 · ISO 56006 · WIPO PLR · Admiralty · SIFT · ISO 16290 · AR 25-50)을 비교해 작업 7단계 · 장 구성안(양식 D, 승인 전) · 점검 12항목 · 불확실성 표현안 · AI 동향 보고 제3판 대조표를 정리. 사내 규칙 아님.
+
+영향받은 페이지: [[standards/동향조사-보고서-작성법]], [[index]]
+출처 추가: [SYS-KOSIS-PUB], [SYS-KOSTAT-QUALITY2016], [SYS-MOGAHA2007], [SYS-KISTA-PATENTTREND2020], [SYS-JPO-GIDOU2022], [SYS-KMONG-PATENTS], [SYS-WIPO-PLR2015], [STD-ISO56006], [SYS-ICD203], [SYS-NATO-ADMIRALTY], [SYS-SIFT-CAULFIELD2019], [STD-ISO16290], [SYS-AR25-50]
+
 ## [2026-11-18] 업데이트 — AI 동향 보고 제3판 · 참고 영상 · 사진
 
 보고서 수록 장비의 공식 · 기사 영상 4건(아룸 TTMC Origin · 마작 말하는 NC · 미쓰비시 휴머노이드 · DMG AI Chip Removal) · 사진 5건 링크를 위키 §6 「참고 영상 · 사진」과 보고서 부록 마항(표 9)에 추가 → `AI공작기계_동향조사_보고_20261118_v3`(제2판 보존). 저작권 때문에 사진은 붙이지 않고 주소만. doc_style_check 기준 넘은 항목 0.
