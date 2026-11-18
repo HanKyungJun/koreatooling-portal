@@ -10,7 +10,7 @@
   python erp\\sales_board.py --py full       전년 비교를 「같은 기간(1일 ~ 기준일)」 대신 「같은 달 전체」로
   python erp\\sales_board.py --refresh       지난달 이전 캐시까지 ERP 에서 다시 받음
   python erp\\sales_board.py --offline       ERP 조회 없이 캐시만으로 (시험용)
-  python erp\\sales_board.py --weekly        주간 실행 — 기준일 = 직전 화요일, 엑셀을 화면에 연다
+  python erp\\sales_board.py --weekly        주간 실행 — 기준일 = 직전 화요일, 지난 달 캐시까지 ERP 에서 다시 받고, 엑셀을 화면에 연다
                                             (예약 작업 CNC_Sales_Weekly · 수 09:00 KST, scripts/register_sales_weekly_task.ps1)
 
 엑셀(2026-11-18~): 실행마다 private_local/sales_board/엑셀/매출현황_YYYYMMDD.xlsx (기준일) — 수기 「생산팀 매출 현황」
@@ -49,7 +49,7 @@ WEEKLY_LOG = os.path.join(OUT_DIR, "weekly.log")
 WORK_SET = "lem120_jae_g00"
 KEEP = ("out_dt", "cust_nm", "mov_own_qty", "mov_qty", "bad_qty", "mov_amt", "vat_amt", "tot_amt")
 NEED = {"out_dt", "cust_nm", "mov_own_qty", "mov_qty", "mov_amt"}
-PUR_KEEP = ("in_dt", "cust_nm", "in_amt", "vat_amt")
+PUR_KEEP = ("in_dt", "cust_cd", "cust_nm", "in_amt", "vat_amt")   # cust_cd 는 업체를 코드로 맞추려고(11-18 검토)
 PUR_NEED = {"in_dt", "cust_nm", "in_amt"}
 PUR_SPEC = os.path.join(OUT_DIR, "purchase_spec.json")     # probe_purchase.py --parse 결과 (캡처 파라미터)
 VENDOR_CFG = os.path.join(OUT_DIR, "외주업체.json")         # {"항목 이름": ["ERP 거래처명", ...]} — 업체명은 여기에만
@@ -133,8 +133,9 @@ def load_months(yms, today_ym, refresh=False, offline=False, log=print, kind="sh
                 from trico_client import TricoClient
                 client = TricoClient(macro=(spec or {}).get("macro") or None) if kind == "pur" else TricoClient()
             df = fetch_pur_month(client, ym, spec) if kind == "pur" else fetch_month(client, ym)
-            df.to_csv(path + ".tmp", index=False, encoding="utf-8-sig")
-            os.replace(path + ".tmp", path)
+            tmp = f"{path}.{os.getpid()}.tmp"      # 실행이 겹쳐도 임시 파일이 부딪히지 않게
+            df.to_csv(tmp, index=False, encoding="utf-8-sig")
+            os.replace(tmp, path)
             out[ym] = (df.astype(str).fillna(""), "ERP")
             fails = 0
         except Exception as e:
@@ -284,12 +285,63 @@ def ratio(a, b):
 
 
 def read_vendors(path=None):
+    """외주업체.json → {항목: {"names": {...}, "codes": {...}}}.
+    값은 ["거래처명", ...] 또는 {"이름": [...], "코드": [...]}. 코드가 있으면 코드로도 맞춘다(이름이 바뀌어도 빠지지 않게)."""
     try:
         with open(path or VENDOR_CFG, encoding="utf-8") as f:
             cfg = json.load(f)
-        return {str(k): [str(n).strip() for n in v] for k, v in cfg.items() if not str(k).startswith("_")}
     except (OSError, ValueError):
         return None
+    out = {}
+    for k, v in cfg.items():
+        if str(k).startswith("_"):
+            continue
+        if isinstance(v, dict):
+            out[str(k)] = {"names": {str(n).strip() for n in v.get("이름", [])},
+                           "codes": {str(c).strip() for c in v.get("코드", [])}}
+        else:
+            out[str(k)] = {"names": {str(n).strip() for n in v}, "codes": set()}
+    return out
+
+
+def vendor_codes_check(pur, vendors, log=print):
+    """① 코드가 없는 항목은 이름이 같은 행의 cust_cd 를 외주업체.json 에 적는다(한 번만)
+    ② 코드는 같은데 이름이 다른 행(ERP 에서 거래처명이 바뀐 경우)을 알린다. 알림 문장 목록을 돌려준다."""
+    import pandas as pd
+    msgs = []
+    if not vendors or not pur:
+        return msgs
+    frames = [d for d, _ in pur.values() if d is not None and len(d) and "cust_cd" in d.columns]
+    if not frames:
+        return msgs
+    allp = pd.concat(frames, ignore_index=True)
+    allp["_nm"] = allp["cust_nm"].astype(str).str.strip()
+    allp["_cd"] = allp["cust_cd"].astype(str).str.strip()
+    learned = {}
+    for k, v in vendors.items():
+        if not v["codes"]:
+            cds = sorted({c for c in allp.loc[allp["_nm"].isin(v["names"]), "_cd"] if c and c != "nan"})
+            if cds:
+                v["codes"] = set(cds)
+                learned[k] = cds
+        if v["codes"]:
+            other = sorted(set(allp.loc[allp["_cd"].isin(v["codes"]) & ~allp["_nm"].isin(v["names"]), "_nm"]))
+            if other:
+                msgs.append(f"⚠ 외주 「{k}」 거래처 코드는 같은데 이름이 다른 입고가 있음: {', '.join(other)} — 코드로 함께 셈")
+    if learned:
+        try:
+            with open(VENDOR_CFG, encoding="utf-8") as f:
+                cfg = json.load(f)
+            for k, cds in learned.items():
+                old = cfg.get(k)
+                names = old.get("이름", []) if isinstance(old, dict) else list(old or [])
+                cfg[k] = {"이름": names, "코드": cds}
+            with open(VENDOR_CFG, "w", encoding="utf-8") as f:
+                json.dump(cfg, f, ensure_ascii=False, indent=1)
+            log(f"  외주업체.json 에 거래처 코드를 적었습니다: {learned}")
+        except (OSError, ValueError) as e:
+            log(f"  [경고] 외주업체.json 코드 기록 실패: {e}")
+    return msgs
 
 
 def read_vendor_labels():
@@ -309,9 +361,18 @@ def erp_outs(pur, vendors, ym, upto=None):
     d = pur[ym][0]
     if upto is not None and len(d):
         d = d[d["in_dt"].astype(str).str[:10] <= upto]
-    amt = pd.to_numeric(d["in_amt"], errors="coerce").fillna(0) if len(d) else pd.Series(dtype=float)
-    names = d["cust_nm"].astype(str).str.strip() if len(d) else pd.Series(dtype=str)
-    return {k: float(amt[names.isin(v)].sum()) if len(d) else 0.0 for k, v in vendors.items()}
+    if not len(d):
+        return {k: 0.0 for k in vendors}
+    amt = pd.to_numeric(d["in_amt"], errors="coerce").fillna(0)
+    names = d["cust_nm"].astype(str).str.strip()
+    codes = d["cust_cd"].astype(str).str.strip() if "cust_cd" in d.columns else None
+    out = {}
+    for k, v in vendors.items():
+        m = names.isin(v["names"])
+        if codes is not None and v["codes"]:
+            m = m | codes.isin(v["codes"])
+        out[k] = float(amt[m].sum())
+    return out
 
 
 def fy_start_year(d: date) -> int:
@@ -821,6 +882,32 @@ def main(argv=None):
 
 
 def _main(a):
+    """같은 시각에 두 번 돌지 않게 잠금 파일(run.lock)을 건다 — 15분 넘은 잠금은 낡은 것으로 보고 지운다."""
+    os.makedirs(OUT_DIR, exist_ok=True)
+    lock = os.path.join(OUT_DIR, "run.lock")
+    try:
+        if os.path.exists(lock) and (datetime.now().timestamp() - os.path.getmtime(lock)) > 15 * 60:
+            os.remove(lock)
+        fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+    except FileExistsError:
+        msg = f"{datetime.now(KST):%Y-%m-%d %H:%M} KST SKIP — 다른 실행이 아직 도는 중(run.lock)"
+        print("[sales_board] " + msg)
+        if a.weekly:
+            with open(WEEKLY_LOG, "a", encoding="utf-8") as fh:
+                fh.write(msg + "\n")
+        return 2
+    try:
+        os.write(fd, str(os.getpid()).encode())
+        os.close(fd)
+        return _run(a)
+    finally:
+        try:
+            os.remove(lock)
+        except OSError:
+            pass
+
+
+def _run(a):
 
     now = datetime.now(KST)
     base = date.fromisoformat(a.date) if a.date else (last_tuesday(now.date()) if a.weekly else now.date())
@@ -833,14 +920,17 @@ def _main(a):
     # 전년 회계연도 시작(4월)부터 기준월까지 — 회계연도 누계 · 추이의 전년 같은 달까지 덮는다
     fy0 = fy_start_year(base) - 1
     yms = [f"{yy}-{mm:02d}" for yy, mm in fy_months(fy0) + fy_months(fy0 + 1) if (yy, mm) <= (base.year, base.month)]
-    months = load_months(yms, ym_of(now.date()), refresh=a.refresh, offline=a.offline)
+    # 주간 실행은 지난 달 캐시도 다시 받는다 — ERP 에서 나중에 고친 값까지 누계 · 추이에 반영(11-18 검토)
+    refresh = a.refresh or a.weekly
+    months = load_months(yms, ym_of(now.date()), refresh=refresh, offline=a.offline)
     vendors, pur = read_vendors(), None
     if vendors and os.path.exists(PUR_SPEC):
         with open(PUR_SPEC, encoding="utf-8") as fh:
             spec = json.load(fh)
-        pur = load_months(yms, ym_of(now.date()), refresh=a.refresh, offline=a.offline, kind="pur", spec=spec)
+        pur = load_months(yms, ym_of(now.date()), refresh=refresh, offline=a.offline, kind="pur", spec=spec)
     elif vendors:
         print(f"  [경고] {PUR_SPEC} 없음 — 외주 매입은 입력표 값을 씀 (probe_purchase.py --parse 먼저)")
+    vendor_msgs = vendor_codes_check(pur, vendors)
     r = build(base, months, inputs, out_names, py_mode=a.py, pur=pur, vendors=vendors)
 
     with open(OUT_HTML + ".tmp", "w", encoding="utf-8") as f:
@@ -869,6 +959,7 @@ def _main(a):
                                        if e is not None else "ERP 매입 자료 없음(입력표 사용)"))
     if c and c.get("amt_check_bad", 0) > 0:
         L.append(f"  [확인 필요] 공급가+부가세≠합계 행 {c['amt_check_bad']}개")
+    L += ["  " + m for m in vendor_msgs]
     # 월 평균 출하 수량 후보 (수기 시트 맨 아래 값의 기준 찾기용)
     L.append("  월별 출고 / 출고합계 (ERP):")
     per = []
@@ -902,6 +993,11 @@ def _main(a):
     notes = []
     if r["src"].get(r["cur_ym"]) != "ERP" and not a.offline:
         notes.append(f"⚠ 이번 달 출하 ERP 조회 실패 — {r['src'].get(r['cur_ym'])}")
+    if vendors and pur is None:
+        notes.append("⚠ 매입 조회 설정(purchase_spec.json) 없음 — 외주는 입력표 값")
+    elif pur is not None and pur.get(r["cur_ym"], (None, ""))[1] != "ERP" and not a.offline:
+        notes.append(f"⚠ 이번 달 매입 ERP 조회 실패 — {pur.get(r['cur_ym'], (None, '없음'))[1]} · 외주 값 확인 필요")
+    notes += vendor_msgs
     xp = write_sheet_xlsx(r, os.path.join(XLSX_DIR, f"매출현황_{base:%Y%m%d}.xlsx"), now, notes)
     print(f"  → {xp}")
     if a.weekly:
