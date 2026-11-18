@@ -1,4 +1,12 @@
-﻿## 2026-11-18 (#6) 핸드오프 — Cowork (AI 동향 보고 제5판 — 결과 설명 보완)
+﻿## 2026-11-18 (#7) 핸드오프 — Cowork (AI 동향 보고 새 작성법 제1판 — 비교 견본)
+
+- 한 일: 작성법(양식 D)대로 처음부터 — 범위 합의 4문항 · 검색 29회 기록 · 37건 분류 · 그래프 4 · 사례 3 · 방법은 부록
+- 결과/산출물: `wiki/reports/04_비교·분석/AI공작기계_동향공유_보고_20261118.pdf`(.docx, 25쪽, doc_style_check 0) · `scripts/report_ai_trend_v2/`(build · body · content · items.csv · search_log.csv · charts.py · fig/) · 비교표 [[standards/동향조사-보고서-작성법]] §8-A
+- 미완·블로커: 새 출처 약 30건 sources.md 미등재 · 양식 D 확정 · decisions · CLAUDE.md §14 는 경준님 비교 검토 뒤
+- 다음 단계 제안: 두 PDF 비교 → 새 방식 채택이면 양식 D 확정 + 출처 등재
+- 챗으로 가져갈 질문: 없음
+
+## 2026-11-18 (#6) 핸드오프 — Cowork (AI 동향 보고 제5판 — 결과 설명 보완)
 
 - 한 일: 3장 결과 표 19건 설명을 「하는 일 / 방법」으로 다시 씀 · 항마다 분류 설명 · 양식 D 결과 장 규칙 보강
 - 결과/산출물: `wiki/reports/04_비교·분석/AI공작기계_동향조사_보고_20261118_v5.pdf`(.docx, 22쪽, doc_style_check 0) · `scripts/report_ai_trend/build.js`(표 칸 줄바꿈 · 「하는 일:」 굵게, 백업 .bak_20261118) · body1 · body2(백업 .bak_20261118c)

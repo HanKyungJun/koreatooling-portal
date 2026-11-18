@@ -1,0 +1,30 @@
+no,date,lang,region,query,returned,adopted,note
+1,2026-11-18,일본어,일본,JIMTOF2026 AI 工作機械 AIエージェント 各社,9,3,마작 · 미쓰비시 · 닛칸 종합(오쿠마 등)
+2,2026-11-18,중국어,중국,2026 CCMT 机床 AI 大模型 数控系统 发布,9,2,CCMT2026 종합 · 화중수공 AI(후속 검색)
+3,2026-11-18,중국어(번체),대만,TMTS 2026 工具機 AI 智慧 加工 發表,9,3,도타이 AI 에이전트 · 공업기술연구원 · TMBA AI 표장
+4,2026-11-18,한국어,한국,공작기계 AI 머시닝센터 2026 SIMTOS 로보월드 출시,15,3,스맥 · 위아 · 인터엑스
+5,2026-11-18,영어,미국,IMTS 2026 AI machining center CNC new product launch,17,4,Cimatron CAM Agent · 화낙 · Hexagon · Siemens
+6,2026-11-18,독일어,유럽,AMB 2026 KI Werkzeugmaschine Bearbeitungszentrum Neuheit,18,2,Beckhoff TwinCAT CoAgent · VDMA 설문
+7,2026-11-18,중국어,중국,华中数控 华中10型 AI 数控系统 大模型 2026 发布 功能,9,3,화중10형(IR · 기사 · CCMT 30대 시연)
+8,2026-11-18,중국어(번체),대만,新代 SYNTEC AI 控制器 2026 生成式 工具機,9,1,AI 제어기 세부 미흡(후속 원문 필요)
+9,2026-11-18,중국어(번체),대만,東台精機 AI代理人 功能 TMTS 2026 數位雙生,9,3,도타이 AI 에이전트 4기능 · 5개 플랫폼 · 산출 오차 5 %
+10,2026-11-18,한국어,한국,인터엑스 완전자율머신 SIMTOS 2026 공작기계 AI,10,3,음성 지시 · 채터 감지 피드 조정 시연
+11,2026-11-18,한국어,한국,DN솔루션즈 AI 2026 공작기계 열변위 보정 iDOO 출시,12,2,iDOO RMS+ · 비전 공구 · DNVS
+12,2026-11-18,영어,미국,Cimatron CAM Agent agentic AI availability 2027 release,10,2,Cimatron CAM Agent · ENCY AI Superagent(베타)
+13,2026-11-18,일본어,일본,オークマ JIMTOF2026 AIエージェント OSP 参考出展 MONOist,8,2,오쿠마 AI 에이전트(편집후기 경유) · 화낙 Physical AI CNC
+14,2026-11-18,일본어,일본,DMG森精機 サービスエージェント 生成AI 提供開始 2026,9,3,서비스 에이전트 · Adaptive Coolant Flow · 산총연 기반 모델
+15,2026-11-18,일본어,일본,アルム TTMC Origin 予約 2027 発売 TTMC Brain,9,1,잡음 많음 — Type-M/L 기사 1건만 채택(재검색 필요)
+16,2026-11-18,영어,유럽,CloudNC CAM Assist 2026 customers funding,18,2,1,000곳 · 미국 80 % · Quote Agent 2026 하반기
+17,2026-11-18,영어,유럽,Siemens NX CAM Machining Copilot generative AI 2026 announcement,16,2,NX 2606 생성 AI 가공 제안(제조사 블로그)
+18,2026-11-18,영어,유럽,HEIDENHAIN HEIDI AI assistant TNC 2026,17,2,HEIDI · Visual Tool Check 1.6 AI 마모 측정
+19,2026-11-18,영어,일본,ARUM TTMC 2026 AI machining center sales units price news,17,3,TTMC 양산 발매(2025-05) · Type-M/L · 수십 대 출하
+20,2026-11-18,일본어,일본,三菱電機 NC MachiningAID 加工異常検知 工具摩耗 対象CNC,9,3,제품 페이지 · 2024 기사(대상 CNC) · 기보 2025
+21,2026-11-18,중국어,중국,北京精雕 科德数控 AI 机床 2026 智能 自适应 加工,8,0,AI 기능 발표 확인 못 함(오축 · 국산화 기사뿐)
+22,2026-11-18,중국어(번체),대만,工研院 AI 工具機 2026 加工參數 最佳化 技術移轉 控制器,9,1,공업기술연구원 AI 12건 전시(MCT 사용자 기능은 아님 — 참고)
+23,2026-11-18,한국어,한국,화천기계 AI 2026 심토스 머신 온 AI 공구 진단,10,3,화천 하모니 · 한화세미텍 AI 공구 진단 · AI 팩토리 테마관
+24,2026-11-18,영어,유럽,GrindingHub 2026 AI grinding machine Vollmer Walter ANCA new,17,2,VOLLMER AI 챗봇 · ANCA(AI 명칭 없음)
+25,2026-11-18,일본어,일본,(원문 읽기) MONOist 2611/02 オークマ AIエージェント JIMTOF2026,1,1,참고출품 · 사내망 GPU PC · OSP 기반 · 출시 시기 없음
+26,2026-11-18,일본어,일본,マザック ABEJA AIエージェント 工程設計 切削条件 2028年度 製品化,9,3,2026-10-16 발표 · 2028년도 제품화 목표 · 마자트롤 프로그램 제안
+27,2026-11-18,중국어,중국,数控系统 大模型 智能体 2026 机床 发布 广州数控 创世纪 海天精工 AI,9,0,증권 보고서 · 산업 개관뿐 · 제품 단위 AI 기능 없음
+28,2026-11-18,영어,유럽,DMG MORI AI Chip Removal AMB 2026 NTX technology cycle,18,2,제조사 보도(2026-04) · AI 칩 제거 · MPC
+29,2026-11-18,영어,유럽,Hexagon ProPlanAI ESPRIT EDGE 2026 available,20,3,제조사 페이지(2.5축 밀링 지원 · 선삭 베타) · 2026-03 릴리스
