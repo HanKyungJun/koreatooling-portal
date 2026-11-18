@@ -16,10 +16,39 @@ module.exports = (H) => {
     ['TTMC 프로그래밍 시간', '16시간에서 15분 / 1시간 이상에서 4분', '[28] / [27]'],
     ['TTMC 가공 소재', '금속과 수지 / 현재 알루미늄만', '[25] / [30]'],
   ], true, SMALL);
+  const { ExternalHyperlink, TextRun: TR, Paragraph: PG } = require('docx');
+  const tMedia = table(W(3, 1, 6), [
+    ['보고서 항목', '종류', '내용'],
+    ['아룸 TTMC Origin', '영상', 'M1, M2. 마이크로소프트 촬영. 대화형 AI KAYA 화면과 TTMC 장비'],
+    ['마작 말하는 NC', '영상', 'M3. JIMTOF 2026 현장 시연. 기번 확인 후 알람 원인 추정과 대처 제안'],
+    ['미쓰비시 휴머노이드와 CNC', '영상', 'M4. JIMTOF 2026 현장 시연. 음성 지시를 받아 공정을 짜고 각인 가공'],
+    ['DMG 모리 AI Chip Removal', '영상', 'M5. 제조사 영상 페이지, 2020년 출시 때 자료'],
+    ['아룸 TTMC Origin', '사진', 'M6. 아룸 제공 시연 사진 2장'],
+    ['오쿠마 MB-46VEⅡ', '사진', 'M7. JIMTOF 출품 장비. 같은 기사에 마작과 미쓰비시 사진도 있음'],
+    ['화낙 Physical AI CNC', '사진', 'M8. 구성도, AI 면 튜너와 알람 진단 화면, 손글씨 각인 결과 등 7장'],
+    ['미쓰비시 NC MachiningAID', '사진', 'M9. 알람 화면과 전류 추세 그래프'],
+    ['ANCA MX7 Ultra', '사진', 'M10. 장비 사진과 사양. 2022년 출시 자료이며 AI 기능과는 관계없음'],
+  ], true, SMALL);
+  const MEDIA = [
+    ['M1', 'Microsoft, 2026. 3. 아룸 영상 1', 'https://news.microsoft.com/source/asia/wp-content/uploads/2026/03/260318_Microsoft_Foundry_ARUM_DH01_Low.mp4'],
+    ['M2', 'Microsoft, 2026. 3. 아룸 영상 2', 'https://news.microsoft.com/source/asia/wp-content/uploads/2026/03/260318_Microsoft_Foundry_ARUM_DH02_Low.mp4'],
+    ['M3', 'ITmedia, 2026. 10. 28. 마작 시연 영상', 'https://www.youtube.com/watch?v=QFvki0A4SqM'],
+    ['M4', 'ITmedia, 2026. 10. 26. 미쓰비시 시연 영상', 'https://www.youtube.com/watch?v=v187_E_qsGQ'],
+    ['M5', 'DMG MORI, AI Chip Removal 영상 페이지', 'https://www.dmgmori.co.jp/en/movie_library/movie/id=5336'],
+    ['M6', 'SBbit, 2026. 8. 27. 아룸 기사', 'https://www.sbbit.jp/article/st/186632'],
+    ['M7', '日刊工業新聞 ニュースイッチ, 2026. 10. 28.', 'https://newswitch.jp/p/50642'],
+    ['M8', 'MONOist, 2026. 10. 30. 화낙 기사', 'https://monoist.itmedia.co.jp/mn/articles/2610/30/news047.html'],
+    ['M9', '三菱電機 FA, NC MachiningAID 제품 페이지', 'https://www.mitsubishielectric.co.jp/fa/products/cnt/cnc/pmerit/iot/nc_machining_aid/index.html'],
+    ['M10', 'ANCA, MX7 ULTRA 브로슈어', 'https://machines.anca.com/Anca.CNC/media/Images/Brochures/MX7-ULTRA-EN-digital_4.pdf?ext=.pdf'],
+  ];
+  const mediaParas = () => MEDIA.map(([id, label, url]) => new PG({ indent: { left: 560, hanging: 560 }, spacing: { after: 70, line: 280 },
+    children: [H.run(`${id} `, { size: SMALL, bold: true }), H.run(`${label} `, { size: SMALL }),
+      new ExternalHyperlink({ link: url, children: [new TR({ text: url, font: H.LATIN, size: 18, color: '1F4E9A', underline: {} })] })] }));
   const tRev = table(W(1.4, 2, 6.6), [
     ['판', '날짜', '변경 및 사유'],
     ['제1판', '2026. 11. 17.', '최초 작성'],
     ['제2판', '2026. 11. 17.', '내용 검수 10건 반영. 미쓰비시 휴머노이드 2030년 목표는 근거 원문에 시기가 없어 삭제함. 오카모토를 조건 자동 설계에서 조건 제안으로 고침. 하이덴하인 TNC7 본체 AI 유무를 확인 못 함으로 고침. 시기를 밝힌 업체를 세 곳으로 정정함. 검토 칸과 구분 열 추가, 출처 [34][35] 추가'],
+    ['제3판', '2026. 11. 18.', '부록 마항 참고 영상 및 사진 추가. 영상 4건, 사진 5건의 주소만 적음. 저작권 때문에 사진은 본문에 붙이지 않음'],
   ], true, SMALL);
   return [
     h2('마. 연삭기 및 공구연삭기'),
@@ -77,6 +106,9 @@ module.exports = (H) => {
     item('1)', '위키: wiki/comparisons/AI-탑재-공작기계-동향-2026-11.md'),
     item('2)', '출처 등재: wiki/_handoff/sources.md 5절, 신뢰도 표기 기준 decisions 2026. 11. 17. 1번'),
     item('3)', '작성 스크립트: scripts/report_ai_trend/build.js'),
-    h2('마. 개정 이력'), caption('표 9. 개정 이력'), tRev,
+    h2('마. 참고 영상 및 사진'), caption('표 9. 참고 영상 및 사진'), tMedia,
+    note('※ 장비 모습과 시연 확인용임. 사진과 영상의 저작권은 제조사와 언론사에 있어 주소만 적음. 시연은 전시 데모이며 성능 검증이 아님. 오카모토 PSG63SA1의 사진과 영상, 아룸 TTMC 12공정 가공 영상, 화낙 시연 영상은 찾지 못함'),
+    ...mediaParas(),
+    h2('바. 개정 이력'), caption('표 10. 개정 이력'), tRev,
   ];
 };

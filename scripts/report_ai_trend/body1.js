@@ -9,10 +9,10 @@ module.exports = (H) => {
   const lab = (t) => ({ t, fill: LAV, bold: true });
   const infoW = [1500, CONTENT_W / 2 - 1500, 1500, CONTENT_W / 2 - 1500];
   const info = table(infoW, [
-    [lab('과제명'), 'AI 탑재 공작기계 업계 수준 및 방향 조사', lab('문서번호'), 'AI공작기계_동향조사_보고_20261117_v2'],
+    [lab('과제명'), 'AI 탑재 공작기계 업계 수준 및 방향 조사', lab('문서번호'), 'AI공작기계_동향조사_보고_20261118_v3'],
     [lab('보고일'), '2026. 11. 17.', lab('자료 기간'), '2025. 11. ~ 2026. 11.'],
     [lab('작성'), '생산팀 한경준, 자료 조사 및 정리 보조 Claude Cowork', lab('검토'), ''],
-    [lab('상태'), '참고 보고, 도입 검토 전 단계', lab('판'), '제2판, 2026. 11. 17. 정정'],
+    [lab('상태'), '참고 보고, 도입 검토 전 단계', lab('판'), '제3판, 2026. 11. 18. 보완'],
     [lab('조사 대상'), '머시닝센터 중심, CNC 선반과 복합가공기, CNC 장치, CAM, 연삭기 포함', lab('지역'), '한국, 일본, 미국, 유럽'],
   ], false);
   const nv = (t) => ({ t, fill: NAVY, bold: true, color: 'FFFFFF', align: AlignmentType.CENTER });

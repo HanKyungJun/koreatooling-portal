@@ -1,3 +1,10 @@
+## [2026-11-18] 업데이트 — AI 동향 보고 제3판 · 참고 영상 · 사진
+
+보고서 수록 장비의 공식 · 기사 영상 4건(아룸 TTMC Origin · 마작 말하는 NC · 미쓰비시 휴머노이드 · DMG AI Chip Removal) · 사진 5건 링크를 위키 §6 「참고 영상 · 사진」과 보고서 부록 마항(표 9)에 추가 → `AI공작기계_동향조사_보고_20261118_v3`(제2판 보존). 저작권 때문에 사진은 붙이지 않고 주소만. doc_style_check 기준 넘은 항목 0.
+
+영향받은 페이지: [[comparisons/AI-탑재-공작기계-동향-2026-11]]
+출처 추가: [IND-MONOIST-MITSUBISHI-JIMTOF-20261027], [IND-SBBIT-ARUM-20260827], [VEN-DMGMORI-AICHIP-MOVIE], [VEN-MITSUBISHI-NCMAID-PRODUCT], [VEN-ANCA-MX7ULTRA-BROCHURE]
+
 ## [2026-11-17] 업데이트 — FreeCAD CAM 으로 O0003 측면가공 재현 시험
 
 2024 손코드 `raw/report/6.al엔드밀/O0003.txt`(D10 3날 · S5500 · F1300 · ap 10 · ae 2)를 FreeCAD 1.1.4 Face + qp2040_post 로 다시 만들어(O9103) 독립 시뮬로 비교 — 결과 면 같음(차이 0.000 mm, 소재 크기 추정) · 1차는 절삭 방향 섞임(상향 70 · 하향 71) → FreeCAD 직선 방향 옵션(`direction` +X)을 넣은 2차는 전부 상향 141 로 손코드와 같음. CAMotics 미설치라 높이맵 시뮬로 대신. 역할 정의 §4 주의 8 추가.
