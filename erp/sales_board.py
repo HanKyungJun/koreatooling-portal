@@ -54,6 +54,7 @@ PUR_NEED = {"in_dt", "cust_nm", "in_amt"}
 PUR_SPEC = os.path.join(OUT_DIR, "purchase_spec.json")     # probe_purchase.py --parse 결과 (캡처 파라미터)
 VENDOR_CFG = os.path.join(OUT_DIR, "외주업체.json")         # {"항목 이름": ["ERP 거래처명", ...]} — 업체명은 여기에만
 INPUT_SHEET = "월별입력"
+FY_START = 4    # 회계연도 시작 월 — 회사 목표표가 4월 ~ 3월 (2026-11-18 경준님 「4월로 진행」)
 FIXED_COLS = ("월", "매출목표", "이익목표")   # 그 뒤 「메모」 전까지 = 외주 매입 항목
 # ERP 에 그 달 출하 기록이 없을 때만 쓰는 수기 값(예: ERP 이전 달). 열 위치는 상관없음 — 이름으로 찾는다
 MANUAL_COLS = {"매출(수기)": "sales_manual", "수량(수기)": "qty_manual"}
@@ -313,6 +314,15 @@ def erp_outs(pur, vendors, ym, upto=None):
     return {k: float(amt[names.isin(v)].sum()) if len(d) else 0.0 for k, v in vendors.items()}
 
 
+def fy_start_year(d: date) -> int:
+    return d.year if d.month >= FY_START else d.year - 1
+
+
+def fy_months(fy: int):
+    """회계연도 fy 의 12개월 [(년, 월), ...] — fy 년 4월 ~ fy+1 년 3월."""
+    return [(fy + (FY_START - 1 + i) // 12, (FY_START - 1 + i) % 12 + 1) for i in range(12)]
+
+
 def month_sum(months, inputs, ym, upto=None):
     """ERP 합계. ERP 기록이 없고 입력표에 매출(수기)가 있으면 그 값(달 전체 값, manual=True)."""
     s = summarize(months[ym][0], upto=upto) if ym in months else None
@@ -363,11 +373,15 @@ def build(base: date, months, inputs, out_names, py_mode="full", pur=None, vendo
     t_s = i_cur["sales_target"] if i_cur else None
     t_p = i_cur["profit_target"] if i_cur else None
 
-    # 올해 누계 (1월 ~ 기준일) vs 전년 같은 기간
+    # 회계연도 누계 (4월 1일 ~ 기준일) vs 전년 같은 기간
+    fy = fy_start_year(base)
+    fms = fy_months(fy)
     ytd = dict(cur_amt=0.0, py_amt=0.0, cur_qty=0.0, py_qty=0.0, cur_out=0.0, py_out=0.0,
                miss_cur=[], miss_py=[], miss_out=[])
-    for mm in range(1, m + 1):
-        a, b = f"{y}-{mm:02d}", f"{y-1}-{mm:02d}"
+    for yy, mm in fms:
+        if (yy, mm) > (y, m):
+            break
+        a, b = f"{yy}-{mm:02d}", f"{yy-1}-{mm:02d}"
         sa = month_sum(months, inputs, a, upto=base_iso if mm == m else None)
         sb = month_sum(months, inputs, b, upto=py_same_iso if mm == m else None)
         if sa: ytd["cur_amt"] += sa["amt"]; ytd["cur_qty"] += sa["own"] or 0
@@ -382,15 +396,15 @@ def build(base: date, months, inputs, out_names, py_mode="full", pur=None, vendo
         else: ytd["py_out"] += ob
 
     trend = []
-    for mm in range(1, 13):
-        a, b = f"{y}-{mm:02d}", f"{y-1}-{mm:02d}"
+    for yy, mm in fms:
+        a, b = f"{yy}-{mm:02d}", f"{yy-1}-{mm:02d}"
         sb = month_sum(months, inputs, b)
         sa = None
-        if mm <= m:
-            sa = month_sum(months, inputs, a, upto=base_iso if mm == m else None)
+        if (yy, mm) <= (y, m):
+            sa = month_sum(months, inputs, a, upto=base_iso if (yy, mm) == (y, m) else None)
         tg = inputs.get(a, {}).get("sales_target") if inputs.get(a) else None
-        trend.append(dict(m=mm, py=sb["amt"] if sb else None, cur=sa["amt"] if sa else None,
-                          partial=(mm == m and base < month_end(a)), target=tg))
+        trend.append(dict(m=mm, ycur=yy, ypy=yy - 1, py=sb["amt"] if sb else None, cur=sa["amt"] if sa else None,
+                          partial=((yy, mm) == (y, m) and base < month_end(a)), target=tg))
 
     days_in = calendar.monthrange(y, m)[1]
     return dict(
@@ -400,7 +414,7 @@ def build(base: date, months, inputs, out_names, py_mode="full", pur=None, vendo
         i_cur=i_cur, i_py=i_py, outs_cur=outs_cur, outs_py=outs_py, outs_src=(src_py, src_cur),
         out_names=list(vendors) if vendors else out_names,
         elapsed=base.day / days_in, days_in=days_in,
-        ytd=ytd, trend=trend,
+        ytd=ytd, trend=trend, fy=fy,
         top=top_customers(months[cur_ym][0], base_iso),
         src={k: v[1] for k, v in months.items()},
         manual=[k for k in sorted(months) if summarize(months[k][0]) is None
@@ -552,8 +566,8 @@ def trend_svg(trend, y):
 
     for i, t in enumerate(trend):
         gx = L + gw * i + (gw - (2 * bw + 2)) / 2
-        p.append(bar(gx, t["py"], "#b9b7ae", f"{y-1}년 {t['m']}월 · {won(t['py'])} 원"))
-        lab = f"{y}년 {t['m']}월{' (진행 중)' if t['partial'] else ''} · {won(t['cur'])} 원"
+        p.append(bar(gx, t["py"], "#b9b7ae", f"{t['ypy']}년 {t['m']}월 · {won(t['py'])} 원"))
+        lab = f"{t['ycur']}년 {t['m']}월{' (진행 중)' if t['partial'] else ''} · {won(t['cur'])} 원"
         if t["target"]:
             lab += f"<br>목표 {won(t['target'])} 원 · 달성 {pct(ratio(t['cur'], t['target']))}"
         p.append(bar(gx + bw + 2, t["cur"], "url(#hatch)" if t["partial"] else "#2a78d6", lab))
@@ -594,7 +608,7 @@ def render(r, generated: datetime):
     if not ytd["miss_out"]:
         pc, pp = ytd["cur_amt"] - ytd["cur_out"], ytd["py_amt"] - ytd["py_out"]
         yt_rows.append(("이익 (원)", won(pc), won(pp), pct(ratio(pc, pp))))
-    ytd_html = ('<table><tr><th></th><th class="n">' + f"{r['y']}년 1월 1일 ~ {r['m']}월 {base.day}일"
+    ytd_html = ('<table><tr><th></th><th class="n">' + f"{r['fy']}년 {FY_START}월 1일 ~ {r['y']}년 {r['m']}월 {base.day}일"
                 + '</th><th class="n">' + f"{r['y']-1}년 같은 기간" + '</th><th class="n">전년대비</th></tr>'
                 + "".join(f'<tr><td>{a}</td><td class="n">{b}</td><td class="n">{c}</td><td class="n">{d}</td></tr>'
                           for a, b, c, d in yt_rows) + "</table>")
@@ -614,9 +628,9 @@ def render(r, generated: datetime):
     top_html += "</table>" if top else "<tr><td colspan=5 class='need'>이번 달 출하 없음</td></tr></table>"
 
     # 추이 표
-    tr_tbl = ('<table><tr><th>월</th><th class="n">' + f"{r['y']-1}년" + '</th><th class="n">' + f"{r['y']}년"
-              + '</th><th class="n">목표</th><th class="n">전년대비</th></tr>'
-              + "".join(f'<tr><td>{t["m"]}월{" (진행 중)" if t["partial"] else ""}</td><td class="n">{won(t["py"])}</td>'
+    tr_tbl = ('<table><tr><th>월</th><th class="n">전년 같은 달</th><th class="n">올해</th>'
+              + '<th class="n">목표</th><th class="n">전년대비</th></tr>'
+              + "".join(f'<tr><td>{str(t["ycur"])[2:]}년 {t["m"]}월{" (진행 중)" if t["partial"] else ""}</td><td class="n">{won(t["py"])}</td>'
                         f'<td class="n">{won(t["cur"])}</td><td class="n">{won(t["target"])}</td>'
                         f'<td class="n">{pct(ratio(t["cur"], t["py"]))}</td></tr>' for t in r["trend"]) + "</table>")
 
@@ -640,14 +654,14 @@ def render(r, generated: datetime):
 <div class="note">빨간 % = 달 경과율 {pct(r['elapsed'])} ({base.day}/{r['days_in']}일, 달력일)보다 낮음. 「입력 필요」 = 입력.xlsx 빈칸(목표) 또는 매입 자료 없음.</div></section>
 <div>
 <section class="card" style="margin-bottom:14px"><div class="tiles">{tiles}</div>
-<h2>월별 매출 — {r['y']-1}년 vs {r['y']}년</h2>
-<div class="legend"><span><span class="sw" style="background:#b9b7ae"></span>{r['y']-1}년</span>
-<span><span class="sw" style="background:#2a78d6"></span>{r['y']}년</span>
+<h2>월별 매출 — {r['fy']}년 {FY_START}월 ~ {r['fy']+1}년 {FY_START-1}월 (회계연도)</h2>
+<div class="legend"><span><span class="sw" style="background:#b9b7ae"></span>전년 같은 달</span>
+<span><span class="sw" style="background:#2a78d6"></span>올해</span>
 <span><span class="sw" style="background:repeating-linear-gradient(45deg,#2a78d6 0 3px,#a9c8ee 3px 6px)"></span>진행 중인 달</span>
 <span><span class="sw" style="background:#0b0b0b;height:2px;vertical-align:3px"></span>목표</span></div>
 {trend_svg(r['trend'], r['y'])}
 <details><summary>표로 보기</summary>{tr_tbl}</details></section>
-<section class="card" style="margin-bottom:14px"><h2>올해 누계</h2>{ytd_html}</section>
+<section class="card" style="margin-bottom:14px"><h2>회계연도 누계 ({FY_START}월 시작)</h2>{ytd_html}</section>
 <section class="card"><h2>{r['m']}월 거래처별 매출 (상위 10)</h2>{top_html}</section>
 </div></div>
 <footer>
@@ -816,8 +830,9 @@ def _main(a):
         print(f"[sales_board] 입력표를 새로 만들었습니다 — 목표 · 외주 매입을 채우세요: {INPUT_XLSX}")
     inputs, out_names = read_inputs(INPUT_XLSX)
 
-    yms = [f"{y}-{m:02d}" for y in (base.year - 1, base.year) for m in range(1, 13)
-           if (y, m) <= (base.year, base.month)]
+    # 전년 회계연도 시작(4월)부터 기준월까지 — 회계연도 누계 · 추이의 전년 같은 달까지 덮는다
+    fy0 = fy_start_year(base) - 1
+    yms = [f"{yy}-{mm:02d}" for yy, mm in fy_months(fy0) + fy_months(fy0 + 1) if (yy, mm) <= (base.year, base.month)]
     months = load_months(yms, ym_of(now.date()), refresh=a.refresh, offline=a.offline)
     vendors, pur = read_vendors(), None
     if vendors and os.path.exists(PUR_SPEC):
