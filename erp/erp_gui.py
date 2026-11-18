@@ -1154,7 +1154,7 @@ class ItemPriceTab(DataTab):
             self._ui(lambda: self._query_failed(seq, msg))
 
     def _postprocess_df(self, df):
-        """정가를 「8,310」처럼 쉼표 정수로, 품목코드 순 정렬"""
+        """정가를 「1,234」처럼 쉼표 정수로, 품목코드 순 정렬"""
         if df is None or df.empty:
             return df
         df = df.copy()
