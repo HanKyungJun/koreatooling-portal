@@ -34,7 +34,10 @@ function tcell(text, width, o = {}) {
   return new TableCell({ width: { size: width, type: WidthType.DXA }, borders, columnSpan: span,
     shading: fill ? { type: ShadingType.CLEAR, color: 'auto', fill } : undefined,
     verticalAlign: VerticalAlign.CENTER, margins: { top: 50, bottom: 50, left: 90, right: 90 },
-    children: [new Paragraph({ alignment: align || AlignmentType.LEFT, children: [run(text, { size: size || TBL, bold, color: color || INK })] })] });
+    children: String(text).split('\n').map((line) => { const m = line.match(/^(하는 일|방법): (.*)$/);
+      return new Paragraph({ alignment: align || AlignmentType.LEFT, spacing: { after: 30 }, children: m
+        ? [run(m[1] + ': ', { size: size || TBL, bold: true, color: color || INK }), run(m[2], { size: size || TBL, bold, color: color || INK })]
+        : [run(line, { size: size || TBL, bold, color: color || INK })] }); }) });
 }
 function table(widths, rows, headRow = true, size) {
   const total = widths.reduce((a, b) => a + b, 0);
