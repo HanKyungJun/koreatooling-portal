@@ -7,7 +7,7 @@
 
 - 결정: ① 매출 현황판의 결과 · 입력 · 캐시 · 주간 엑셀을 `wiki/_private/sales_board/` → 저장소 루트 `private_local/sales_board/` 로 옮긴다(`.gitignore` 에 `private_local/` 추가) ② `erp/sales_board.py` · `erp/probe_purchase.py` 경로를 바꾸고 `scripts/sync_to_gdrive.py` 는 건드리지 않는다
 - 근거: 검토(11-18 16:0x KST) 중 `scripts/sync_to_gdrive.py` 가 `wiki/` 를 제외 목록 없이 통째로 올림을 확인(`sync_folder` 재귀, 건너뛰는 것은 `~$` 잠금 파일뿐) — 매일 16:30 「cnc-wiki Drive 동기화」로 거래처별 매출 · 전체 매입처 금액 캐시가 Google Drive 에 올라갈 뻔함(첫 업로드 16:30 전에 옮김). 앞서 「금액이 PC 밖으로 안 나간다」는 안내가 틀렸음(Claude 실수). 대안: 동기화 스크립트에 제외 줄 추가 — 기존 자동화 수정이라 뺌 · 그대로 둠 — 대외비 원칙과 어긋남. 한경준님 「wiki 밖으로 옮김」(추천안) 선택
-- 확인 필요: 다른 `wiki/_private/` 파일(단가 · 할인율 · 실명판 등)도 같은 방식으로 Drive 에 올라가고 있음 — 의도한 백업인지 한경준님 확인
+- ~~확인 필요: 다른 `wiki/_private/` 파일의 Drive 업로드 의도~~ → 그대로 둠(한경준님 「괜찮을 거 같으면 냅두고」 11-18). Drive `cnc-wiki/wiki/_private`(2026-06-29~) 파일은 모두 소유자만 보기 · 공유 없음 [실측 — Drive 조회]. 매출 현황판 자료만 `private_local/` 로 따로 둠
 - 출처: Cowork
 - 영향: `.gitignore` · `erp/sales_board.py` · `erp/probe_purchase.py` · `scripts/register_sales_weekly_task.ps1`(주석만, 등록된 예약 작업은 그대로) · decisions (4) (5) · worklog #13 경로 표기
 
