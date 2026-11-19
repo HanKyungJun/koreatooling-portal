@@ -3,6 +3,13 @@
 > 무엇을(What), 왜(Why), 출처(Where)를 **시간 역순(최신이 맨 위)** 으로 기록합니다.
 > 챗에서 결정된 내용도 반드시 여기로 옮겨야 Code/Cowork가 따라옵니다.
 
+## 2026-11-19 (1): 새 작업 PC 이전 — 사용자 이름이 HAN 이라 `C:\Users\TOOLKOREA` → `C:\Users\HAN` 연결 폴더(정션)로 옛 경로 유지
+
+- 결정: ① 새 PC(사용자 `HAN`)에 정션 `C:\Users\TOOLKOREA` → `C:\Users\HAN` 1개를 두어 스크립트 · bat · vbs · `.env`(`INTERNAL_DIR`) · `run_scraper.ps1` · 예약 작업의 `C:\Users\TOOLKOREA\...` 고정 경로를 코드 수정 없이 그대로 쓴다(2026-11-19 09:35 KST 생성) ② 예약 작업은 XML 가져오기 때 사용자를 HAN 으로 다시 지정(XML 에 옛 PC SID) ③ 정션 제거는 `cmd /c rmdir C:\Users\TOOLKOREA` 만 — `Remove-Item -Recurse` · 탐색기 삭제 금지(대상 실제 파일까지 지울 수 있음)
+- 근거: 옛 PC 실측 — `C:\Users\TOOLKOREA` 고정 경로가 실행 파일 약 20개(cnc-wiki 경로) · `.env` 1줄(`Desktop\현황판`) · Python 경로 4곳(예약 작업 3 · `run_scraper.ps1`)에 있음. 대안 ① 경로를 상대 경로 · 환경 변수로 고치기 — 정석이나 파일 20개+ 수정 · 시험 부담, 이전 당일엔 위험 ② 새 Windows 계정 TOOLKOREA 생성 — 프로그램 · 로그인 재설정이 두 배. Windows 사용자 이름을 바꿔도 프로필 폴더 이름은 그대로라 해결 안 됨
+- 출처: Cowork (추천안 → 한경준님 새 PC 에서 직접 실행 = 승인)
+- 영향: 이전 체크리스트 `private_local/pc_migration/PC이전_체크리스트.md`(git · Drive 제외 — 설치 목록 · 알FTP · MCT 접속 정보) · 고정 경로 정리(상대 경로화)는 나중 과제로 남김 · 옛 PC 예약 작업 7개는 새 PC 시험 통과 당일 「사용 안 함」
+
 ## 2026-11-18 (6): 매출 현황판 자료 위치를 wiki/ 밖 `private_local/sales_board/` 로 — 16:30 Drive 동기화 제외
 
 - 결정: ① 매출 현황판의 결과 · 입력 · 캐시 · 주간 엑셀을 `wiki/_private/sales_board/` → 저장소 루트 `private_local/sales_board/` 로 옮긴다(`.gitignore` 에 `private_local/` 추가) ② `erp/sales_board.py` · `erp/probe_purchase.py` 경로를 바꾸고 `scripts/sync_to_gdrive.py` 는 건드리지 않는다

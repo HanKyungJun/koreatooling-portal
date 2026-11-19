@@ -1,4 +1,14 @@
-﻿## 2026-11-18 (#13) 핸드오프 — Cowork (매출 현황판)
+﻿## 2026-11-19 (#1) 핸드오프 — Cowork (작업 PC 이전 · 알FTP)
+
+- 한 일: 새 PC 이전 준비 — 옛 PC 설치 목록 115 · pip 68 · 예약 작업 18(cnc-wiki 7) 분석 · 새 PC 사용자 HAN 확인 → 정션 `C:\Users\TOOLKOREA` → `C:\Users\HAN`(decisions 2026-11-19 (1))
+- 결과/산출물: `private_local/pc_migration/PC이전_체크리스트.md`(git 제외) · tasks 「작업 PC 이전」 P1 신규
+- 알FTP · MCT: 설정 위치(`%APPDATA%\ESTsoft\ALFTP` .dat 3 · HKCU 레지스트리) 백업 → 새 PC 복원 · 받기 8개 · 보내기(빈 번호) 시험 통과 — 연동 완료
+- 미완·블로커: cnc-wiki 복사 · Python · 예약 작업 가져오기 · 자동화 시험 · 옛 PC 자동화 끄기(체크리스트 0 ~ 5번)
+- 다음 단계 제안: 새 PC 에서 경로 점검 명령(체크리스트) → cnc-wiki 복사 → 일일보고 수동 실행
+- 검토: R4 주 — 통과 20 · 확인 필요 3(라이선스 · Python 경로 · 바탕화면 OneDrive) · 통과 뒤 지적 0
+- 챗으로 가져갈 질문: 없음
+
+## 2026-11-18 (#13) 핸드오프 — Cowork (매출 현황판)
 
 - 한 일: 수기 「생산팀 매출 현황」 시트를 ERP(출하 `lem120_jae_g00` · 매입 `lea110_g00`)로 자동 계산 — 시트 21칸 실데이터 일치, 주간 엑셀 · 회계연도(4월) 누계 · 검토 개선 4건(decisions 2026-11-18 (4) ~ (6))
 - 결과/산출물: `erp/sales_board.py` · `erp/probe_purchase.py` · `scripts/register_sales_weekly_task.ps1` · `매출현황판.bat` · 자료 `private_local/sales_board/`(git · Drive 제외 — 입력.xlsx 26년 4월 ~ 27년 3월 목표 입력)

@@ -27,6 +27,12 @@
 
 ## 진행 중
 
+- [ ] 🔵 **작업 PC 이전 — DESKTOP-35OSE6P → 새 PC(사용자 HAN)** (P1, 2026-11-19 등재)
+  - 체크리스트: `private_local/pc_migration/PC이전_체크리스트.md`(git · Drive 제외 — 설치 목록 · 접속 정보)
+  - ✅ (11-19) 설치 목록 · pip · 예약 작업 백업 · `C:\Users\TOOLKOREA` → `C:\Users\HAN` 정션(decisions 2026-11-19 (1)) · 알FTP · MCT 연동 받기 · 보내기 시험 통과
+  - 남음: cnc-wiki 폴더 통째 복사(git clone 금지) · `Desktop\현황판` · Python 3.14 경로 3곳 · `pip install -r pip_목록.txt` · 예약 작업 7개 가져오기(사용자 HAN) · 일일보고 · 매출판 · git push 시험 · 라이선스(Office · 한글 · NX · ThinkWise) · 바탕화면 OneDrive 이동 여부
+  - 🔴 전환일: 옛 PC 예약 작업 7개 「사용 안 함」(두 PC 동시 실행 → 보고서 중복 · push 충돌)
+
 - [ ] 🔵 **공구 도면 · 3D 생성기 — 사양 한 줄 → 도면(DXF · PDF · PNG) + 3D(STEP · .sc)** (P1, 2026-11-12 등재 · 한경준님 승인 · ✅ v1.1 11-12 — 현장 사용 의견 대기)
   - 담당: Cowork (새 세션에서 시작 — 「공구 생성기 만들어 줘」)
   - 메모: 입력 예 `EM 4날 D6 d6 L50 Lc9 R0.5 넥5.7×18 헬릭스35`. 범위 평 · 코너R · 볼, 2 ~ 4날, 넥 유무(날 끝 형상 생략). 도면 = `outputs/02_도면_3D_CAM/스크립트/sample_drawings_20261112.py` 일반화(축척 ISO 5455 자동 · 배치 규칙 · 그리기 전 겹침 검사 · 치수도 ezdxf 로 넣고 CADCraft 는 확인 · PDF 만). 3D = 날부 회전체(코너 · 볼 R 포함, z 0 ~ Lc) → 홈 1개씩 sweep cut(경로 −1 ~ Lc+1) → 넥 · 생크 별도 몸체, 단계마다 .sc 저장, 부피 계산값 자동 비교. 마지막에 FreeCAD 형상 점검. 목표: 공구 1종 5 ~ 10분(추정값 — 샘플 3종으로 실측)
