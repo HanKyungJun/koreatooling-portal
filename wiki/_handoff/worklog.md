@@ -1,4 +1,14 @@
-﻿## 2026-11-19 (#1) 핸드오프 — Cowork (작업 PC 이전 · 알FTP)
+﻿## 2026-11-19 (#2) 핸드오프 — Cowork (새 PC CAD · 3D 프로그램 연결)
+
+- 한 일: 새 PC 에 CADCraft · SolidCraft · FreeCAD · Blender 의 Claude 연결 복구 — 설치는 돼 있었으나 연결 0개였음. 실행 파일 3개 작성 → 한경준님 실행 → Blender 커넥터 추가
+- 결과/산출물: `outputs/02_도면_3D_CAM/setup_mcp_newpc.ps1` · `setup_freecad_newpc.ps1` · `setup_blender_newpc.ps1` · 실행 기록 `setup_*_log_*.txt` · `add_cadcraft_mcp.py` · `add_freecad_mcp.py` 수정(`.bak_20261119`) · 위키 [[cadcam/CAD-3D-프로그램-역할-정의]] §2-1 · §4-9 ~ 11 · [[cadcam/Blender-3D-시각화-MCP-연동]] · sources `[VEN-FREECAD-MCP]`
+- 시험: 원통 D10 × 75 mm — SolidCraft 5,889.51 · FreeCAD 5,890.49 · Blender(정256각) 5,889.89 mm³ · CADCraft 선 좌표 일치, 4종 합격
+- 미완·블로커: `add_cadcraft` · `add_solidcraft` 백업 이름 겹침(옛 방식) · tasks 「작업 PC 이전」 항목에 이 결과 반영 안 함
+- 다음 단계 제안: PC 이전 체크리스트 나머지(cnc-wiki 자동화 · 예약 작업) 진행
+- 검토: R4 주 — 통과 37 · 확인 필요 0(모두 실행 기록으로 종결) · 통과 뒤 지적 0 · 자체 정정 1(CADCraft 옛 경로가 「멈춘다」고 안내했으나 새 PC 에 TOOLKOREA → HAN 정션이 있어 동작했을 수 있음)
+- 챗으로 가져갈 질문: 없음
+
+## 2026-11-19 (#1) 핸드오프 — Cowork (작업 PC 이전 · 알FTP)
 
 - 한 일: 새 PC 이전 준비 — 옛 PC 설치 목록 115 · pip 68 · 예약 작업 18(cnc-wiki 7) 분석 · 새 PC 사용자 HAN 확인 → 정션 `C:\Users\TOOLKOREA` → `C:\Users\HAN`(decisions 2026-11-19 (1))
 - 결과/산출물: `private_local/pc_migration/PC이전_체크리스트.md`(git 제외) · tasks 「작업 PC 이전」 P1 신규

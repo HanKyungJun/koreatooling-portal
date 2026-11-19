@@ -4,7 +4,7 @@ tags: [Blender, 3D, 시각화, MCP, 렌더링, G코드, 시뮬레이션]
 sources:
   - "[VEN-BLENDER-LAB-MCP]"
   - "[VEN-ANTHROPIC-BLENDER-CONNECTOR]"
-updated: 2026-11-12
+updated: 2026-11-19
 ---
 
 # Blender 3D 시각화 (Claude MCP 연동)
@@ -20,6 +20,7 @@ updated: 2026-11-12
 | 애드온 설정 | Host localhost / Port 9876 / Auto Start 켜짐, 지연 1 s | 실측 검증 |
 | Claude 커넥터 | 「Blender」 확장 프로그램 1.0.1, Blender Lab 제작, 도구 26개 | 제조사 기준 [VEN-ANTHROPIC-BLENDER-CONNECTOR] |
 | 최소 Blender 버전 | 5.1 이상 | 제조사 기준, 아래 주 참고 |
+| 새 PC 확인 (2026-11-19) | desktop-dqdpa0j · Blender 5.2.2 LTS · 애드온 1.0.3 · 커넥터 연결 · 시험 물체 부피 계산값과 일치 | 실측 검증 |
 
 주: Anthropic 튜토리얼은 「4.2 이상」이라고 적었다. 그러나 blender.org 애드온 내려받기 링크의 최소 버전은 5.1.0 이다. 이 위키는 배포처 값인 5.1 이상을 따른다.
 
@@ -31,6 +32,11 @@ updated: 2026-11-12
 4. 확인: Blender Python 콘솔에서 아래 한 줄이 `(True, True)`를 돌려주면 설치와 활성화가 끝난 것이다.
    `import addon_utils; print([(m.__name__, addon_utils.check(m.__name__)) for m in addon_utils.modules() if 'mcp' in m.__name__.lower()])`
 5. Claude 데스크톱 앱 **설정 > 커넥터**에서 Blender를 추가한다. 앱을 완전히 종료한 뒤 다시 켠다.
+
+명령으로 설치(2026-11-19 새 PC): 2 ~ 4단계를 화면 없이 `outputs/02_도면_3D_CAM/setup_blender_newpc.ps1` 로 했다 — `blender -b -c extension install-file -r user_default -e <zip>` 로 설치와 켜기, 「온라인 접근 허용」 켜고 저장, 4단계 확인 줄로 `(True, True)` 확인. 절차 전체는 [[cadcam/CAD-3D-프로그램-역할-정의]] §2-1.
+
+- 애드온은 Blender **환경 설정 > 시스템 > 「온라인 접근 허용」**이 꺼져 있으면 서버를 시작하지 않는다 [VEN-BLENDER-LAB-MCP](애드온 `__init__.py` 의 `startup_online_ok_or_error`, 2026-11-19 소스 확인). 새 PC 처음 실행 때는 꺼져 있을 수 있다.
+- 설정을 바꿀 때는 Blender 를 끈다. 켜 둔 채 바꾸면 Blender 를 닫을 때 저장되는 설정이 덮어쓸 수 있다.
 
 ## 3. 쓰는 방식 두 가지
 
@@ -88,6 +94,7 @@ updated: 2026-11-12
 | 2026-10-22 | Cowork에 Blender 도구 안 보임 | 도구 목록 갱신 전 | 앱 재시작 후 도구 목록 새로 고침 |
 | 2026-10-22 | 「Cannot connect to Blender at localhost:9876」 | Blender 꺼짐 | Blender 실행, Auto Start로 서버 시작 |
 | 2026-10-22 | 「Blender executable not found at 'blender'」 | 커넥터가 `BLENDER_PATH`를 못 받음, 추정 | 사용자 PATH에 Blender 폴더 추가 |
+| 2026-11-19 | 설치 실행 파일이 「Blender is running」으로 멈춤 | 처음 실행한 Blender 창이 작업 표시줄 뒤에 남음 | `Get-Process blender` 로 창 제목 확인 → 창을 닫고 다시 실행 |
 | 2026-10-22 | 백그라운드 도구가 60 s 안에 응답 없음 | Claude 경유 실행이 약 2분 걸림, 원인 확인 필요 | 화면 방식으로 작업. 남은 프로세스는 `Stop-Process -Name blender` |
 
 ## 8. 관련 페이지

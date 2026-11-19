@@ -1,3 +1,10 @@
+## [2026-11-19] 업데이트 — 새 PC CAD · 3D 프로그램 연결 (CADCraft · SolidCraft · FreeCAD · Blender)
+
+새 PC(desktop-dqdpa0j) 연결 절차 §2-1 신설 — 실행 파일 3개(`setup_mcp_newpc` · `setup_freecad_newpc` · `setup_blender_newpc`) + Blender 커넥터. 원통 D10 × 75 mm 시험 4종 합격. 주의 추가: freecadcmd 경로 따옴표 + `/`(shlex) · FreeCAD 자동 시작 기본 꺼짐 · 같은 초 백업 덮어쓰기 · Blender 온라인 접근 허용 필수.
+
+영향받은 페이지: [[cadcam/CAD-3D-프로그램-역할-정의]], [[cadcam/Blender-3D-시각화-MCP-연동]]
+출처 추가: [VEN-FREECAD-MCP]
+
 ## [2026-11-18] 업데이트 — 마이다스 몰 재연마 견적 계산기 방향(이름 · 위치)
 
 고객 화면 이름 「재연마 견적 계산기」, midastool.co.kr 안 일반 페이지 1개(팝업 · iframe 안 씀), 개발사에 엔진 · 데이터 · 명세 · 검수 문항 꾸러미로 전달, 1차 공표 정가만. 꾸러미 제작 시점 미정
