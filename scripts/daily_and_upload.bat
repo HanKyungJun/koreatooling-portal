@@ -28,6 +28,13 @@ python erp\save_shipment.py >> wiki\reports\daily\run.log 2>&1
 REM 2) calendar artifacts
 python scripts\update_calendar_artifact.py >> wiki\reports\daily\run.log 2>&1
 python scripts\update_calendar_claude_work.py >> wiki\reports\daily\run.log 2>&1
+REM 2b) 2026-11-19: new PC - the app keeps artifacts in its own folder and Claude scheduled
+REM     runs cannot read this PC folder. So export small files and upload them to Google Drive
+REM     directly (scripts\drive_upload.py, folder cnc-wiki-auto): calendar data (the calendar
+REM     artifact reads it) and worklog material (Claude task writes the ecount worklog draft).
+REM     Upload errors are logged only. Backup: daily_and_upload.bat.bak_20261119
+python scripts\export_calendar_data.py >> wiki\reports\daily\run.log 2>&1
+python scripts\export_worklog_material.py >> wiki\reports\daily\run.log 2>&1
 
 REM 3) wiki overview stats
 python scripts\update_overview.py >> wiki\reports\daily\run.log 2>&1
@@ -50,4 +57,7 @@ set "RC5=%EL5%"
 if not "%RC5%"=="0" echo [step5-fail] %DATE% %TIME% rc=%RC5% process dump: >> wiki\reports\daily\step5_err.log
 if not "%RC5%"=="0" powershell -NoProfile -NonInteractive -Command "Get-CimInstance Win32_Process | Where-Object { $_.Name -match 'python|cmd|wscript|powershell' } | Select-Object ProcessId,ParentProcessId,CreationDate,Name,CommandLine | Format-List | Out-String -Width 400" >> wiki\reports\daily\step5_err.log 2>&1
 echo [step5-end] %DATE% %TIME% rc=%RC5% >> wiki\reports\daily\run.log
+REM 6) 2026-11-19: Fridays only - weekly cleanup metrics (dry-run / read-only) uploaded to
+REM    Google Drive for the Claude task "weekly cleanup". Runs after the push on purpose.
+python scripts\export_weekly_metrics.py >> wiki\reports\daily\run.log 2>&1
 exit /b %RC5%

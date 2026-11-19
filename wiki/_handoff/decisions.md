@@ -3,6 +3,38 @@
 > 무엇을(What), 왜(Why), 출처(Where)를 **시간 역순(최신이 맨 위)** 으로 기록합니다.
 > 챗에서 결정된 내용도 반드시 여기로 옮겨야 Code/Cowork가 따라옵니다.
 
+## 2026-11-19 (5): 새 PC 에서 Claude 예약 작업은 PC 폴더를 못 읽는다 — 16:00 배치가 재료를 구글 드라이브에 바로 올리고, 예약 작업은 클라우드에서 그 파일만 읽는다
+
+- 결정: ① 신규 `scripts/drive_upload.py`(token.json · drive.file 범위, 갱신 실패 때 브라우저 로그인 안 띄움 · 대기 60초) — 내 드라이브 `cnc-wiki-auto/` 에 작은 파일을 바로 올림 ② 16:00 배치(`daily_and_upload.bat`)에 `export_calendar_data.py`(캘린더 · (4) 의 올리는 경로를 이것으로 바꿈) · `export_worklog_material.py`(업무일지 재료) 추가, push 뒤에 금요일만 `export_weekly_metrics.py`(주간 정리 측정값 — 드라이런 · 읽기만) ③ Claude 예약 작업: 「업무일지 초안 v2」 평일 16:13 · 「주간 정리 제안 v2」 금 16:23 — 둘 다 클라우드 전용(PC 불필요) ④ 옛 작업(옛 PC DESKTOP-35OSE6P 고정)은 끔: 업무일지 16:07 · 주간 정리 금 14:47 · 월초 점검 v2 · AI 월간 동향 · GitHub 토큰 알림 2개(→ 클라우드 v2 2개 새로 만듦). 월초 점검 · AI 동향은 12-01 · 12-03 전에 같은 방식으로 다시 만듦(11-26 10:20 알림)
+- 근거: 11-19 14:09 KST 진단 예약 실행(한경준님 허용) 결과를 드라이브 「cowork_예약진단_20261119」로 받음 — 새 PC 예약 실행에 `device_bash` · `update_artifact` 없음, 예약 작업에 폴더를 지정해도 `connectedFolders` 빈 배열(파일 내용 못 읽음, 이름만). 옛 예약 작업 프롬프트 변경은 「옛 PC 에서 승인 필요」로 거절됨 = 옛 PC 고정 확인. 드라이브 전체 동기화(16:30)는 로그가 없고 11-17 일부만 · 11-18 0건 올라감(드라이브 수정 시각 실측) → 기대지 않음. 시험: 재료 · 측정값 생성(11-18 자료 · 클라우드 복제본, 핸드오프 파일 안 바뀜 확인) · 업로드는 모의 [실측 — 업로드 실물은 11-19 16:00 첫 실행]
+- 출처: Cowork (한경준님 「원인 찾아 고치기」 · 「진단 예약 만들어도 돼. 예약 작업 5개 고치는 것도 허용」 11-19)
+- 영향: `scripts/daily_and_upload.bat`(원본 `.bak_20261119`) · 신규 `scripts/drive_upload.py` · `export_worklog_material.py` · `export_weekly_metrics.py` · `export_calendar_data.py` 수정 · `private_local/worklog_material/` · `private_local/weekly_metrics/` · CLAUDE.md §15-3 시각 · 업무일지 결과는 이제 알림 · 세션 응답으로만(옛 `outputs/업무일지/*.txt` 저장 없음)
+
+## 2026-11-19 (4): 캘린더 아티팩트가 열릴 때 구글 드라이브의 실적 파일을 직접 읽는다 — (3)의 「Claude 예약 작업 반영」 대체
+
+- 결정: ① 16:00 배치에 `scripts/export_calendar_data.py` 1줄 추가(`daily_and_upload.bat`, 원본 `.bak_20261119`) — 사본의 PROD · CLAUDE_WORK 중 `private_local/calendar/artifact_base.txt`(2026-11-19) 7일 전부터를 `wiki/_private/calendar/calendar_data.txt` 로 내보냄 ② 16:30 「cnc-wiki Drive 동기화」가 그 파일을 올림(본인만 보기 폴더) ③ 아티팩트 「Weekly Calendar Overview」는 열 때 구글 드라이브 `search_files` · `read_file_content` 로 그 파일을 읽어 PROD · CLAUDE_WORK 를 덮어씀(11-19 14:0x KST 이 대화에서 1회 고침). 아래 「업데이트:」 줄에 「실적 YYYY-MM-DD HH:MM 기준」 표시 ④ (3)의 Claude 예약 작업 `trig_01Vogy3u4cZ9B3HWyzoP1xYZ` 는 끔(지우지 않음)
+- 근거: 11-19 13:43 KST (3) 방식 시험 실행 보고 — 예약 실행에는 `update_artifact` · `create_artifact` 도구가 없고, 연결 폴더도 0개(예약 작업에 폴더를 지정했는데도). 드라이브 읽기 도구는 파일을 마크다운으로 바꿔 돌려줌(`\[` `\_` 이스케이프 · 이모지 깨짐 — holidays.md 로 실측) → JSON 을 16진수로 바꿔 `CALDATABEGIN` ~ `CALDATAEND` 사이에 넣음. 클라우드 시험: 마크다운식으로 망가뜨린 파일에서 복원 · 화면에 드라이브 값(시험값 99개)이 그려짐 [실측 — Playwright, 도구 응답은 모의]. 대안: 대화 시작 때 반영 · 말할 때만 반영 → 한경준님 「캘린더가 스스로 읽기」(추천안) 선택
+- 확인 필요: 실제 앱에서 드라이브 도구 호출 응답 모양 · 처음 열 때 드라이브 연결 허용 창 — 11-19 16:30 뒤 캘린더를 열어 「실적 2026-11-19 16:0x 기준」이 보이면 통과
+- 한계: 실적이 16:30 뒤에 보임(전엔 16:00). 파일이 몇 달 쌓이면 대화 세션에서 아티팩트를 사본으로 한 번 갱신하고 `artifact_base.txt` 날짜를 바꿈
+- ⚠️ 정정 병기(11-19 14:3x): ② 의 「16:30 동기화가 올림」은 (5) 로 바뀜 — 파일은 `private_local/calendar/calendar_data.txt` 에 두고 16:00 배치가 드라이브 `cnc-wiki-auto/` 로 바로 올림(16:30 동기화는 11-17 · 11-18 누락 실측). 실적은 16:00 뒤 바로 보임
+- 출처: Cowork
+- 영향: `scripts/daily_and_upload.bat` · 신규 `scripts/export_calendar_data.py` · `private_local/calendar/artifact_base.txt` · 아티팩트 · (3) ③ 대체
+
+## 2026-11-19 (3): 캘린더 아티팩트 자동 갱신 — 스크립트는 cnc-wiki 안 사본만 고치고, 사이드바 반영은 Claude 예약 작업(평일 16:10)
+
+- 결정: ① `scripts/update_calendar_artifact.py` · `update_calendar_claude_work.py` 의 대상 파일을 옛 `C:\Users\TOOLKOREA\Documents\Claude\Artifacts\weekly-calendar-overview\index.html` → `private_local/calendar/weekly-calendar-overview.html`(git · Drive 제외)로 바꾼다(환경변수 `CALENDAR_HTML` 로 바꿔 쓸 수 있음, 원본 `.bak_20261119`) ② 사본은 11-19 13:3x KST 현재 아티팩트 내용 그대로로 시작 ③ Claude 예약 작업 「캘린더 아티팩트 반영 (평일 16:10)」(`trig_01Vogy3u4cZ9B3HWyzoP1xYZ`, 이 PC 필요 · 자동 승인)이 사본을 스테이징 → 아티팩트와 다르면 `update_artifact` 로 올림. 같으면 아무것도 안 함
+- 근거: 새 PC 데스크톱 앱(6.6395)은 아티팩트를 앱 내부 폴더에 둬 파이썬이 못 고침 → 11-19 11:59 · 13:08 수동 실행에서 `[calendar-work] ERROR - artifact not found`(다른 단계 rc=0). 아티팩트는 Google 캘린더를 실시간으로 부르므로(`window.cowork.callMcpTool` list_events) 브라우저용 HTML 로 바꾸면 그 기능을 잃음. 대안 ② 사본만 두고 반영은 손으로 — 사용량 0 이나 사이드바가 안 바뀜 ③ 캘린더 단계 끄기 — ERROR 만 사라짐. 한경준님 ① 선택(추천안, 11-19). 클라우드 시험: 11-18 PROD 줄 다시 넣기 · 같은 값 SKIP · CLAUDE_WORK 11-19 추가 모두 rc=0 [실측 — 사본 복제본]
+- 출처: Cowork
+- 영향: `scripts/update_calendar_artifact.py` · `scripts/update_calendar_claude_work.py` · 신규 `private_local/calendar/` · Claude 예약 작업 1개 추가 · 16:00 배치(`daily_and_upload.bat`)는 그대로. 확인: 11-19 16:40 KST 후속 점검(send_later)
+- ⚠️ 정정 병기(11-19 14:0x): ③ 은 동작하지 않음 — 예약 실행에 `update_artifact` 없음 · 연결 폴더 0개(13:43 시험). → (4) 로 대체, 예약 작업은 끔. ① ② 는 그대로 유효
+
+## 2026-11-19 (2): 작업 PC 전환을 오늘(11-19) 16:00 전에 한다 — 두 PC 병행 운용 안 함
+
+- 결정: ① 옛 PC(DESKTOP-35OSE6P) cnc-wiki 예약 작업 7개 「사용 안 함」 → 새 PC 에 같은 7개 등록(XML 의 옛 SID · `DESKTOP-35OSE6P\TOOLKOREA` 를 새 PC 사용자로 바꿔 등록), 오늘 16:00 일일보고부터 새 PC 가 실행 ② 옛 PC 는 1 ~ 2주 끄지 않고 보관 — 문제 시 예약 작업만 다시 켜서 되돌림 ③ 전환 전까지 새 PC 에서 `daily_report.py` · 일일보고 bat · `update_dashboard_now.bat` 실행 금지(끝에 `generate.py` 업로드를 자동 실행 — `scripts/daily_report.py` 737 ~ 740행)
+- 근거: 11-19 10:51 KST 새 PC 시험 — ERP 조회 231회 실패 0 · 일일보고 xlsx 생성 · `generate.py --local` 사내 배포 23개 성공, 남은 것은 Git 설치뿐. 병행하면 두 PC 가 같은 GitHub 저장소에 push 해 충돌 · 보고서 중복. 옛 PC 의 cnc-wiki 쓰기는 16:00 일일보고 전까지 없음(07:54 OnBoot 실행 이후 · 09:00 알림 2개는 메일만) → 자료 재복사 불필요. 대안: 며칠 병행 시험 — 충돌 위험만 늘고 얻는 것 없음
+- 출처: Cowork (추천안 → 한경준님 「승인」 11-19)
+- 영향: 예약 작업 7개(옛 PC 사용 안 함 · 새 PC 등록) · `private_local/pc_migration/PC이전_체크리스트.md` §5 전환일 · 옛 PC 백업 XML 기준 ANCA_Scraper_Daily · DailyDlvAlert · DailyZeroPriceAlert 는 이미 「사용 안 함」 상태라 새 PC 에도 꺼진 채 등록됨
+
 ## 2026-11-19 (1): 새 작업 PC 이전 — 사용자 이름이 HAN 이라 `C:\Users\TOOLKOREA` → `C:\Users\HAN` 연결 폴더(정션)로 옛 경로 유지
 
 - 결정: ① 새 PC(사용자 `HAN`)에 정션 `C:\Users\TOOLKOREA` → `C:\Users\HAN` 1개를 두어 스크립트 · bat · vbs · `.env`(`INTERNAL_DIR`) · `run_scraper.ps1` · 예약 작업의 `C:\Users\TOOLKOREA\...` 고정 경로를 코드 수정 없이 그대로 쓴다(2026-11-19 09:35 KST 생성) ② 예약 작업은 XML 가져오기 때 사용자를 HAN 으로 다시 지정(XML 에 옛 PC SID) ③ 정션 제거는 `cmd /c rmdir C:\Users\TOOLKOREA` 만 — `Remove-Item -Recurse` · 탐색기 삭제 금지(대상 실제 파일까지 지울 수 있음)

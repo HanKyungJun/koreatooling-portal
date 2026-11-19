@@ -11,7 +11,11 @@ worklog.md 핸드오프 블록 -> 캘린더 아티팩트 CLAUDE_WORK 자동 업�
   2. 아티팩트 CLAUDE_WORK에 아직 없는 날짜만 골라 자동 태깅 후 삽입 (최대 3개/일)
   3. 이미 사람이 채워둔 날짜는 절대 건드리지 않음 (수동 큐레이션 값 보존)
      단 --repair 를 주면, 라벨이 전부 '참조 파편'인 날짜만 골라 재생성한다.
-출력: weekly-calendar-overview\index.html CLAUDE_WORK 갱신
+출력: private_local\calendar\weekly-calendar-overview.html(아티팩트 사본) CLAUDE_WORK 갱신
+
+[2026-11-19 수정] 새 PC 이전 — 옛 위치 Documents\Claude\Artifacts 가 없어 사본 경로로 바꿈
+  (원본 update_calendar_claude_work.py.bak_20261119 · decisions 2026-11-19 (3)).
+  사이드바 반영은 Claude 예약 작업(평일 16:10 KST). 시험용 경로는 환경변수 CALENDAR_HTML.
 
 [2026-09-30 수정] 볼드를 무조건 라벨로 쓰던 로직이 교차 참조까지 긁어오는 버그를 고쳤다.
   증상: 09-23~09-29 항목이 "(2)", "2026-09-29 (3)" 처럼 날짜·번호만 남음
@@ -20,7 +24,7 @@ worklog.md 핸드오프 블록 -> 캘린더 아티팩트 CLAUDE_WORK 자동 업�
   대응: REF_CONTEXT(앞 문맥) · REF_ONLY(내용 자체) · BOLD_HEAD_WINDOW(위치) 3중 필터 +
         볼드가 없으면 항목 머리말로 폴백 → 볼드 습관에 대한 의존 제거
 """
-import sys, io, re
+import sys, io, re, os
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 from pathlib import Path
@@ -40,7 +44,8 @@ def read_all_worklogs() -> str:
         for p in sorted(WORKLOG_ARCHIVE.glob('*.md')):
             parts.append(p.read_text(encoding='utf-8'))
     return '\n'.join(parts)
-ARTIFACT = Path(r'C:\Users\TOOLKOREA\Documents\Claude\Artifacts\weekly-calendar-overview\index.html')
+ARTIFACT = Path(os.environ.get('CALENDAR_HTML') or
+                BASE / 'private_local' / 'calendar' / 'weekly-calendar-overview.html')
 LOG      = BASE / 'wiki' / 'reports' / 'daily' / 'run.log'
 
 MAX_TAGS_PER_DAY = 3
@@ -170,7 +175,7 @@ def main():
         log('[calendar-work] ERROR - worklog.md not found')
         sys.exit(1)
     if not ARTIFACT.exists():
-        log('[calendar-work] ERROR - artifact not found')
+        log(f'[calendar-work] ERROR - artifact not found: {ARTIFACT}')
         sys.exit(1)
 
     repair = '--repair' in sys.argv

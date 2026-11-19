@@ -4,7 +4,7 @@ r"""
 일일보고 xlsx -> 캘린더 아티팩트 PROD 자동 업데이트
 실행: python scripts/update_calendar_artifact.py [YYYY-MM-DD] [--artifact=경로]
       날짜 생략 시 오늘 날짜 사용 · --artifact 는 시험용(생략 시 실제 아티팩트)
-출력: weekly-calendar-overview\index.html 업데이트 (Cowork Artifacts 폴더)
+출력: private_local\calendar\weekly-calendar-overview.html 업데이트 (아티팩트 사본)
 
 2026-10-27 수정 (원본: update_calendar_artifact.py.bak_20261027)
   - 10-23 부터 일일보고가 ERP 작업실적 기준(decisions 2026-10-23 (7))이라 「FAST GRIND / GX7 수량」 줄이 없다.
@@ -14,8 +14,15 @@ r"""
              ② PROD 줄은 json.dumps 로 쓴다 — 파이썬 None 이 JS 에 들어갈 수 없다
              ③ 가공시간은 H:MM:SS 만 남기고, 표준공수 추정값이면 "est":true 로 따로 표시
   - 엑셀 기준 보고서(~10-22)는 전과 같은 값·같은 형식으로 쓴다(total = fg + gx7).
+2026-11-19 수정 (원본: update_calendar_artifact.py.bak_20261119) — 새 PC 이전
+  - 새 데스크톱 앱(6.6395)은 아티팩트를 앱 내부 폴더에 둬서 옛 위치
+    Documents\Claude\Artifacts\... 가 없다 → [calendar] ERROR - artifact not found.
+  - 이제 cnc-wiki 안 사본 private_local\calendar\weekly-calendar-overview.html 만 고친다
+    (git · Drive 제외). 사이드바 아티팩트 반영은 Claude 예약 작업 「캘린더 아티팩트 반영」
+    (평일 16:10 KST)이 사본을 올린다. decisions 2026-11-19 (3).
+  - 경로를 바꿔 시험하려면 환경변수 CALENDAR_HTML 또는 --artifact=경로.
 """
-import sys, io, re, json
+import sys, io, re, json, os
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 from datetime import date, datetime
@@ -24,7 +31,8 @@ import openpyxl
 
 BASE      = Path(__file__).resolve().parent.parent
 DAILY_DIR = BASE / 'wiki' / 'reports' / 'daily'
-ARTIFACT  = Path(r'C:\Users\TOOLKOREA\Documents\Claude\Artifacts\weekly-calendar-overview\index.html')
+ARTIFACT  = Path(os.environ.get('CALENDAR_HTML') or
+                 BASE / 'private_local' / 'calendar' / 'weekly-calendar-overview.html')
 LOG       = DAILY_DIR / 'run.log'
 MARKER    = '};\n\nconst REPORT_START'
 TIME_RE   = re.compile(r'(\d+):(\d{2}):(\d{2})')

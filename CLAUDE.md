@@ -390,7 +390,7 @@ updated: YYYY-MM-DD
 
 ### 15-3. 매주 정리
 
-- 금요일 14:47 KST 예약 작업 「주간 정리 제안」이 핸드오프 크기 · `tasks.md` · `.bak` · `outputs` · `_to_delete` · 이번 주 결정 건수 · 프로젝트 메모 목록 길이(§15-4)를 재고 **제안 목록만** 만든다(옮기기 · 지우기 없음). 넘친 항목이 있을 때만 알림.
+- 금요일 16:23 KST 예약 작업 「주간 정리 제안 v2」(2026-11-19 — 16:00 배치가 잰 값을 드라이브 `cnc-wiki-auto/weekly_metrics.txt` 에서 읽음, decisions 2026-11-19 (5) · ~~금 14:47 · device_bash~~)가 핸드오프 크기 · `tasks.md` · `.bak` · `outputs` · `_to_delete` · 이번 주 결정 건수 · 프로젝트 메모 목록 길이(§15-4)를 재고 **제안 목록만** 만든다(옮기기 · 지우기 없음). 넘친 항목이 있을 때만 알림.
 - 적용은 한경준님 「승인」 뒤: `python scripts/slim_tasks.py --apply` · `python scripts/archive_handoff.py --apply` 등.
 
 ### 15-4. 핸드오프 · 메모리 역할과 상한 (2026-11-03 신설)
