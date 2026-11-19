@@ -31,14 +31,17 @@
   - 체크리스트: `private_local/pc_migration/PC이전_체크리스트.md`(git · Drive 제외 — 설치 목록 · 접속 정보)
   - ✅ (11-19) 설치 목록 · pip · 예약 작업 백업 · `C:\Users\TOOLKOREA` → `C:\Users\HAN` 정션(decisions 2026-11-19 (1)) · 알FTP · MCT 연동 받기 · 보내기 시험 통과
   - ✅ (11-19 오후) cnc-wiki 복사 · Python 3.14.10 · 패키지 26개 · Node 26 + docx · Git 2.56 · 예약 작업 7개 등록(Ready 4 · Disabled 3) · 수동 실행 2회 rc=0 · 11:59 push 성공 · Cowork 아티팩트 3개 다시 만듦(weekly-calendar-overview · cnc-progress-tracker · daily-task-checklist)
-  - 남음: 16:00 첫 정기 실행 확인 · 11-25(수) 매출 주간 · ~~매출판 수동 시험~~(✅ 11-19 13:39 새 PC 통과) · 라이선스(Office · 한글 · NX · ThinkWise) · `C:\NCDATA` 옛 파일 복사 · 바탕화면 OneDrive 이동 여부
+  - 남음: ~~16:00 첫 정기 실행 확인~~(✅ 11-19) · 11-25(수) 매출 주간 · ~~매출판 수동 시험~~(✅ 11-19 13:39 새 PC 통과) · 라이선스(Office · 한글 · NX · ThinkWise) · `C:\NCDATA` 옛 파일 복사 · 바탕화면 OneDrive 이동 여부
   - ~~🔴 캘린더 자동 갱신 끊김~~ → ✅ (11-19 13:4x, decisions 2026-11-19 (3)) 스크립트 2개 대상 = `private_local/calendar/weekly-calendar-overview.html` 사본 · 사이드바 반영 = Claude 예약 작업 평일 16:10(`trig_01Vogy3u4cZ9B3HWyzoP1xYZ`). ⬜ 16:40 후속 점검(16:00 배치 · 16:30 Drive · 16:10 반영) · 11-25 09:40 매출 주간 점검 예약됨
   - 🔄 (11-19 14:0x) (3) 의 Claude 반영은 예약 실행에 `update_artifact` 가 없어 실패 → decisions 2026-11-19 (4): 캘린더가 열릴 때 구글 드라이브 `wiki/_private/calendar/calendar_data.txt` 를 읽음. ⬜ 16:30 뒤 캘린더 「업데이트:」 줄에 「실적 2026-11-19 16:0x 기준」 확인 · 처음 열 때 드라이브 허용
   - ✅ (11-19 14:3x, decisions 2026-11-19 (5)) Claude 예약 작업 — 진단: 새 PC 예약 실행은 폴더 0개 · device_bash 없음, 옛 작업은 옛 PC 고정. 16:00 배치가 재료를 드라이브 `cnc-wiki-auto/` 에 바로 올리고 클라우드 예약 작업이 읽게 바꿈: 업무일지 v2 평일 16:13 · 주간 정리 v2 금 16:23 · GitHub 토큰 알림 v2 2개. 옛 6개 끔
-  - ⬜ 11-19 16:00 첫 실행 run.log 에 `[calendar-data] DRIVE` · `[worklog-material] DRIVE` 가 OK 인지 · 16:13 업무일지 v2 결과 · 11-20(금) 16:23 주간 정리 v2
+  - ✅ (11-19 14:33 수동 시험) `export_calendar_data.py` · `export_worklog_material.py` → 드라이브 `cnc-wiki-auto/` 업로드 성공(드라이브 조회 확인) · 업무일지 v2 시험 실행 양식 정상(ANCA 0 = 13:08 스냅샷, 16:00 전이라 정상) · 캘린더 「실적 … 기준」 표시 한경준님 확인
+  - ✅ (11-19 16:40 점검) 16:00 정기 실행 정상 — 일일보고 xlsx 16:00 생성(29개) · push code=0(16:01:07 · 16:01:37) · step5 rc=0 · [calendar] OK · [calendar-data] · [worklog-material] DRIVE 업데이트 · 16:13 업무일지 v2 실행 성공 · 16:34 Drive 동기화 새 PC 에서 동작(드라이브 수정 시각 확인)
+  - ~~⬜ 11-19 16:00 첫 실행 run.log 에 `[calendar-data] DRIVE` · `[worklog-material] DRIVE` 가 OK 인지 · 16:13 업무일지 v2 결과~~ · ⬜ 11-20(금) 16:23 주간 정리 v2
   - ⬜ (P1, ~11-30) 월초 마감 점검 v2(12-01) · AI 월간 동향(12-03) 새 방식으로 재구성 — 지금 꺼 둠, 11-26 10:20 알림
   - ⬜ 11-18 실적 값 차이: 아티팩트 total 60(옛 PC 11-18 16:00) ↔ 새 PC 재생성 xlsx 66(11-19 10:51) — 늦게 입력된 ERP 실적으로 추정. 맞으면 `python scripts\update_calendar_artifact.py 2026-11-18` 1회
   - ✅ 전환 완료(11-19 오전, decisions 2026-11-19 (2)): 옛 PC 예약 작업 7개 Disabled → 새 PC 등록. 옛 PC 1 ~ 2주 보관
+  - ✅ (11-20 07:5x 점검, Cowork) 이전 후 첫 밤 정상 — 11-19 16:00 정기(일일보고 29개 · push code=0) · 16:13 업무일지 v2 SUCCEEDED · 16:34 Drive 동기화. 11-20 00:17 PC 재시작 → OnBoot 따라잡기 실행(그날 xlsx 없으면 bat 실행 — 설계대로) 전 단계 rc=0 · push code=0(94bfb1c, 로컬 = origin) · 드라이브 worklog_material · weekly_metrics 업로드(16:00 에 다시 덮어씀). C: 119 GB 중 여유 23 GB(82 %) · 새 PC Cowork device_bash 사용 가능해짐(11-20 08:0x). ⬜ 00:17 재시작 원인(Windows 업데이트 추정 — 확인 필요) · ⬜ 오늘 16:00 · 16:23 주간 정리 v2 · 11-19 #4 변경 미커밋
 
 - [ ] 🔵 **공구 도면 · 3D 생성기 — 사양 한 줄 → 도면(DXF · PDF · PNG) + 3D(STEP · .sc)** (P1, 2026-11-12 등재 · 한경준님 승인 · ✅ v1.1 11-12 — 현장 사용 의견 대기)
   - 담당: Cowork (새 세션에서 시작 — 「공구 생성기 만들어 줘」)

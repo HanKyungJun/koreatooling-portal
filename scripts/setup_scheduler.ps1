@@ -3,7 +3,7 @@
 
 $TaskName  = "CNC_Daily_Report"
 $TaskName2 = "CNC_Daily_Report_OnBoot"
-$BaseDir   = "C:\Users\TOOLKOREA\Desktop\cnc-wiki"
+$BaseDir   = Split-Path -Parent $PSScriptRoot   # 2026-11-19: parent of scripts\ = cnc-wiki (works for any Windows user)
 $LogFile   = "$BaseDir\wiki\reports\daily\run.log"
 $RunTime   = "16:00"
 

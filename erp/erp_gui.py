@@ -65,6 +65,20 @@ SAVE_DIR    = BASE_DIR / "outputs" / "dlv_alerts"
 SCOPES      = ["https://www.googleapis.com/auth/gmail.send"]
 
 
+def _alert_script(name: str) -> Path:
+    """알림 스크립트 위치 (2026-11-19 수정).
+    exe 로 실행하면 --add-data 로 묶은 파일이 exe 옆(dist)이 아니라
+    임시 압축 해제 폴더(sys._MEIPASS)에 풀린다. 예전에는 dist 에서 찾아
+    FileNotFoundError 가 났다(신규 PC 에서 확인)."""
+    if getattr(sys, "frozen", False):
+        return Path(getattr(sys, "_MEIPASS", ERP_DIR)) / name
+    return ERP_DIR / name
+
+
+# Get-ScheduledTask 의 State 는 JSON 으로 바꾸면 숫자로 나온다 (3 = Ready)
+_TASK_STATE = {0: "Unknown", 1: "Disabled", 2: "Queued", 3: "Ready", 4: "Running"}
+
+
 # ── 설정 저장/로드 ─────────────────────────────────────────────────────────────
 def load_config() -> dict:
     defaults = {
@@ -906,11 +920,12 @@ class SettingsTab(ttk.Frame):
             import importlib.util, types
 
             spec = importlib.util.spec_from_file_location(
-                "daily_dlv_alert", ERP_DIR / "daily_dlv_alert.py"
+                "daily_dlv_alert", _alert_script("daily_dlv_alert.py")
             )
-            mod = types.ModuleType("daily_dlv_alert")
-            mod.__spec__ = spec
+            # 2026-11-19: ModuleType 은 __file__ 이 없어 NameError → module_from_spec 사용
+            mod = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(mod)
+            mod.SAVE_DIR = SAVE_DIR   # 임시 폴더가 아니라 exe 옆 outputs 에 저장
 
             # 설정 동기화
             mod.TO_EMAIL  = self.cfg.get("to_email", mod.TO_EMAIL)
@@ -925,15 +940,18 @@ class SettingsTab(ttk.Frame):
             print(f"[{today}] 납기 알림 리포트 생성 중…")
             print("① ERP 데이터 조회")
             df_so, df_pp, df_sh = mod.fetch_data()
+            # 2026-11-19: daily_dlv_alert.py __main__ 과 같은 순서로 맞춤
+            df_so = mod.flag_urgent(df_so, "dlv_dt", mod.DLV_DAYS)
 
             print("② Excel 생성")
             urgent = mod.build_excel(df_so, df_pp, df_sh, out_path)
             print(f"   저장: {out_path}  (긴급 {urgent}건)")
 
             print("③ 이메일 발송")
-            mod.send_email(out_path, urgent)
+            mod.send_email(urgent, df_so)   # 2026-11-19: 인자 순서 (긴급건수, 수주표)
 
             result = f"✅ 완료  |  긴급 {urgent}건  →  {mod.TO_EMAIL}"
+            print(result)
             last   = f"마지막 실행: {today.strftime('%Y-%m-%d')} {date.today().strftime('%H:%M')}"
             self.after(0, lambda: (
                 self.btn_alert.config(state="normal", text="▶  지금 납기 알림 실행"),
@@ -970,11 +988,13 @@ class SettingsTab(ttk.Frame):
             import importlib.util, types
 
             spec = importlib.util.spec_from_file_location(
-                "zero_price_alert", ERP_DIR / "zero_price_alert.py"
+                "zero_price_alert", _alert_script("zero_price_alert.py")
             )
-            mod = types.ModuleType("zero_price_alert")
-            mod.__spec__ = spec
+            # 2026-11-19: ModuleType 은 __file__ 이 없어 NameError → module_from_spec 사용
+            mod = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(mod)
+            mod._cfg_file = CONFIG_FILE                         # 수신자 설정
+            mod.SAVE_DIR  = BASE_DIR / "outputs" / "zero_price_alerts"
 
             mod.TOKEN_FILE = TOKEN_FILE
             mod.SAVE_DIR.mkdir(parents=True, exist_ok=True)
@@ -998,6 +1018,7 @@ class SettingsTab(ttk.Frame):
                 print("③ 이메일 발송")
                 mod.send_email(df, out_path)
                 result = f"✅ 완료  |  단가 0 {len(df)}건 발송"
+            print(result)
 
             self.after(0, lambda: (
                 self.btn_zero.config(state="normal", text="▶  지금 단가 0 알림 실행"),
@@ -1047,6 +1068,7 @@ class SettingsTab(ttk.Frame):
                 if r.returncode == 0 and r.stdout.strip():
                     data  = json.loads(r.stdout.strip())
                     state = data.get("State", "?")
+                    state = _TASK_STATE.get(state, state)
                     icon  = "✅" if state in ("Ready", "Running") else "⚠️"
                     text  = f"{icon}  {task_name}: {state}"
                     fg    = GREEN if state in ("Ready", "Running") else "#e65100"

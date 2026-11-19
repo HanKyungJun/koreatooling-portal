@@ -1,12 +1,16 @@
 # -*- mode: python ; coding: utf-8 -*-
+from PyInstaller.utils.hooks import collect_data_files
+
+datas = [('trico_client.py', '.'), ('daily_dlv_alert.py', '.'), ('zero_price_alert.py', '.')]
+datas += collect_data_files('googleapiclient')
 
 
 a = Analysis(
     ['erp_gui.py'],
     pathex=[],
     binaries=[],
-    datas=[('trico_client.py', '.'), ('daily_dlv_alert.py', '.')],
-    hiddenimports=[],
+    datas=datas,
+    hiddenimports=['googleapiclient.discovery', 'google.auth.transport.requests', 'email.mime.multipart', 'email.mime.base', 'email.mime.text', 'email.encoders'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

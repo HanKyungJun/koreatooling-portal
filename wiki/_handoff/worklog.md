@@ -1,4 +1,23 @@
-﻿## 2026-11-19 (#3) 핸드오프 — Cowork (PC 이전 · cnc-wiki 자동화 · 예약 작업)
+﻿## 2026-11-20 (#1) 핸드오프 — Cowork (새 PC 이전 후 첫 밤 점검)
+
+- 한 일: 핸드오프 읽기 · 새 PC 점검(run.log · generate.log · git 참조 · 드라이브 수정 시각 · Claude 예약 작업 실행 기록 · 디스크)
+- 결과: 정상 — 11-19 16:00 정기 · 16:13 업무일지 v2 · 16:34 Drive 동기화 통과. 11-20 00:17 PC 재시작 → OnBoot 실행 rc=0 · push code=0(로컬 = origin 94bfb1c) · C: 여유 23 GB. tasks 「작업 PC 이전」 · 체크리스트 §7 한 줄씩
+- 미완·블로커: 00:17 재시작 원인 확인 필요(이벤트 로그 — PowerShell 1줄, 경준님) · 11-19 #4 TricoERP 변경 8개 + 새 페이지 1개 미커밋
+- 다음 단계 제안: 커밋 · 오늘 16:00 정기 · 16:23 주간 정리 v2 결과 확인 · 「단가 0 알림」 버튼 1회
+- 검토: R4 주 — 통과 6 · 확인 필요 1(재시작 원인) · 통과 뒤 지적 0
+- 챗으로 가져갈 질문: 없음
+
+## 2026-11-19 (#4) 핸드오프 — Cowork (새 PC TricoERP 뷰어 · 납기 알림 메일)
+
+- 한 일: 새 PC 에서 ERP 조회 확인(피들러 불필요 — 요청에 PC별 인증 없음, 연결 테스트 48건) → 「지금 납기 알림 실행」 메일 미발송 원인 4건 수정: ① exe 가 알림 스크립트를 dist 에서 찾음 ② exe 에 googleapiclient · email.mime 누락 ③ ModuleType 이라 `__file__` 없음 ④ send_email 인자 순서 틀림(뷰어 ↔ 스크립트 불일치) · 스케줄러 상태 숫자(3)→Ready 표시
+- 결과/산출물: `erp/erp_gui.py` · `erp/build_exe.bat`(python -m PyInstaller · 실패 시 [FAILED]) · `erp/TricoERP.spec` · `scripts/setup_scheduler.ps1`($BaseDir 를 스크립트 위치 기준으로) — 모두 `.bak_20261119` · exe 재빌드(한경준님) · 사유 정리 [[troubleshoot/TricoERP-납기알림-메일-미발송]] · index · log
+- 시험: exe 구조 모의 + 실제 Gmail 라이브러리로 두 버튼 끝까지 통과 → 실제 발송 15:44 「[납기 알림] D-3 이내 37건」 수신 확인(한경준님)
+- 미완·블로커: 「지금 단가 0 알림 실행」 실물 미시험 · 메일 제목 37건(수주+생산실적+출하 합계) ↔ 본문 표 6줄(수주만) 기준 다름 · 장치 커밋 직후 다시 불러오면 옛 사본으로 되돌아가는 현상 2회(확인은 파일 크기로)
+- 다음 단계 제안: 단가 0 버튼 1회 실행 · 제목 건수 기준을 본문과 맞출지 결정
+- 검토: R4 주 — 통과 6 · 확인 필요 1(단가 0 실물 발송) · 통과 뒤 지적 1(빌드 반복 — 끝까지 시험하지 않고 수정본을 냄)
+- 챗으로 가져갈 질문: 없음
+
+## 2026-11-19 (#3) 핸드오프 — Cowork (PC 이전 · cnc-wiki 자동화 · 예약 작업)
 
 - 한 일: 새 PC 자동화 실측(run.log · generate.log — 11:59 · 13:08 수동 실행 rc=0, 오류는 캘린더 1줄) → 캘린더 자동 갱신 복구: 스크립트 2개 대상을 `private_local/calendar/` 사본으로(원본 `.bak_20261119`) · Claude 예약 작업 「캘린더 아티팩트 반영 (평일 16:10)」 생성 · 후속 점검 2개(11-19 16:40 · 11-25 09:40) 예약
 - 결과/산출물: `scripts/update_calendar_artifact.py` · `scripts/update_calendar_claude_work.py` · `private_local/calendar/weekly-calendar-overview.html` · decisions 2026-11-19 (3) · 체크리스트 §4 · §5 체크 · §8 신규 · tasks 「작업 PC 이전」
@@ -7,6 +26,7 @@
 - 다음 단계 제안: 16:40 점검 결과 확인 → 라이선스 · `C:\NCDATA` 옛 파일 복사
 - 검토: R4 주 — 통과 9 · 확인 필요 3(16:00 실행 · Drive 동기화 · 아티팩트 캘린더 권한 — 모두 16:40 점검에서 종결 예정) · 통과 뒤 지적 0
 - 추가(14:0x): 캘린더 Claude 반영 시험 실패(예약 실행에 update_artifact 없음 · 폴더 0개) → decisions 2026-11-19 (4) 드라이브 읽기 방식: `scripts/export_calendar_data.py` · bat 1줄(`.bak_20261119`) · `artifact_base.txt` · 아티팩트 1회 갱신(Playwright 모의 시험 통과) · 예약 작업 끔 · Claude 예약 작업 5종 새 PC 문제 발견(tasks · 체크리스트 §9) — 진단 예약 만들기는 자동 차단됨
+- 추가(16:40): 첫 정기 실행 점검 통과 — 일일보고 29개 · push code=0 · 드라이브 재료 2건 업데이트 · 업무일지 v2 16:13 성공 · Drive 동기화 16:34 동작
 - 추가(14:3x): 진단 예약(허용 받음) → 새 PC 예약 실행은 폴더 0개 · device_bash 없음 · 옛 작업은 옛 PC 고정 확인 → decisions 2026-11-19 (5): `drive_upload.py` · `export_worklog_material.py` · `export_weekly_metrics.py` · bat 2곳 · 업무일지 v2 · 주간 정리 v2 · GitHub 알림 v2 생성, 옛 6개 끔 · 드라이브 16:30 동기화 11-17 · 11-18 누락 발견
 - 챗으로 가져갈 질문: 없음
 

@@ -1,3 +1,10 @@
+## [2026-11-19] 신규 — TricoERP 납기 알림 메일 미발송 원인 정리
+
+새 PC 이전 때 발견한 뷰어 알림 버튼 결함 4건(exe 가 dist 에서 스크립트를 찾음 · googleapiclient · email.mime 누락 · ModuleType `__file__` 없음 · send_email 인자 순서)과 조치, 새 PC exe 빌드 방법, 재발 방지 점검 4가지. 15:44 실제 발송 확인.
+
+영향받은 페이지: [[troubleshoot/TricoERP-납기알림-메일-미발송]], [[index]]
+출처 추가: 없음
+
 ## [2026-11-19] 업데이트 — 새 PC CAD · 3D 프로그램 연결 (CADCraft · SolidCraft · FreeCAD · Blender)
 
 새 PC(desktop-dqdpa0j) 연결 절차 §2-1 신설 — 실행 파일 3개(`setup_mcp_newpc` · `setup_freecad_newpc` · `setup_blender_newpc`) + Blender 커넥터. 원통 D10 × 75 mm 시험 4종 합격. 주의 추가: freecadcmd 경로 따옴표 + `/`(shlex) · FreeCAD 자동 시작 기본 꺼짐 · 같은 초 백업 덮어쓰기 · Blender 온라인 접근 허용 필수.
