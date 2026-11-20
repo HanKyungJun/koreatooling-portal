@@ -61,9 +61,20 @@ def get_or_create_folder(service, name, parent_id=None):
 
 # ── Drive 파일 목록 조회 (name → {id, modifiedTime}) ─────────────────────────
 def get_drive_files(service, folder_id):
+    # 2026-11-20: 목록을 끝까지 읽는다(전에는 첫 페이지 100개만 읽어, 100개 넘는 폴더의 나머지 파일을
+    # 「Drive 에 없음」으로 보고 매번 새로 올림 → 같은 이름 파일이 쌓임). 같은 이름이 여럿이면 가장 최근 것.
     q = f"'{folder_id}' in parents and trashed=false and mimeType != 'application/vnd.google-apps.folder'"
-    res = service.files().list(q=q, fields='files(id, name, modifiedTime)').execute()
-    return {f['name']: f for f in res.get('files', [])}
+    out, token = {}, None
+    while True:
+        res = service.files().list(q=q, pageSize=1000, pageToken=token,
+                                   fields='nextPageToken, files(id, name, modifiedTime)').execute()
+        for f in res.get('files', []):
+            old = out.get(f['name'])
+            if old is None or f['modifiedTime'] > old['modifiedTime']:
+                out[f['name']] = f
+        token = res.get('nextPageToken')
+        if not token:
+            return out
 
 
 # ── 로컬 수정일자 → UTC datetime ──────────────────────────────────────────────

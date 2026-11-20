@@ -1,4 +1,14 @@
-﻿## 2026-11-20 (#13) 핸드오프 — Cowork (erp/ 추적 제외)
+﻿## 2026-11-20 (#14) 핸드오프 — Cowork (16:00 배치 확인 · 일일보고 표기)
+
+- 확인(#7 · #8 미완): 11-20 16:00 정기 실행 정상 — 일일보고 xlsx 16:00 생성 · `[step1-fail]` 없음 · step5 rc=0 · push code=0(08254a7) · calendar · worklog-material · weekly-metrics DRIVE 업데이트. erp/ 추적 제외 커밋(741af59) 뒤에도 generate.py 의 erp import 정상. bat 의 실패 경로(1단계 실패 → 작업 결과 ≠ 0)는 실제 실패가 없어 미검증 · LastTaskResult 는 VM 에서 못 읽음
+- 한 일: `scripts/daily_report.py` 제목 「─」 · 가운데점 → 쉼표, 표 머리 「▲▼」 제거(보고서 규칙 지적 ②, decisions 2026-11-20 (7) 남은 것) — 「(YYYY-MM-DD HH:MM 생성」 형식 유지(export_worklog_material 정규식 확인) · 백업 `.bak_20261120`
+- 미완·블로커: 다음 정기 실행 xlsx 제목 확인 · 16:30 Drive 동기화 `[erp] 소스 백업` 줄 확인
+- 추가(16:40): 16:13 업무일지 v2 · 16:23 주간 정리 v2 모두 SUCCEEDED · Drive `cnc-wiki-erp` 폴더 16:40 까지 없음(동기화 출력이 파일로 안 남아 원인 확인 필요 — 한경준님 수동 실행 출력 대기) · 기존 버그 발견: `get_drive_files` 가 첫 100개만 읽어 매번 중복 업로드(예: 2026-05-18 일일보고 5개 이상) → ✅ 16:5x 수정(끝까지 읽기 · 같은 이름은 최신 것, 가짜 2쪽 목록 시험 통과, `.bak_20261120b`) · 중복 정리는 목록 보여 준 뒤 승인
+- 다음 단계 제안: 월요일 16:00 뒤 xlsx 확인
+- 검토: R4 주 · 코드 — 통과 3(py_compile · 정규식 2경우 · 남은 기호 주석만) · 확인 필요 2(실제 xlsx 생성 · bat 실패 경로) · 통과 뒤 지적 0
+- 챗으로 가져갈 질문: 없음
+
+## 2026-11-20 (#13) 핸드오프 — Cowork (erp/ 추적 제외)
 
 - 한 일: `.gitignore` 에 `erp/` · `sync_to_gdrive.py` 에 erp 소스 Drive 백업(39개) — decisions 2026-11-20 (9)
 - 미완·블로커: 한경준님 `git rm -r --cached erp` 커밋 · 다음 Drive 동기화 `[erp]` 줄 확인

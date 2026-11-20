@@ -235,7 +235,7 @@ def make_report(target: datetime) -> Path:
     n_work    = len(work_days)
     n_prev    = len(summary[(summary['일'] < d) & (summary['합수량'] > 0)])
 
-    title(ws1, 1, f"재연마 일일생산 보고  ─  {date_str}  ({now} 생성 · 속보값)", 9)  # 2026-10-19: 「(17:30 기준)」 → 실제 생성 시각 (decisions 2026-10-19 (2))
+    title(ws1, 1, f"재연마 일일생산 보고  {date_str}  ({now} 생성, 속보값)", 9)  # 2026-10-19: 「(17:30 기준)」 → 실제 생성 시각 (decisions 2026-10-19 (2))
 
     ws1.merge_cells('A2:I2')
     ws1['A2'] = (f"생성: {now}   |   전일: {prev_str}   |"
@@ -245,8 +245,8 @@ def make_report(target: datetime) -> Path:
     ws1.row_dimensions[2].height = 15
 
     # ── 헤더 행
-    hdrs3 = ['항목', '오늘', '전일', '전일대비\n(▲▼수량)', '전일대비\n(%)',
-             '월평균', '월평균대비\n(▲▼수량)', '월평균대비\n(%)', '비고']
+    hdrs3 = ['항목', '오늘', '전일', '전일대비\n(수량)', '전일대비\n(%)',
+             '월평균', '월평균대비\n(수량)', '월평균대비\n(%)', '비고']  # 2026-11-20: 「▲▼」 제거 — 값은 DNUM 서식으로 + / − 표시
     for ci, h in enumerate(hdrs3, 1):
         hdr(ws1.cell(3, ci, value=h))
     ws1.row_dimensions[3].height = 28
@@ -315,7 +315,7 @@ def make_report(target: datetime) -> Path:
 
     # ── 시트 2: 작업 상세 ──────────────────────────────────
     ws2 = wb.create_sheet("작업 상세")
-    title(ws2, 1, f"작업 상세  ─  {date_str}", 11)
+    title(ws2, 1, f"작업 상세  {date_str}", 11)
 
     DHDR = ['순서', '형상', '날수(F)', '날경(Ø)', '상크경(Ø)',
             '코팅', '특이사항', '완료', '수량(개)', '시간합계(초)', '시간(H:M:S)']
@@ -522,7 +522,7 @@ def make_report_erp(target: datetime, backfill: bool = False) -> Path:
     n_prev = len(work)
 
     kind = '보충본' if backfill else '속보값'   # 2026-11-12: 보충 생성은 4시 속보가 아님
-    title(ws1, 1, f"재연마 일일생산 보고  ─  {date_str}  ({now} 생성 · {kind} · ERP 작업실적 기준)", 9)
+    title(ws1, 1, f"재연마 일일생산 보고  {date_str}  ({now} 생성, {kind}, ERP 작업실적 기준)", 9)  # 2026-11-20: 「─」 · 가운데점 제거(양식 C §1 · 공통 규칙 §8). 「(YYYY-MM-DD HH:MM 생성」 형식은 export_worklog_material.py 가 읽으므로 유지
     # 요약 3줄 — 스위치 SUMMARY3(위). 꺼져 있으면 off = 0 이라 아래 행 번호가 예전과 같다
     import os
     on3 = os.environ.get('DAILY_SUMMARY3', '1' if SUMMARY3 else '0') == '1'
@@ -550,8 +550,8 @@ def make_report_erp(target: datetime, backfill: bool = False) -> Path:
     ws1.cell(r2, 1).alignment = Alignment(horizontal='left', vertical='center')
     ws1.row_dimensions[r2].height = 15
 
-    hdrs3 = ['항목', '오늘', '전일', '전일대비\n(▲▼수량)', '전일대비\n(%)',
-             '월평균', '월평균대비\n(▲▼수량)', '월평균대비\n(%)', '비고']
+    hdrs3 = ['항목', '오늘', '전일', '전일대비\n(수량)', '전일대비\n(%)',
+             '월평균', '월평균대비\n(수량)', '월평균대비\n(%)', '비고']  # 2026-11-20: 「▲▼」 제거 — 값은 DNUM 서식으로 + / − 표시
     for ci, h in enumerate(hdrs3, 1):
         hdr(ws1.cell(3 + off, ci, value=h))
     ws1.row_dimensions[3 + off].height = 28
@@ -635,7 +635,7 @@ def make_report_erp(target: datetime, backfill: bool = False) -> Path:
     ws2 = wb.create_sheet("작업 상세")
     DHDR = ['순서', '작업지시', '형상', '날수(F)', '날경(Ø)', '소재', '코팅', '각도/R',
             '양품', '불량', '표준(초/개)', '기준', '시간합계(초)', '시간(H:M:S)', '관리번호']
-    title(ws2, 1, f"작업 상세  ─  {date_str}  (ERP 작업실적 · 공정 NC)", len(DHDR))
+    title(ws2, 1, f"작업 상세  {date_str}  (ERP 작업실적, 공정 NC)", len(DHDR))
     r0 = 2
     ws2.merge_cells(f'A{r0}:{get_column_letter(len(DHDR))}{r0}')
     c = ws2.cell(r0, 1, value='■ NC (FAST GRIND · GX7)')
