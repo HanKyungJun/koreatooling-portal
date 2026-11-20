@@ -1,3 +1,10 @@
+## [2026-11-20] 업데이트 — AI 티 점검기에 im-not-ai 어휘 사전(참고) 추가
+
+im-not-ai 검토 → 스킬 설치 보류, 어휘 사전 1.3(115항목)만 `doc_style_check.py` [참고] 출력으로. 기계 용어 오탐 4항목 제외 · 스타일 없는 문단 오류(16개 파일) 수정. 위키 docx · pptx 60개 시험: AI 티 4건 표시, 기존 판정 변화 없음
+
+영향받은 페이지: [[standards/문서작성-AI티-점검표]]
+출처 추가: 없음 ([IND-IMNOTAI2026] 보강)
+
 ## [2026-11-19] 신규 — TricoERP 납기 알림 메일 미발송 원인 정리
 
 새 PC 이전 때 발견한 뷰어 알림 버튼 결함 4건(exe 가 dist 에서 스크립트를 찾음 · googleapiclient · email.mime 누락 · ModuleType `__file__` 없음 · send_email 인자 순서)과 조치, 새 PC exe 빌드 방법, 재발 방지 점검 4가지. 15:44 실제 발송 확인.

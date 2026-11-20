@@ -2,6 +2,8 @@
 """문서 문체 점검기 — 발표자료(pptx) · 보고서(docx) · 위키(md)에서 「AI 티」 패턴을 센다.
 
 기준: wiki/standards/문서작성-AI티-점검표.md (2026-10-22)
+어휘 점검(2026-11-20): scripts/doc_style_lexicon.json — im-not-ai 어휘 사전 1.3(MIT, 출처 · 라이선스는
+    doc_style_lexicon.LICENSE.txt). [참고]로만 표시하고 「기준 넘은 항목」 수에는 넣지 않는다.
 쓰는 법:
     python scripts/doc_style_check.py 파일.pptx [파일.docx ...]
     python scripts/doc_style_check.py --strict 파일.pptx   # 기준 넘으면 종료 코드 1
@@ -43,7 +45,8 @@ def load(path):
         for j, p in enumerate(d.paragraphs, 1):
             t = p.text.strip()
             if not t: continue
-            kind = "title" if p.style.name.lower().startswith(("heading", "title", "제목")) else "text"
+            sty = p.style.name if p.style is not None else ""  # 스타일 없는 문단(16개 파일에서 오류, 2026-11-20 고침)
+            kind = "title" if sty.lower().startswith(("heading", "title", "제목")) else "text"
             out.append((f"문단 {j}", kind, t))
         for ti, tb in enumerate(d.tables, 1):
             for r in tb.rows:
@@ -90,6 +93,47 @@ LIMIT = {  # 기준값 — 점검표 §4
     "제목 쉼표 두 마디": 2,
     "괄호 줄 비율 %": 25,
 }
+
+
+# ---------- 2-A. 어휘 점검 (im-not-ai 어휘 사전, 참고만) ----------
+LEX_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "doc_style_lexicon.json")
+LEX_GENRE = "보고서"   # 사내 문서는 모두 보고서 장르로 본다
+LEX_WINDOW = 12        # 제외어 창: 매치 앞뒤 12자 — 원본 lexical_layer.py 와 같은 규약
+# 사내 기계 용어 제외(2026-11-20 실측): 위키 docx · pptx 60개에서 걸린 8종 중 4종이 실제 물건을 가리킨
+# 말(휠 모서리 · 접안렌즈 · 휠이 파고듦 · 공구가 못 들어가는 틈)이었다. 그 4개 항목만 주변에 기계 용어가 있으면 뺀다.
+LEX_SHOP_IDS = {"L-13", "L-17", "L-06", "L-63"}   # 모서리 · 렌즈 · 틈 · 파고들다
+LEX_SHOP_EX = re.compile(r"휠|공구|날|접안|대물|연삭|가공|절삭|엔드밀|드릴|마모|도면|CAM|척|생크|넥")
+LEX_QUOTE = re.compile(r'"[^"\n]{1,200}"|“[^”\n]{1,200}”|‘[^’\n]{1,200}’|「[^」\n]{1,200}」|『[^』\n]{1,200}』')
+
+def load_lexicon():
+    """사전이 없거나 깨졌으면 None — 점검기 본체는 그대로 돈다."""
+    try:
+        import json
+        ents = json.load(open(LEX_PATH, encoding="utf-8"))["entries"]
+    except Exception as e:
+        print(f"  [참고] 어휘 사전을 읽지 못함 — 어휘 점검 생략 ({type(e).__name__})")
+        return None
+    out = []
+    for e in ents:
+        if LEX_GENRE in e.get("skip_genres", []): continue
+        rx = e.get("regex_detect") or e["regex"]
+        ex = e.get("regex_detect_exclude") if e.get("regex_detect") else e.get("regex_exclude")
+        out.append((e, re.compile(rx), re.compile(ex) if ex else None))
+    return out
+
+def lexicon_hits(lines, lex):
+    """(표제어, 등급, 위치, 걸린 말, 글) 목록. 직접 인용(따옴표 · 낫표) 안은 세지 않는다."""
+    hits = []
+    for loc, kind, t in lines:
+        spans = [(m.start(), m.end()) for m in LEX_QUOTE.finditer(t)]
+        for e, rx, ex in lex:
+            for m in rx.finditer(t):
+                if m.end() == m.start(): continue
+                if any(a <= m.start() < b for a, b in spans): continue
+                if ex and ex.search(t[max(0, m.start() - LEX_WINDOW): m.end() + LEX_WINDOW]): continue
+                if e["id"] in LEX_SHOP_IDS and LEX_SHOP_EX.search(t[max(0, m.start() - LEX_WINDOW): m.end() + LEX_WINDOW]): continue
+                hits.append((e["headword"], "우선" if e["tier"] == "change" else "조건부", loc, m.group(0), t))
+    return hits
 
 def check(items, include_notes=False):
     found = {k: [] for k in LIMIT}
@@ -142,6 +186,15 @@ def report(path, strict=False, include_notes=False):
             for loc, t in found[k][:5]:
                 print(f"        - {loc}: {t[:90]}")
             if len(found[k]) > 5: print(f"        … 외 {len(found[k]) - 5}건")
+    lex = load_lexicon()
+    if lex is not None:
+        lines = [(loc, kind, t) for loc, kind, t in items if include_notes or kind != "note"]
+        hits = lexicon_hits(lines, lex)
+        n_pri = sum(1 for h in hits if h[1] == "우선")
+        print(f"  [참고] 어휘 점검(im-not-ai 사전 {len(lex)}항목): {len(hits)}건(우선 {n_pri}) — 기준 없음, 문맥 보고 판단")
+        for hw, tier, loc, w, t in sorted(hits, key=lambda h: h[1] != "우선")[:8]:
+            print(f"        - [{tier}] {hw} ← 「{w}」 {loc}: {t[:70]}")
+        if len(hits) > 8: print(f"        … 외 {len(hits) - 8}건")
     print(f"  → 기준 넘은 항목 {over}개")
     return over
 
