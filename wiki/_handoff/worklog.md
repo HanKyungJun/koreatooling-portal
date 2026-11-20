@@ -1,4 +1,31 @@
-﻿## 2026-11-20 (#3) 핸드오프 — Cowork (레이아웃 이름 · im-not-ai 검토)
+﻿## 2026-11-20 (#6) 핸드오프 — Cowork (python-review 검토 · 추가)
+
+- 한 일: 챗 python-review 1차안 검토(사실 4건 1차 자료 확인 · 실제 코드 80개 grep) → 수정 3건 추천 · 승인 → 챗 zip 을 PC 에서 못 읽어 ECC 원본(MIT)과 승인 내용으로 다시 만듦 · `scripts/daily_report.py` 1개 전체 적용으로 보정 3건
+- 결과/산출물: `skills-custom/python-review/SKILL.초안_20261120.md`(4cde0592) · `LICENSE-ECC.txt` · `review-role/SKILL.개정안_20261120.md`(d0719964, 정상본 그대로) · 테스트카드 #8 · decisions 2026-11-20 (3) — `.bak_20261120c`(decisions) · `.bak_20261120d`(worklog) · 테스트카드 `.bak_20261120`
+- 미완·블로커: 저장 카드 2장(python-review 신규 · review-role 개정) 한경준님 저장 대기 · 테스트카드 #8 새 대화 시험 3가지 미실행 · `daily_and_upload.bat` 1단계 종료 코드 미전달(W7 중) 고침은 승인 대상
+- 다음 단계 제안: 저장 → 새 대화 「generate.py 검수해 줘」 등 #8 시험 → 통과 시 정상본 교체(README §3)
+- 검토: R4 주 · G — 통과 7 · 확인 필요 1(챗 원본과 대조 못 함) · 통과 뒤 지적 0
+- 챗으로 가져갈 질문: 없음
+
+## 2026-11-20 (#5) 핸드오프 — Cowork (im-not-ai 검토 · 어휘 사전 반영)
+
+- 한 일: im-not-ai 저장소 검토(R4 주 · R5) → 「설치 보류 + 어휘 사전만 점검기에 참고로」 승인 → 반영 · 기록
+- 결과/산출물: `scripts/doc_style_check.py`(`.bak_20261120`) · 신규 `scripts/doc_style_lexicon.json` · `.LICENSE.txt` · 점검표 §4-A · decisions 2026-11-20 (4) · sources [IND-IMNOTAI2026] 보강 — 위키 파일 `.bak_20261120d`
+- 미완·블로커: 없음
+- 다음 단계 제안: 다음 보고서 작성 때 [참고] 어휘 출력이 쓸모 있는지 보고, 오탐이 나오면 `LEX_SHOP_IDS` 에 추가
+- 검토: R4 주 · R5 — 통과 6 · 확인 필요 1 · 통과 뒤 지적 1(앞 답의 #184 설명 오류, 스스로 정정)
+- 챗으로 가져갈 질문: 없음
+
+## 2026-11-20 (#4) 핸드오프 — Cowork (문서 정리)
+
+- 한 일: 핸드오프 분할(`archive_handoff.py --apply`) · 11-06 이전 `.bak` 212개 이동(한경준님 승인)
+- 결과/산출물: decisions.md 138.7 → 39.2 KB(71건 중 15건 유지, 56건 → `decisions-archive/2026-10.md` · `2026-11.md`, 제목 대조 누락 0) · tasks.md 67.9 → 56.1 KB(완료 7건 → `tasks-archive.md`) · 원본 백업 `_to_delete/handoff_backup_20261119/`(VM 이 UTC 라 날짜가 11-19) · `.bak` → `_to_delete/정리_20261120/`(같은 폴더 구조, raw/ 제외, 최근 168개는 그대로)
+- 미완·블로커: `_to_delete` 1.3 GB 비우기(한경준님, `20261112_도면작업` 895 MB 먼저 확인)
+- 다음 단계 제안: 없음
+- 검토: R4 주 — 통과 4 · 확인 필요 0 · 통과 뒤 지적 0
+- 챗으로 가져갈 질문: 없음
+
+## 2026-11-20 (#3) 핸드오프 — Cowork (레이아웃 이름 · im-not-ai 검토)
 
 - 한 일: 게시물 2건 검토 답변 재검토(R5) → 추천안 승인 → 디자인 시스템 반영 · 결정 기록
 - 결과/산출물: COGO TOOL 디자인 시스템 README 「화면 배치」 절 · decisions 2026-11-20 (2) — `.bak_20261120b`(worklog `.bak_20261120c`)
