@@ -122,6 +122,10 @@ def sync_folder(service, local_dir, drive_folder_id, stats, rel_base=''):
             if entry.name.startswith('~$'):
                 stats['skipped'] += 1
                 continue
+            # 2026-11-20: 작업 백업(.bak_YYYYMMDD 등)은 PC 에만 둔다 — Drive 에 올리지 않음
+            if '.bak_' in entry.name or entry.name.endswith('.bak'):
+                stats['skipped'] += 1
+                continue
             existing = drive_files.get(entry.name)
             need_upload = True
 
