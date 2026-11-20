@@ -1,8 +1,20 @@
-﻿## 2026-11-20 (#6) 핸드오프 — Cowork (python-review 검토 · 추가)
+﻿## 2026-11-20 (#7) 핸드오프 — Cowork (검수 지적 수정 A~E)
+
+- 한 일: 승인된 A~E — generate.py 7건 · .gitignore 4줄 · daily_and_upload.bat 1단계 종료 코드 · 옛 등록 스크립트 2개 · price_consolidate 실행 금지 표시 · python-review 4판 카드(P1-a 심각도 · 「두 번 검수 결과 합치기」)
+- 결과/산출물: decisions 2026-11-20 (5) · py_compile 통과 · ruff F 0건(전 9 → 8, 남은 것 B905 · PLW 스타일) · 테스트 저장소 4경우 + 알림 SystemExit + 비밀번호 따옴표 확인 · python-review 초안 4판(ab2c3df0) — 백업 `.bak_20261120`(코드) · decisions `.bak_20261120f` · worklog `.bak_20261120f`
+- 미완·블로커: bat 은 Linux VM 에서 못 돌림 → 다음 16:00 run.log · 작업 결과로 확인 · 작업 XML 내보내기(한경준님 PowerShell) · 테스트카드 #8 ③ 새 대화 재시험
+- 다음 단계 제안: XML 받으면 등록 스크립트 대신 XML 기준으로 문서화 · `wiki/troubleshoot/TricoERP-납기알림-메일-미발송.md` 61행의 setup_scheduler.ps1 안내 고치기
+- 검토: R4 주 · 코드 · Py — 통과 9 · 확인 필요 2(bat 실제 동작 · Windows 3.14) · 통과 뒤 지적 0
+- 챗으로 가져갈 질문: 없음
+
+## 2026-11-20 (#6) 핸드오프 — Cowork (python-review 검토 · 추가)
 
 - 한 일: 챗 python-review 1차안 검토(사실 4건 1차 자료 확인 · 실제 코드 80개 grep) → 수정 3건 추천 · 승인 → 챗 zip 을 PC 에서 못 읽어 ECC 원본(MIT)과 승인 내용으로 다시 만듦 · `scripts/daily_report.py` 1개 전체 적용으로 보정 3건
 - 결과/산출물: `skills-custom/python-review/SKILL.초안_20261120.md`(4cde0592) · `LICENSE-ECC.txt` · `review-role/SKILL.개정안_20261120.md`(d0719964, 정상본 그대로) · 테스트카드 #8 · decisions 2026-11-20 (3) — `.bak_20261120c`(decisions) · `.bak_20261120d`(worklog) · 테스트카드 `.bak_20261120`
-- 미완·블로커: 저장 카드 2장(python-review 신규 · review-role 개정) 한경준님 저장 대기 · 테스트카드 #8 새 대화 시험 3가지 미실행 · `daily_and_upload.bat` 1단계 종료 코드 미전달(W7 중) 고침은 승인 대상
+- 추가: python-review 2판(5983ca82) — description 에서 「검수해 줘」를 빼고 「review-role 전용 하위 검토표」로(같은 말로 두 스킬이 경쟁하지 않게, 한경준님 질문) · 테스트카드 #8 ① 기대 결과에 「review-role 이 먼저」 추가
+- 추가 2: 시험 ① 통과(1항목 확인 필요) · 계정 review-role 이 옛판(저장 안 됨)으로 확인돼 두 카드 다시 제시 — python-review 3판(34a5c345, P1-a SystemExit) · review-role 개정안 2판(74005e46, §3 결론 블록)
+- 추가 3: 카드 2장 저장 확인(세션 스킬 목록) · 테스트카드 #8 판정 — ① 재시험 통과(보정 2: P1-a 심각도 · 같은 파일 두 검수의 상 지적 불일치) · ② 통과 · ③ 부분 통과(같은 대화) · 실물 대조: price_consolidate 폴더 11개 · generate.py 1548/1920행
+- 미완·블로커: ③ 새 대화 재시험 · P1-a 심각도 보정 카드 한경준님 저장 대기 · 테스트카드 #8 새 대화 시험 3가지 미실행 · `daily_and_upload.bat` 1단계 종료 코드 미전달(W7 중) 고침은 승인 대상
 - 다음 단계 제안: 저장 → 새 대화 「generate.py 검수해 줘」 등 #8 시험 → 통과 시 정상본 교체(README §3)
 - 검토: R4 주 · G — 통과 7 · 확인 필요 1(챗 원본과 대조 못 함) · 통과 뒤 지적 0
 - 챗으로 가져갈 질문: 없음

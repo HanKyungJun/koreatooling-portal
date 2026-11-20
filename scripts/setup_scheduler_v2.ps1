@@ -1,4 +1,13 @@
 # ============================================================
+#  !!! OLD VERSION - DO NOT RUN (marked 2026-11-20) !!!
+#  Running this overwrites the live tasks with old settings
+#  (S4U / Highest / AtStartup) -> internal share deploy fails
+#  again (WinError 1312, 2026-09). Live tasks were registered
+#  from exported XML on the new PC (2026-11-19). Rebuild from
+#  task XML exported with Export-ScheduledTask (worklog
+#  2026-11-20), not from this file.
+# ============================================================
+# ============================================================
 #  cnc-wiki  Windows Task Scheduler setup  (rev 2026-08-28)
 #
 #  ASCII ONLY - do not add Korean text to this file.

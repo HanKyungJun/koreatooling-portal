@@ -1,7 +1,7 @@
-import sys, io, os, json, hashlib, subprocess, time
+import sys, io, os, json, subprocess, time
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-import openpyxl, xlrd, requests
+import openpyxl, xlrd   # 2026-11-20: 안 쓰는 requests · hashlib 제거(새 PC 에 없으면 시작부터 멈춤)
 from datetime import datetime, date, timedelta
 
 # 2026-07-07: 16:00 정기 실행만 30분+ 소요되는 병목 조사용 타임스탬프 로깅.
@@ -324,7 +324,7 @@ def build_portal_html(show_staff: bool = None):
   }
   function checkStaffPass() {
     var val = document.getElementById('staff-pass-input').value;
-    if (val === '""" + STAFF_PASS + """') {
+    if (val === """ + json.dumps(STAFF_PASS) + """) {   // 2026-11-20: 따옴표 · 역슬래시가 든 비밀번호도 안전하게
       closeStaffModal();
       document.getElementById('staff-section').style.display = 'block';
       document.querySelector('.staff-toggle').style.display = 'none';
@@ -1174,7 +1174,7 @@ def write_internal_auth_js() -> bool:
 function checkPass() {
   var inp = document.getElementById('pass-input');
   if (!inp) return;
-  if (inp.value === '__STAFF_PASS__') {
+  if (inp.value === __STAFF_PASS__) {
     sessionStorage.setItem('kt_auth', '1');
     document.getElementById('auth-overlay').style.display = 'none';
   } else {
@@ -1184,7 +1184,7 @@ function checkPass() {
     inp.focus();
   }
 }
-""".replace('__STAFF_PASS__', STAFF_PASS)
+""".replace('__STAFF_PASS__', json.dumps(STAFF_PASS))   # 2026-11-20: JS 문자열로 안전하게(따옴표 포함)
     try:
         os.makedirs(INTERNAL_ASSET_DIR, exist_ok=True)
         with open(os.path.join(INTERNAL_ASSET_DIR, 'portal-auth.js'), 'w',
@@ -1335,14 +1335,18 @@ def _notify_internal_deploy(ok: bool, reason: str) -> None:
         was_ok = prev.get('ok', True)
         last_notified = prev.get('notified_on', '')
 
-        try:
-            os.makedirs(os.path.dirname(state_path), exist_ok=True)
-            with open(state_path, 'w', encoding='utf-8') as f:
-                json.dump({'ok': ok, 'reason': reason, 'at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                           'notified_on': (today if (not ok and (was_ok or last_notified != today))
-                                           else last_notified)}, f, ensure_ascii=False)
-        except Exception:
-            pass
+        # 2026-11-20: 예전에는 발송 전에 notified_on=오늘 을 먼저 적어, 발송이 실패해도 그날은 다시 안 보냈다.
+        #   → 상태는 먼저 적되 notified_on 은 그대로 두고, 발송에 성공했을 때만 오늘로 바꾼다.
+        def _save(notified_on):
+            try:
+                os.makedirs(os.path.dirname(state_path), exist_ok=True)
+                with open(state_path, 'w', encoding='utf-8') as f:
+                    json.dump({'ok': ok, 'reason': reason, 'at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                               'notified_on': notified_on}, f, ensure_ascii=False)
+            except Exception:
+                pass
+
+        _save(last_notified)
 
         if ok:
             if not was_ok:
@@ -1352,33 +1356,18 @@ def _notify_internal_deploy(ok: bool, reason: str) -> None:
             _log('  (사내 배포 실패 알림 — 오늘 이미 발송, 생략)')
             return
 
-        to_addr = os.getenv('ALERT_EMAIL_TO', '')
-        if not to_addr:
-            _log('  ⚠️ ALERT_EMAIL_TO 미설정 — 사내 배포 실패 메일을 보내지 않습니다')
-            return
-        try:
-            import base64
-            from email.mime.text import MIMEText
-            sys.path.insert(0, os.path.join(BASE_DIR, 'erp'))
-            from daily_dlv_alert import get_gmail_service
-            svc = get_gmail_service()
-            body = ('사내 공유폴더 현황판 배포가 실패했습니다.\n\n'
-                    f'시각: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n'
-                    f'경로: {INTERNAL_DIR}\n'
-                    f'사유: {reason}\n\n'
-                    '영향: 사내 현황판만 옛 데이터로 남습니다. 일일보고 생성과 공개 배포는 정상입니다.\n'
-                    '확인: wiki/reports/daily/run.log 와 generate.log 의 "사내 배포 단계 종료" 줄\n'
-                    '참고: 2026-09-14 사례는 접속 계정명 오등재였습니다 (decisions.md 2026-09-14).\n')
-            msg = MIMEText(body, _charset='utf-8')
-            msg['to'] = to_addr
-            msg['subject'] = '[현황판] 사내 공유폴더 배포 실패'
-            svc.users().messages().send(
-                userId='me',
-                body={'raw': base64.urlsafe_b64encode(msg.as_bytes()).decode()}).execute()
-            _log(f'  📧 사내 배포 실패 알림 발송: {to_addr}')
-        except Exception as e:
-            _log(f'  ⚠️ 실패 알림 발송 실패(무시): {type(e).__name__}: {str(e)[:120]}')
-    except Exception as e:
+        body = ('사내 공유폴더 현황판 배포가 실패했습니다.\n\n'
+                f'시각: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n'
+                f'경로: {INTERNAL_DIR}\n'
+                f'사유: {reason}\n\n'
+                '영향: 사내 현황판만 옛 데이터로 남습니다. 일일보고 생성과 공개 배포는 정상입니다.\n'
+                '확인: wiki/reports/daily/run.log 와 generate.log 의 "사내 배포 단계 종료" 줄\n'
+                '참고: 2026-09-14 사례는 접속 계정명 오등재였습니다 (decisions.md 2026-09-14).\n')
+        # 2026-11-20: 따로 구현하던 발송을 공용 함수로 — get_gmail_service() 의 sys.exit(1)(토큰 없음)까지
+        #   받아 주므로, 알림 실패가 GitHub 업로드 · 차단성 점검을 건너뛰게 하지 않는다(검수 P1-a).
+        if _send_alert_mail('[현황판] 사내 공유폴더 배포 실패', body):
+            _save(today)
+    except (Exception, SystemExit) as e:
         _log(f'  ⚠️ 알림 처리 중 예외(무시): {type(e).__name__}: {str(e)[:120]}')
 
 
@@ -1644,7 +1633,7 @@ def upload_to_github():
             dt = time.time() - t0
             if label:
                 _log(f'  [git] {label} — TIMEOUT ({dt:.1f}s)')
-            return 1, '', f'[timeout] {" ".join(cmd)}'
+            return 1, '', _mask_secret(f'[timeout] {" ".join(cmd)}')   # 2026-11-20: push 명령줄의 인증 헤더 가림
         dt = time.time() - t0
         if label:
             _log(f'  [git] {label}: {dt:.1f}s (code={result.returncode})')
@@ -1711,6 +1700,23 @@ def upload_to_github():
         _UPLOAD_FAIL_REASON = f'git add 실패 {len(_add_fail)}건 — {(_add_fail[0] or "")[:200]}'
         return None
 
+    # 2026-11-20: 사람이 PowerShell 에서 add 만 해 두고 커밋 안 한 파일이 자동 커밋에 섞여 공개 저장소로
+    #   올라가지 않게, 이 프로그램이 담는 파일(루트 html · css · js · dist/ · 일일보고 xlsx · overview.md)
+    #   밖의 것이 스테이징돼 있으면 커밋하지 않고 실패로 남긴다(사람이 정리한 뒤 다음 실행에서 올라감).
+    def _ours(pth):
+        if pth.startswith('dist/') or pth == 'wiki/overview.md':
+            return True
+        if pth.startswith('wiki/reports/daily/') and pth.count('/') == 3 and pth.endswith('.xlsx'):
+            return True
+        return '/' not in pth and os.path.splitext(pth)[1] in ('.html', '.css', '.js')
+    _c, _o, _e = run([git, 'diff', '--cached', '--name-only', '-z'], label='staged check')
+    _foreign = [x for x in (_o or '').split('\0') if x and not _ours(x)] if _c == 0 else []
+    if _foreign:
+        _log(f'  ❌ 스테이징에 이 프로그램 밖 파일 {len(_foreign)}개 — 커밋 안 함: {", ".join(_foreign[:5])}')
+        _log('  → PowerShell 에서 그 파일을 커밋하거나 git restore --staged 로 내린 뒤 다시 실행하세요.')
+        _UPLOAD_FAIL_REASON = f'스테이징에 다른 파일 {len(_foreign)}개 섞임: {", ".join(_foreign[:3])}'
+        return None
+
     # 커밋 (변경 없으면 스킵)
     msg = f'update: {datetime.now().strftime("%Y-%m-%d %H:%M")}'
     code, out, err = run([git, 'commit', '-m', msg], label='commit')
@@ -1721,20 +1727,33 @@ def upload_to_github():
     _noop = ('nothing to commit', 'no changes added to commit',
              'nothing added to commit', '커밋할 사항 없음', '커밋할 변경 사항')
     if code != 0 and any(k in (out + err) for k in _noop):
-        _log('  변경 없음 — 업로드 생략')
-        return f'https://{GITHUB_USER}.github.io/{GITHUB_REPO}/'
+        # 2026-11-20: 앞 실행의 push 가 실패해 로컬 커밋이 남아 있으면 「변경 없음」이어도 push 해야 한다.
+        #   예전에는 여기서 바로 성공을 돌려줘, 다음 변경이 생길 때까지 공개 사이트가 안 바뀌는데도 정상으로 보였다.
+        _c2, _o2, _e2 = run([git, 'rev-list', '--count', 'origin/main..HEAD'], label='unpushed check')
+        try:
+            _ahead = int((_o2 or '0').strip()) if _c2 == 0 else -1
+        except ValueError:
+            _ahead = -1
+        if _ahead == 0:
+            _log('  변경 없음 — 업로드 생략')
+            return f'https://{GITHUB_USER}.github.io/{GITHUB_REPO}/'
+        if _ahead < 0:
+            _log(f'  ⚠️ 변경 없음 · 안 올라간 커밋 수 확인 실패(code={_c2}) — push 를 시도합니다')
+        else:
+            _log(f'  변경 없음 · 안 올라간 커밋 {_ahead}개 — push 진행')
     # '변경 없음'이 아닌 커밋 실패(예: index.lock → code=128)를 그대로 흘려보내면
     #   뒤이은 push가 code=0을 반환해 성공으로 오인된다. 여기서 끊는다.
-    if code != 0:
+    elif code != 0:
         _log(f'  ❌ 커밋 실패 (code={code}): {(err or out)[:300]}')
         _UPLOAD_FAIL_REASON = f'커밋 실패 (code={code}): {(err or out)[:200]}'
         return None
 
-    # 푸시 (파이썬 레벨 timeout 없음 — daily_report.py의 1800s가 상위 안전장치)
+    # 푸시 — 2026-11-20: timeout 600 s. 예전 주석 「daily_report.py 의 1800s 가 상위 안전장치」는
+    #   bat 5단계 · 갱신 버튼처럼 generate.py 를 직접 부를 때는 해당이 없었다(검수 지적).
     # 2026-10-30: credential.helper= → 자격 증명 관리자 끔(예약 실행에서 멈춤 방지) · extraheader = 이 명령에서만 인증
     code, out, err = run([git, '-c', 'credential.helper=',
                           '-c', f'http.https://github.com/.extraheader=AUTHORIZATION: basic {_GH_AUTH_B64}',
-                          'push', 'origin', 'main'], timeout=None, label='push')
+                          'push', 'origin', 'main'], timeout=600, label='push')
     if code != 0:
         _log(f'  ❌ 푸시 실패: {err}')
         _UPLOAD_FAIL_REASON = f'push 실패 (code={code}): {(err or "")[:200]}'

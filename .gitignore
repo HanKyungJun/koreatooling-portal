@@ -203,6 +203,12 @@ scripts/anca-monitor/*.bak_*
 #   ② 현장기록 엔드포인트·토큰도 사내 전용이다(2026-09-08).
 /field-record-config.js
 /dist/field-record-config.js
+#   ③ 2026-11-20 검수(generate.py): 사내 전용 산출물이 루트 · dist/ 에 생겨도 공개 push 에 안 담기게.
+#      submissions-data.js = 현장기록 제출 내역(회사명 · 연락처), order-status.html = 주문 진행 현황.
+/submissions-data.js
+/dist/submissions-data.js
+/order-status.html
+/dist/order-status.html
 #   ② 옛 포털 UI 백업 — 인라인 게이트에 비밀번호가 남아 있었다.
 /wiki/_backup/portal-ui-20260615/
 #   ③ 대외비 수치(설비 투자 금액·원가·거래처 실명 물량)가 든 문서.

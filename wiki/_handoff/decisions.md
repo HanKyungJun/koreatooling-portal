@@ -3,6 +3,13 @@
 > 무엇을(What), 왜(Why), 출처(Where)를 **시간 역순(최신이 맨 위)** 으로 기록합니다.
 > 챗에서 결정된 내용도 반드시 여기로 옮겨야 Code/Cowork가 따라옵니다.
 
+## 2026-11-20 (5): 일일 배치 「실패인데 성공으로 보임」 구멍 막기 — generate.py · daily_and_upload.bat 수정, 옛 등록 스크립트 · 일회용 스크립트에 실행 금지 표시
+
+- 결정: ① generate.py — 「변경 없음」이어도 안 올라간 커밋이 있으면 push · 사내 배포 실패 알림을 공용 `_send_alert_mail` 로(토큰 없을 때 `sys.exit` 가 업로드를 막지 않게) · 「보냄」 기록은 발송 성공 뒤에만 · push 시간 제한 600 s(타임아웃 메시지의 인증 헤더 가림 포함) · 스테이징에 이 프로그램 밖 파일이 있으면 커밋하지 않고 실패 · 직원 비밀번호 `json.dumps` · 안 쓰는 import 제거 ② `.gitignore` 에 `submissions-data.js` · `order-status.html` 루트 · dist/ 4줄(공개 저장소 제외) ③ `daily_and_upload.bat` — 1단계(일일보고) 종료 코드를 받아 5단계가 정상일 때 작업 결과로 넘김 ④ `setup_scheduler.ps1` · `_v2.ps1` 맨 위 「OLD VERSION - DO NOT RUN」, `price_consolidate.py` 맨 위 「일회용 · 다시 실행 금지」
+- 근거: generate.py 검수 2회(1차 · 재시험)를 합친 지적 · 테스트 git 저장소 4가지 경우 실행 확인(변경 없음 ahead 0 → 생략 / ahead 1 → push 후 0 / 다른 파일 스테이징 → 실패 / 정상 변경 → push) · 알림 함수에 `sys.exit(1)` 스텁 → SystemExit 안 새고 notified_on 그대로 · 최근 자동 커밋 18개 경로 모두 허용 목록 안(오차단 0) · run.log 에서 1단계 실패는 ERP 전환(10-23) 뒤 0건(새 실패 알림이 잦아질 근거 없음) · 등록 스크립트를 다시 돌리면 9월 설정이 되돌아감(검수 ③). 검토한 대안: 등록 스크립트를 지금 설정으로 고쳐 쓰기 — 실제 설정 XML 을 먼저 받아야 해 보류
+- 출처: Cowork (한경준님 「ㅇㅋ 승인」 11-20)
+- 영향: `generate.py` · `.gitignore` · `scripts/daily_and_upload.bat` · `scripts/setup_scheduler.ps1` · `scripts/setup_scheduler_v2.ps1` · `scripts/price_consolidate.py` — 모두 `.bak_20261120`. 예약 작업 CNC_Daily_Report 결과가 1단계 실패 때도 0 이 아니게 됨(scheduler-diagnose · daily-report-check 판단에 반영). bat 동작은 다음 16:00 실행으로 확인 필요
+
 ## 2026-11-20 (4): AI 티 점검기에 im-not-ai 어휘 사전을 「참고」 항목으로 추가 — 스킬 설치는 계속 보류
 
 - 결정: ① im-not-ai(humanize-korean) 스킬은 설치하지 않는다((2)② 유지) ② 어휘 사전 1.3(115항목, MIT)만 `scripts/doc_style_lexicon.json` 으로 복사해 `doc_style_check.py` 에 [참고] 출력으로 붙인다 — 기준값 없음, 「기준 넘은 항목」 수에 넣지 않음 ③ 기계 용어 오탐 4항목(모서리 · 렌즈 · 틈 · 파고들다)은 주변에 휠 · 공구 · 연삭 등이 있으면 뺀다 ④ 점검기가 스타일 없는 문단에서 멈추던 오류도 고친다

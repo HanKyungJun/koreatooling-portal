@@ -19,7 +19,11 @@ REM  ASCII only - do not add Korean text to this file.
 REM ============================================================
 
 REM 1) daily report xlsx
+REM 2026-11-20: keep step 1 exit code. Before this, a failed daily report was
+REM only visible in run.log - the task result showed step 5 (generate.py) only.
 python scripts\daily_report.py >> wiki\reports\daily\run.log 2>&1
+set "RC1=%ERRORLEVEL%"
+if not "%RC1%"=="0" echo [step1-fail] %DATE% %TIME% rc=%RC1% >> wiki\reports\daily\run.log
 
 REM 1b) 2026-11-10: previous-month shipment snapshot for monthly check (6).
 REM     Runs only on day 1-5 (KST), exits at once otherwise. Never fails the batch.
@@ -60,4 +64,7 @@ echo [step5-end] %DATE% %TIME% rc=%RC5% >> wiki\reports\daily\run.log
 REM 6) 2026-11-19: Fridays only - weekly cleanup metrics (dry-run / read-only) uploaded to
 REM    Google Drive for the Claude task "weekly cleanup". Runs after the push on purpose.
 python scripts\export_weekly_metrics.py >> wiki\reports\daily\run.log 2>&1
-exit /b %RC5%
+REM 2026-11-20: task result = step 5 code, or step 1 code when step 5 was OK.
+set "RCF=%RC5%"
+if "%RCF%"=="0" if not "%RC1%"=="0" set "RCF=%RC1%"
+exit /b %RCF%
