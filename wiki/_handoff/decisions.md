@@ -3,6 +3,13 @@
 > 무엇을(What), 왜(Why), 출처(Where)를 **시간 역순(최신이 맨 위)** 으로 기록합니다.
 > 챗에서 결정된 내용도 반드시 여기로 옮겨야 Code/Cowork가 따라옵니다.
 
+## 2026-11-20 (9): `erp/` 폴더 전체를 공개 저장소에서 추적 제외 — 소스 백업은 Drive 로
+
+- 결정: ① `.gitignore` 에 `erp/` 추가 · `git rm -r --cached erp`(파일은 PC 에 그대로, 저장소에서만 빠짐 — 추적 33개) ② git 이력 · 원격 백업이 없어지는 대신 `scripts/sync_to_gdrive.py` 가 매일 Drive 동기화 때 erp 소스 39개(.py · .bat · .spec · requirements · 사용설명서)를 Drive `cnc-wiki-erp` 에 올림 — build/ · dist/ exe · snapshot/ · 조회 결과 txt 는 안 올림 · 실패해도 wiki 동기화에는 영향 없음 ③ 지난 이력에 남은 erp 파일은 그대로 둠(2026-11-20 (6) 과 같은 이유)
+- 근거: 공개 저장소에 ERP 호출 형식(조회 · 저장 메서드 · 화면 코드 구조)이 들어 있을 이유가 없음 — 포털 페이지 · 자동 커밋 · GitHub Actions 어디도 erp 파일을 쓰지 않음(실측: html · js 참조 0 · workflows 없음, generate.py 는 PC 의 erp 모듈을 직접 import) · Drive 동기화는 원래 `wiki/` 만 올려 추적 제외 뒤 erp 소스가 PC 밖 백업 0 이 되는 것을 막음 · 대안: 별도 비공개 GitHub 저장소 — 계정 작업이 필요해 보류
+- 출처: Cowork 추천 → 한경준님 「진행해」 11-20
+- 영향: `.gitignore` · `scripts/sync_to_gdrive.py` (`.bak_20261120` / `.bak_20261120i`) · 저장소에서 erp/ 33개 삭제 커밋(PC 파일 유지). Drive 백업은 다음 Drive 동기화(16:30 무렵) 출력의 `[erp] 소스 백업` 줄로 확인 필요 · `anonymize_public.py --check` · 차단어 검사 대상에서 erp/ 가 빠짐
+
 ## 2026-11-20 (8): 보고서에 AI 사용을 표기하지 않음 — 사내 보고서 · 대외 기술자료 모두
 
 - 결정: ① 사내 보고서의 「자료 정리 · 계산: Claude Cowork 보조」 한 줄 폐지 ② 대외 기술자료도 표기하지 않음(회사 명의 + 담당자) ③ 내용은 작성자 · 검토자가 확인하고 책임진다 ④ 수치 출처는 표 「구분」 열과 부록의 사내 기록 위치로 추적(대외본은 사내 사본에 남김)

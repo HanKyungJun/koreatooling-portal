@@ -128,6 +128,51 @@ def sync_folder(service, local_dir, drive_folder_id, stats, rel_base=''):
                 stats['skipped'] += 1
 
 
+# ── erp/ 소스 백업 (2026-11-20 추가 — decisions 2026-11-20 (9)) ─────────────────
+# erp/ 를 공개 저장소에서 추적 제외해 git 이력 · 원격 백업이 없어지므로, 소스만 Drive 에 올린다.
+# build/ · dist/ · snapshot/ 등 산출물 · 조회 결과는 올리지 않는다(사용설명서만 예외).
+ERP_LOCAL = 'erp'
+ERP_DRIVE = 'cnc-wiki-erp'
+ERP_EXT = {'.py', '.bat', '.spec', '.md', '.ps1'}  # .txt 는 조회 결과가 많아 빼고 requirements 만(아래)
+ERP_EXTRA = [os.path.join('dist', '사용설명서.txt')]
+
+
+def erp_source_files(base=ERP_LOCAL):
+    """올릴 erp 소스 파일 목록(상대 경로). erp/ 바로 아래 소스 + ERP_EXTRA."""
+    out = []
+    if not os.path.isdir(base):
+        return out
+    for entry in sorted(os.scandir(base), key=lambda e: e.name):
+        if entry.is_file() and (os.path.splitext(entry.name)[1].lower() in ERP_EXT
+                                or entry.name.endswith('requirements.txt')) \
+                and not entry.name.startswith('~$') and '.bak_' not in entry.name:
+            out.append(entry.name)
+    for rel in ERP_EXTRA:
+        if os.path.isfile(os.path.join(base, rel)):
+            out.append(rel)
+    return out
+
+
+def sync_erp_sources(service, stats):
+    root_id = get_or_create_folder(service, ERP_DRIVE)
+    folder_ids = {'': root_id}
+    for rel in erp_source_files():
+        sub = os.path.dirname(rel)
+        if sub not in folder_ids:
+            folder_ids[sub] = get_or_create_folder(service, sub, root_id)
+        fid = folder_ids[sub]
+        name = os.path.basename(rel)
+        existing = get_drive_files(service, fid).get(name)
+        path = os.path.join(ERP_LOCAL, rel)
+        if existing and local_mtime(path) <= drive_mtime(existing['modifiedTime']):
+            stats['skipped'] += 1
+            continue
+        action = upload_file(service, path, name, fid, existing)
+        print(f"  [{action}] {ERP_LOCAL}/{rel}")
+        stats['uploaded'] += 1
+    return root_id
+
+
 # ── 메인 ─────────────────────────────────────────────────────────────────────
 if __name__ == '__main__':
     print("=== Google Drive 동기화 ===")
@@ -145,6 +190,13 @@ if __name__ == '__main__':
     stats = {'uploaded': 0, 'skipped': 0}
     sync_folder(service, LOCAL_ROOT, root_id, stats)
 
+    # erp/ 소스 백업 — 실패해도 wiki 동기화 결과에는 영향 없음
+    try:
+        erp_stats = {'uploaded': 0, 'skipped': 0}
+        sync_erp_sources(service, erp_stats)
+        print(f"  [erp] 소스 백업 — 업로드 {erp_stats['uploaded']}개 / 건너뜀 {erp_stats['skipped']}개 (Drive {ERP_DRIVE})")
+    except Exception as e:
+        print(f"  [erp] 소스 백업 실패: {type(e).__name__}: {e}")
     print()
     print(f"  ✅ 동기화 완료 — 업로드 {stats['uploaded']}개 / 건너뜀 {stats['skipped']}개")
     print(f"  Google Drive: https://drive.google.com/drive/folders/{root_id}")

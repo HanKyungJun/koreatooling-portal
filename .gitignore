@@ -237,3 +237,6 @@ erp/check_so.py
 erp/probe_dlv_mismatch.py
 # private_local/ 추적 제외 (2026-11-18) — 매출 현황판(금액 · 대외비). wiki/ 밖에 둔 이유: 16:30 Drive 동기화가 wiki/ 를 _private 까지 올림
 private_local/
+
+# erp/ 전체 — 공개 저장소에서 추적 제외(2026-11-20, decisions 2026-11-20 (9)). 소스 백업은 scripts/sync_to_gdrive.py → Drive cnc-wiki-erp
+erp/
