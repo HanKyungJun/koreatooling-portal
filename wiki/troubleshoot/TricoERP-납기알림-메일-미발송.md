@@ -58,8 +58,8 @@ updated: 2026-11-20
 
 - 「지금 단가 0 알림 실행」 — 같은 방식으로 고쳤고 모의 시험은 통과했지만 **실물 발송은 아직 안 해 봄** (확인 필요)
 - 납기 메일 **제목 건수(37)** 는 수주 + 생산실적 + 출하의 D-3 합계, **본문 표(6줄)** 는 수주만 — 기준이 달라 헷갈릴 수 있음. 맞출지 미정
-- 일일보고 예약(`CNC_Daily_Report` 등)은 새 PC 에 Ready 로 등록돼 있음. `scripts/setup_scheduler.ps1` 의 경로를 사용자명과 상관없게 바꿈(`$BaseDir = Split-Path -Parent $PSScriptRoot`) — 새 PC 에는 `C:\Users\TOOLKOREA` → `C:\Users\HAN` 정션도 있음(decisions 2026-11-19 (1))
-  - ⚠️ 2026-11-20 추가: `setup_scheduler.ps1` · `setup_scheduler_v2.ps1` 은 **옛판 — 다시 실행하면 안 됨**(맨 위 「OLD VERSION - DO NOT RUN」). 9월에 바꾼 설정(Interactive · 제한 권한 · 로그온 + 3분 지연)을 옛 설정(S4U · 최고 권한)으로 덮어써 사내 공유폴더 배포가 다시 실패한다. 지금 등록된 작업 7개의 기준은 `outputs/03_자동화_백업/작업XML_20261120/` 의 XML(Export-ScheduledTask) — 다시 만들 때는 「작업 가져오기」로 이 XML 을 쓴다(decisions 2026-11-20 (5))
+- 일일보고 예약(`CNC_Daily_Report` 등 7개)은 새 PC 에 Ready 로 등록돼 있음. **등록 기준은 내보낸 작업 XML** (`outputs/03_자동화_백업/작업XML_20261120/`, git 제외 — 이 PC 에만 있음). 다시 만들 때는 작업 스케줄러 「작업 가져오기」로 이 XML 을 쓴다(decisions 2026-11-20 (5)). 새 PC 에는 `C:\Users\TOOLKOREA` → `C:\Users\HAN` 정션도 있음(decisions 2026-11-19 (1))
+  - ⚠️ `scripts/setup_scheduler.ps1` · `setup_scheduler_v2.ps1` 은 **옛판 — 쓰지 않는다**. 9월에 바꾼 설정(Interactive · 제한 권한 · 로그온 + 3분 지연)을 옛 설정(S4U · 최고 권한)으로 덮어써 사내 공유폴더 배포가 다시 실패한다. 2026-11-20 부터 두 파일 맨 위(12행)에 `throw` 를 넣어 **실행하면 바로 멈춘다** — 주석만으로는 실행을 막지 못함. (이력: 2026-11-19 `setup_scheduler.ps1` 의 `$BaseDir` 를 사용자명과 상관없게 고쳤으나, 위 이유로 이 스크립트는 더 이상 등록 경로가 아님)
 
 ## 6. 바뀐 파일 (원본은 모두 `.bak_20261119`)
 

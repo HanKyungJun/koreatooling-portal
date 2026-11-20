@@ -1,4 +1,13 @@
-﻿## 2026-11-20 (#7) 핸드오프 — Cowork (검수 지적 수정 A~E)
+﻿## 2026-11-20 (#8) 핸드오프 — Cowork (문제해결 페이지 61행)
+
+- 한 일: `wiki/troubleshoot/TricoERP-납기알림-메일-미발송.md` 61~62행 — 등록 기준을 작업 XML 로 바꿔 쓰고, setup_scheduler 2개는 「옛판 · 12행 throw 로 실행 즉시 멈춤」, 11-19 $BaseDir 수정은 이력으로 내림(백업 `.bak_20261120g`)
+- 확인: 핸드오프 스킬의 `C:\Users\TOOLKOREA` 경로는 decisions 2026-11-19 (1)(정션으로 옛 경로 유지) 그대로라 고치지 않음 — 상대 경로화는 기존 「나중 과제」
+- 미완·블로커: #7 그대로 — 16:00 run.log 로 bat 동작 확인 · Daily · OnBoot 시간 제한 2시간 승인 대기
+- 다음 단계 제안: 16:00 이후 run.log · 작업 결과 확인
+- 검토: 작은 일(G1)
+- 챗으로 가져갈 질문: 없음
+
+## 2026-11-20 (#7) 핸드오프 — Cowork (검수 지적 수정 A~E)
 
 - 한 일: 승인된 A~E — generate.py 7건 · .gitignore 4줄 · daily_and_upload.bat 1단계 종료 코드 · 옛 등록 스크립트 2개 · price_consolidate 실행 금지 표시 · python-review 4판 카드(P1-a 심각도 · 「두 번 검수 결과 합치기」)
 - 결과/산출물: decisions 2026-11-20 (5) · py_compile 통과 · ruff F 0건(전 9 → 8, 남은 것 B905 · PLW 스타일) · 테스트 저장소 4경우 + 알림 SystemExit + 비밀번호 따옴표 확인 · python-review 초안 4판(ab2c3df0) — 백업 `.bak_20261120`(코드) · decisions `.bak_20261120f` · worklog `.bak_20261120f`
