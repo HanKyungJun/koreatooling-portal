@@ -10,4 +10,12 @@ if [ $? -ne 0 ]; then
   echo "[pre-commit] 위 목록의 파일을 고친 뒤 다시 커밋하세요."
   exit 1
 fi
+# 차단어 검사 — 사내 서버 주소 등 (decisions 2026-11-20 (6)). 목록: private_local/public_blocklist.txt
+"$PY" scripts/check_blocklist.py --staged
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "[pre-commit] 공개하면 안 되는 값(사내 서버 주소 등)이 있어 커밋을 막았습니다."
+  echo "[pre-commit] 위 목록의 파일을 고친 뒤 다시 커밋하세요."
+  exit 1
+fi
 exit 0
