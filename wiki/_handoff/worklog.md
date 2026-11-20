@@ -3,7 +3,8 @@
 - 한 일: 승인된 A~E — generate.py 7건 · .gitignore 4줄 · daily_and_upload.bat 1단계 종료 코드 · 옛 등록 스크립트 2개 · price_consolidate 실행 금지 표시 · python-review 4판 카드(P1-a 심각도 · 「두 번 검수 결과 합치기」)
 - 결과/산출물: decisions 2026-11-20 (5) · py_compile 통과 · ruff F 0건(전 9 → 8, 남은 것 B905 · PLW 스타일) · 테스트 저장소 4경우 + 알림 SystemExit + 비밀번호 따옴표 확인 · python-review 초안 4판(ab2c3df0) — 백업 `.bak_20261120`(코드) · decisions `.bak_20261120f` · worklog `.bak_20261120f`
 - 추가: 커밋 3a62bf5 push 완료(한경준님) · 작업 XML 7개 내보냄(`outputs/03_자동화_백업/작업XML_20261120/`, git 제외 확인) → 9월 결정과 일치(Interactive · 제한 권한 · OnBoot 로그온 + PT3M) · CNC_Daily_Report 는 StartWhenAvailable 꺼짐이라 ③ 의 「동시 실행」 우려는 OnBoot 1경로뿐 · Daily · OnBoot 시간 제한 없음(PT0S) 확인 · 문제해결 페이지 61행 옛판 안내 · log.md
-- 미완·블로커: bat 은 Linux VM 에서 못 돌림 → 다음 16:00 run.log · 작업 결과로 확인 · 테스트카드 #8 ③ 새 대화 재시험 · (선택) Daily · OnBoot 실행 시간 제한 2시간
+- 추가 2: 테스트카드 #8 ③ 새 대화 재시험 통과 → #8 3가지 통과 · review-role(74005e46) · python-review(a81a4316) 정상본 교체(옛 review-role `.bak_20261120`) · README 목록 · ③ 지적대로 등록 스크립트 2개 12행 `throw`(주석만으로는 정션 때문에 안 막힘) + XML 위치 주석(`.bak_20261120b`)
+- 미완·블로커: bat 은 Linux VM 에서 못 돌림 → 다음 16:00 run.log · 작업 결과로 확인 · (승인 대기) Daily · OnBoot 실행 시간 제한 2시간
 - 다음 단계 제안: XML 받으면 등록 스크립트 대신 XML 기준으로 문서화 · `wiki/troubleshoot/TricoERP-납기알림-메일-미발송.md` 61행의 setup_scheduler.ps1 안내 고치기
 - 검토: R4 주 · 코드 · Py — 통과 9 · 확인 필요 2(bat 실제 동작 · Windows 3.14) · 통과 뒤 지적 0
 - 챗으로 가져갈 질문: 없음

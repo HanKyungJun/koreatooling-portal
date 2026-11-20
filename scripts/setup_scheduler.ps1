@@ -6,7 +6,10 @@
 #  from exported XML on the new PC (2026-11-19). Rebuild from
 #  task XML exported with Export-ScheduledTask (worklog
 #  2026-11-20), not from this file.
+#  XML: outputs\03_*\<task XML 20261120 folder> on the PC that
+#  exported it (git-ignored - not in the repository).
 # ============================================================
+throw "OLD VERSION - DO NOT RUN. Rebuild the tasks from the exported task XML (see header)."
 # CNC Daily Report - Windows Task Scheduler Setup
 # Run as Administrator in PowerShell
 
