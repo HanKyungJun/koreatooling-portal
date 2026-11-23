@@ -81,5 +81,14 @@
 | 화면 배치 이름 9종 | 게시물 (uxwoodytips) | 인스타 | 반영 — 디자인 시스템 「화면 배치」 5줄 | decisions 2026-11-20 (2) ① | — |
 | 학습 프롬프트 6개 | 게시물 (alligator.9958261) | 인스타 | 일부 — 3번 시험 · 6번 파인만만 신입 교육에 | 챗 11-20 · tasks P3 「신입 교육 — 위키 페이지로 시험 문제 내기」 | — |
 | 질문 프롬프트 10가지 | 게시물 (promppy_com, 캡션만) | 인스타 | 제외 — 「요청 다듬어 줘」(refine-request) · 「검수해 줘」와 같은 내용 | 챗 11-20 | — |
+| security-audit-skill | github.com/cloudflare/security-audit-skill (Cloudflare 공식, MIT) | 인스타 (_choosit 11-23) | 보류 — 찾은 구멍을 다른 에이전트가 반박해 살아남은 것만 남기는 방식은 python-review 의 「오탐 반증」과 같은 생각. 병렬 하위 에이전트를 많이 쓰는 무거운 감사, Node.js(skills CLI) 필요, 사내 공개 코드는 정적 페이지 · 접수 폼뿐 | 챗 11-23 | 외부에 공개되는 사내 코드를 넘기기 전(예: 재연마 견적 계산기 꾸러미, decisions 2026-11-18 (3)) 1회 |
+| claude-seo | github.com/AgriciDaniel/claude-seo (MIT) — 같은 이름 복사본 여러 개 | 인스타 (_choosit 11-23) | 보류 — 고객에게 안내 · 운영하는 공개 사이트가 아직 없음(GitHub Pages 포털은 올라가 있으나 안내 전 · 코고툴 이름 · 문구 보류, decisions-archive 2026-10-12 (4)), 마이다스 몰은 개발사 소관 | 챗 11-23 | 새 고객용 사이트를 공개 운영할 때 |
+| agent-browser | 확인 안 함 | 인스타 (_choosit 11-23) | 제외 — Claude in Chrome 이 이미 연결돼 있음 | 챗 11-23 | — |
+| t3code | 확인 안 함 | 인스타 (_choosit 11-23) | 제외 — Claude 앱에서 Cowork · Claude Code 를 휴대폰으로 이어 볼 수 있음 | 챗 11-23 | — |
+| Claude-BugHunter | 확인 안 함 | 인스타 (_choosit 11-23) | 제외 — 공격 기법 학습 도구. 사내 원칙상 바깥에서 사내 시스템 시험 호출 금지(tasks-archive 「ERP 서비스 외부 접속」 ⚠️) | 챗 11-23 | — |
+| ffmpeg-skill | 확인 안 함 | 인스타 (_choosit 11-23) | 제외 — 영상 편집 업무 없음, 필요하면 말로 시켜 ffmpeg 명령을 짜는 것은 지금도 됨 | 챗 11-23 | — |
+| hyperframes · claude-animated-shorts · line-art-animation | 확인 안 함 | 인스타 (_choosit 11-23) | 제외 — 영상 · 애니메이션 제작은 업무 범위 밖 | 챗 11-23 | — |
+| instagram-agent-skill | 확인 안 함 | 인스타 (_choosit 11-23) | 제외 — 업무 무관(릴스 문구 점수) | 챗 11-23 | — |
+| Claude Code 폴더 구조 (CLAUDE.md · rules · skills · agents · hooks) | 게시물 (dannyoff.ai, 원 구성 shiva.bytes) · 공식 문서 code.claude.com/docs/en/memory | 인스타 (11-23) | 일부 — `.claude/rules/`(경로 지정 규칙)만 후보, 나머지는 이미 있음(CLAUDE.md · 계정 스킬 · 검수 스킬 · git pre-commit 훅) | 챗 11-23 | CLAUDE.md 측정(worklog 2026-11-23 #5) 결과를 보고 판단 |
 
 ※ 게시물에 함께 붙은 주장 중 확인한 것: ECC 해커톤 우승은 Anthropic · Forum Ventures 공동 주최(2025-09), 「하버드 연구」는 맞춤 제작 AI 튜터 · 물리 2개 주제 · 단기 결과(Kestin 외, Scientific Reports 2025), 「20시간이면 충분」은 연구가 아니라 Josh Kaufman 의 책 주장. 위키 근거로 쓰지 않는다.

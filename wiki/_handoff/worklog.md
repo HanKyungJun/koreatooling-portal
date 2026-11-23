@@ -1,4 +1,23 @@
-﻿## 2026-11-23 (#3) 핸드오프 — Cowork (폴더 정리)
+﻿## 2026-11-23 (#5) 핸드오프 — Cowork (챗 핸드오프 추가2 반영 · CLAUDE.md 측정)
+
+- 한 일: Drive 「챗핸드오프_20261123_추가2_폴더구조.md」 — README §4-2 끝에 1행(Claude Code 폴더 구조, 판정 「일부」) · 「다시 볼 조건」의 「아래 §2」 → 「worklog 2026-11-23 #5」(README 안에서 가리킬 곳이 없어서) · §2 측정만 함(CLAUDE.md · rules 안 만듦 · 안 고침). 앞 두 파일은 #2 · #4 에서 반영돼 있음을 재확인
+- 결과/산출물: `wiki/_handoff/skills-custom/README.md`(25행) · `outputs/CLAUDE_md_측정_20261123.md`(표 · 시험 방법, 추적 제외) — CLAUDE.md 447줄 · 28,811 B(공식 권장 200줄 아래) · 모든 세션 183줄 / 특정 폴더 136줄 / 절차 129줄 · PC 전용 1줄(59줄 TOOLKOREA 경로) · `.gitignore` 에 CLAUDE.local.md 없음
+- 미완·블로커: 「.claude/rules 시험 A · B」 한경준님 승인 대기
+- 다음 단계 제안: 시험 결과로 rules 도입 판정 → README §4-2 해당 행 갱신 · 규칙 변경은 decisions
+- 검토: R4 주 — 통과 5(행 추가 grep · 표 열 수 · 줄 · 바이트 wc · 분류 합 448줄 = 전체 · 공식 문서 원문 확인) · 확인 필요 1(Cowork 의 rules 읽힘 — 시험 필요) · 통과 뒤 지적 0
+- 챗으로 가져갈 질문: 없음
+
+## 2026-11-23 (#4) 핸드오프 — Cowork (챗 핸드오프 추가분 반영)
+
+- 한 일: Drive 「챗핸드오프_20261123_추가_트렌딩10.md」(인스타 _choosit 11월 깃허브 트렌딩 10개) 반영 — README §4-2 표 끝에 8행(도구 10개) 추가 · worklog #1 「한 일」 끝에 한 줄 · 본편(「…_인스타스크랩.md」)은 #2 에서 이미 반영돼 다시 넣지 않음
+- 고친 곳(챗 원문 → 반영본, 판정은 그대로): ① Claude-BugHunter 근거 「tasks ERP 외부 접속 항목 ⚠️」 → 「tasks-archive 「ERP 서비스 외부 접속」 ⚠️」(#3 정리 때 아카이브로 옮겨짐) ② claude-seo 「사내가 운영하는 공개 사이트가 아직 없음」 → 「고객에게 안내 · 운영하는 공개 사이트가 아직 없음(GitHub Pages 포털은 올라가 있으나 안내 전 · 코고툴 이름 · 문구 보류, decisions-archive 2026-10-12 (4))」 — 포털이 이미 인터넷에 있음(projects/B2B-사이트-공개전-점검-2026-10 §0) ③ security-audit-skill 「다시 볼 조건」에 근거 번호 decisions 2026-11-18 (3) 추가, Node.js → Node.js(skills CLI) ④ worklog 「판정 10행」 → 「판정 8행(도구 10개)」(한 행에 3개 묶음)
+- 결과/산출물: `wiki/_handoff/skills-custom/README.md` §4-2 (24행) · `worklog.md` #1 · #4 — 백업 `.bak_20261123b` 2개
+- 미완·블로커: 한경준님 커밋(README.md · worklog.md). decisions 는 안 건드림 — 보류 · 제외 판정은 §5-A 대상 아님(decisions 2026-11-23 (1) ③)
+- 다음 단계 제안: 커밋 뒤 16:30 Drive 동기화로 챗도 최신판을 봄
+- 검토: R4 주 · R5 — 통과 6(10개 기존 기록 없음 grep · python-review 「오탐 반증」 실재 · 견적 계산기 꾸러미 실재 · ERP ⚠️ 줄 실재 · cloudflare 저장소 MIT · Node.js · 병렬 에이전트 웹 확인 · claude-seo MIT 웹 확인) · 고침 4(위) · 확인 필요 0 · 통과 뒤 지적 0
+- 챗으로 가져갈 질문: 없음
+
+## 2026-11-23 (#3) 핸드오프 — Cowork (폴더 정리)
 
 - 한 일: 폴더 점검 → 한경준님 승인 → 191항목 이동(실패 0) · `slim_tasks.py --apply`
 - 결과/산출물: `.bak` 107개(이름 날짜 11-16 이전, raw · outputs 제외) · outputs 84항목(commit_msg 전부 · 임시 파일 · 정가 앱 · 위젯 · 프로젝트 옛 판 · barcode_checker/build · FreeCAD sim_*_Z.npy 3개) → `_to_delete/정리_20261123/`(같은 폴더 구조, 154 MB) · outputs 365 → 264 MB · .bak 217 → 110개 · tasks.md 63.0 → 43.6 KB(15건 원문 → tasks-archive.md, 백업 `_to_delete/handoff_backup_20261123/`)
@@ -19,7 +38,7 @@
 
 ## 2026-11-23 (#1) 핸드오프 — 챗 (인스타 스크랩 정리 · 내부 기록 대조)
 
-- 한 일: 11-19 ~ 22 인스타 스크랩 7건(도구 15 · 요령 3) 정리 · Drive 사본(11-20 16:44)으로 내부 기록 대조 — 챗 판단 6건 중 4건은 이미 반영(python-review · review-role 연결 · 화면 배치 · im-not-ai 보류), 2건 챗 정정 · 외부 도구 검토 이력 표 초안
+- 한 일: 11-19 ~ 22 인스타 스크랩 7건(도구 15 · 요령 3) 정리 · Drive 사본(11-20 16:44)으로 내부 기록 대조 — 챗 판단 6건 중 4건은 이미 반영(python-review · review-role 연결 · 화면 배치 · im-not-ai 보류), 2건 챗 정정 · 외부 도구 검토 이력 표 초안 · 추가 1건(트렌딩 10개) 판정 8행(도구 10개)
 - 결과/산출물: Drive 「챗핸드오프_20261123_인스타스크랩.md」 → README §4 · tasks P3 · decisions 2026-11-23 (1)
 - 미완·블로커: 11-20 16:44 뒤 기록과의 대조(Cowork)
 - 다음 단계 제안: 반영 뒤 4개 경로만 커밋
