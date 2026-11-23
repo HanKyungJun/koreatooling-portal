@@ -96,6 +96,15 @@
 | instagram-agent-skill | 확인 안 함 | 인스타 (_choosit 11-23) | 제외 — 업무 무관(릴스 문구 점수) | 챗 11-23 | — |
 | Claude Code 폴더 구조 (CLAUDE.md · rules · skills · agents · hooks) | 게시물 (dannyoff.ai, 원 구성 shiva.bytes) · 공식 문서 code.claude.com/docs/en/memory | 인스타 (11-23) | 제외(11-23 시험) — Cowork 에서 경로 규칙은 안 켜지고, 무조건 규칙은 CLAUDE.md 와 같이 폴더 첫 접근 때 들어와 맥락이 안 줆. 나머지는 이미 있음(CLAUDE.md · 계정 스킬 · 검수 스킬 · git pre-commit 훅). ~~일부 — `.claude/rules/`(경로 지정 규칙)만 후보~~(챗 11-23) | 챗 11-23 · Cowork 시험 11-23(worklog 2026-11-23 #5 · #7) | Cowork 가 경로 규칙을 지원한다고 공지될 때 · Claude Code 전용 작업이 늘 때 |
 | SkillSpector | github.com/NVIDIA/SkillSpector (NVIDIA, Apache-2.0, v2.12.0 · 패턴 71개 · 17분류) — 같은 이름 복사본 있음 | 인스타 (hongik.man 11-23) | 도입 — 검토 도구로만. 회사 PC 에 설치하지 않고 챗 샌드박스에서 정적 검사(`--no-llm`)를 돌린다 | 챗 11-23 시험(표 아래 ※ SkillSpector 시험) | — |
+| Modern Web Guidance | github.com/GoogleChrome/modern-web-guidance (Chrome · Edge · Firefox 팀, 1.0 = 2026-11-10 발표 · 11-13 정리 글) | 인스타 (aiscene.kr 11-24) | 보류 — 코딩 에이전트가 옛 웹 방식 대신 요즘 HTML · CSS · 웹 API 를 쓰게 하는 스킬 + CLI(안내서 200개 넘음, 브라우저 호환 정보 포함). 지금 진행 중인 사내 웹 코드 작업이 없고, 실행 CLI(npx)가 딸려 있음 | 챗 11-24 | 웹 코드(재연마 견적 계산기 꾸러미 · 포털 템플릿 · B2B 사이트)를 새로 짜거나 크게 고칠 때 — 들이기 전 SkillSpector 검사 |
+| Chrome DevTools MCP (Chrome DevTools for agents) | github.com/ChromeDevTools/chrome-devtools-mcp (Chrome 팀) | 인스타 (aiscene.kr 11-24) | 보류 — 에이전트가 크롬으로 페이지 성능 · 오류를 직접 재는 도구, Modern Web Guidance 와 짝. 지금 진단할 웹 성능 과제가 없고 Claude in Chrome 이 연결돼 있음 | 챗 11-24 | 위 행과 같음, 또는 사이트가 느리거나 오류가 난다는 보고가 있을 때 |
+| Univer | github.com/dream-num/univer (Apache-2.0) | 인스타 (aiscene.kr 11-24) | 제외 — 웹 서비스 안에 표 · 문서 편집기를 넣는 개발 부품. 사내에 그런 웹 서비스 개발이 없음(ERP 뷰어는 파이썬 exe, 마이다스 몰은 개발사 소관) | 챗 11-24 | 사내에서 웹 서비스를 직접 만들 때 |
+| Open Code Review (알리바바) | github.com/alibaba/open-code-review (Apache-2.0) | 인스타 (aiscene.kr 11-24) | 제외 — AI 코드 검사, 「검수해 줘」(code-review · python-review)와 겹침 | 챗 11-24 | — |
+| Plannotator | github.com/backnotprop/plannotator | 인스타 (aiscene.kr 11-24) | 제외 — AI 계획서에 메모를 달아 돌려보내는 검토 창. 사내는 계획을 대화에서 추천안 → 「승인」으로 처리 | 챗 11-24 | — |
+| AG-UI | github.com/ag-ui-protocol/ag-ui | 인스타 (aiscene.kr 11-24) | 제외 — 에이전트를 웹 · 휴대폰 · 슬랙 화면에 붙이는 연결 규격(개발 인프라) | 챗 11-24 | — |
+| Astryx 아스트릭스(메타 화면 부품 세트, 베타) | astryx.atmeta.com (Meta, MIT) | 인스타 (aiscene.kr 11-24) | 제외 — 화면 부품은 코고툴 디자인 시스템이 기본 · 아직 베타 | 챗 11-24 | — |
+| Claude 트레이딩 스킬 | 확인 안 함 | 인스타 (aiscene.kr 11-24) | 제외 — 업무 무관(개인 투자용) | 챗 11-24 | — |
+| 러스트 애니링(가칭 — 영문 이름 확인 안 함) | 확인 안 함 | 인스타 (aiscene.kr 11-24) | 제외 — 느린 프로그램을 Rust 로 조금씩 옮기는 도구, 사내 필요 없음 · 생긴 지 6일 | 챗 11-24 | — |
 
 ※ SkillSpector 시험(챗 샌드박스 2026-11-23, v2.12.0, `--no-llm`): 악성 견본(챗이 만든 것 — 숨은 주석 지시 + 환경변수 중 KEY · TOKEN 외부 전송) 위험 100 · DO_NOT_INSTALL · HIGH 6 → 숨은 지시 · 유출 모두 잡음 / python-review 1차안(11-19 챗) 위험 7 · SAFE · MEDIUM 1 → 정상 / im-not-ai DO_NOT_INSTALL · HIGH 9(캐시 파일 제외) → 시험 · 설치 스크립트와 git 훅의 명령 실행이 걸림, 악성 아님(오탐) / cloudflare/security-audit-skill 위험 86 · DO_NOT_INSTALL · HIGH 6 → 공격 유형을 설명하는 보안 문서가 걸림, 오탐. ⇒ 명백한 악성은 잡지만 정상 스킬도 「설치 금지」로 자주 나와 지적 줄 판독까지 해야 판정. LLM 분석 단계는 외부 API 키가 필요해 쓰지 않음. 저장소 메타(라이선스 · 버전 · 패턴 수 · `--no-llm` 옵션)는 Cowork 가 원본 저장소에서 확인(11-23), 시험 재현은 안 함
 

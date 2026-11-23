@@ -1,4 +1,14 @@
-﻿## 2026-11-23 (#14) 핸드오프 — Cowork (작업 PC 이전 남은 점검)
+﻿## 2026-11-24 (#1) 핸드오프 — Cowork (챗 핸드오프 11-24 반영 · 인스타 주간 트렌딩)
+
+- 한 일: Drive 「cnc-wiki 인계/챗핸드오프_20261124_인스타_주간트렌딩.md」(aiscene.kr, 깃허브 주간 인기 11개) 반영 — README §4-2 표 끝(SkillSpector 행 뒤)에 9행 · 챗 11-24 인스타 1건 판정 11행(ffmpeg · Last 30 Days 는 이력 표에 있어 행 추가 안 함). 기존 기록 grep(README · decisions · decisions-archive · tasks · wiki) 0건 — 겹침 · 모순 없음. 결정 기록 기준(조건 · 안전 · 대외 · 돈 · 규칙)에 안 걸려 decisions 는 안 고침
+- 고친 곳(챗 원문 → 반영본, 판정은 그대로): Modern Web Guidance 「1.0 = 2026-11-13」 → 「1.0 = 2026-11-10 발표 · 11-13 정리 글」(Chrome 블로그 v1 발표 11-10, 11-13 은 정리 글) · 「확인 안 함」 원본 5개 채움 — Univer dream-num/univer (Apache-2.0) · Open Code Review alibaba/open-code-review (Apache-2.0) · Plannotator backnotprop/plannotator · AG-UI ag-ui-protocol/ag-ui · 아스트릭스 = Astryx (astryx.atmeta.com, Meta, MIT, 베타). Claude 트레이딩 스킬 · 러스트 애니링은 이름이 불확실해 「확인 안 함」 그대로
+- 결과/산출물: `wiki/_handoff/skills-custom/README.md` · `worklog.md` — 백업 `.bak_20261124` 2개 · 인계 사본 `outputs/챗핸드오프_20261124_인스타_주간트렌딩.md`(추적 제외)
+- 미완·블로커: 없음
+- 다음 단계 제안: 커밋(README.md · worklog.md)
+- 검토: R4 주 · R5 — 통과 5(원본 저장소 확인: modern-web-guidance 실재 · 1.0 발표일 · Chrome · Edge · Firefox 공동 · 안내서 200개 넘음 / chrome-devtools-mcp 실재(Chrome DevTools 팀) · 기존 기록 grep 0 · 9행 원문 대조(바꾼 6행 외 동일, python) · 표 열 수 6 · 반영 뒤 다시 읽기) · 통과 뒤 지적 0
+- 챗으로 가져갈 질문: 없음
+
+## 2026-11-23 (#14) 핸드오프 — Cowork (작업 PC 이전 남은 점검)
 
 - 한 일: PC 이전 체크리스트 정리(끝난 15줄 [x] · §10 남은 항목) · 예약 진단 2회(폴더 0개) → 월초 점검 · AI 동향을 v3 드라이브 방식으로 재구성(decisions 2026-11-23 (8))
 - 결과/산출물: `scripts/export_monthly_check.py` 신규 · `scripts/daily_and_upload.bat` 7)(백업 `.bak_20261123`) · 예약 「월초 마감 점검 v3」 · 「AI 동향 v3」 · `decisions.md` · `tasks.md` · 체크리스트(git 제외) — 백업 `.bak_20261123p`
