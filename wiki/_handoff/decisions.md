@@ -3,6 +3,34 @@
 > 무엇을(What), 왜(Why), 출처(Where)를 **시간 역순(최신이 맨 위)** 으로 기록합니다.
 > 챗에서 결정된 내용도 반드시 여기로 옮겨야 Code/Cowork가 따라옵니다.
 
+## 2026-11-23 (6): ToolRoom–Claude 연동은 Claude 설정 파일 등록(로컬 MCP) 방식으로 운영
+
+- 결정: 컴퓨터2에 연동 서버(`Claude outputs\ToolRoom연동\server\node.exe` + `index.js`)를 두고 `claude_desktop_config.json` 에 `anca-toolroom` 으로 등록한다. `.mcpb` 확장 파일은 회사 계정에서 확장 설치가 허용될 때 쓰는 예비용.
+- 근거: 회사 계정은 데스크톱 확장 설치 메뉴가 꺼져 있음(설정에 「확장 프로그램」 없음, 「커스텀 커넥터 추가」 비활성). Claude 공식 문서 "Add a connector that isn't in the directory" — 조직이 확장을 끄면 설정에 Extensions 가 나타나지 않음. 설정 파일 등록 후 v0.3.0 동작 확인(공구 183개·휠팩 36개 인식, ToolRoom 빌드 9.22 patch 60.15 / Build 682).
+- 출처: Cowork (컴퓨터2 — Drive 「cnc-wiki 인계/컴퓨터2/decisions_추가분_2026-11-23.md」)
+- 영향: 서버 갱신 시 `server\index.js` 교체 후 Claude 앱 완전 종료·재실행 필요. 기능 — 공구 요약·비교·파라미터 조회·휠 원주속도 점검, ToolRoom 화면 보기(캡처만), 새 공구 파일 만들기.
+
+## 2026-11-23 (5): ToolRoom 휠 번호는 아버 끝(스핀들에서 먼 쪽)부터 1번
+
+- 결정: 휠팩(.wpk) 파일은 스핀들 쪽부터 휠을 나열하므로 번호는 역순으로 매긴다. 화면 표기 `w3 p1` = 3번 휠·1번 팩.
+- 근거: 현장 지적(4F CO 의 7. Endface Gash·9. OD Corner End Finishing 휠이 반대) + 사내 공구 파일 41개의 뒷면(back) 사용 70건 대조 — 파일 순서로 번호를 매기면 49건이 뒷면 연삭면이 없는 11V9(Qualify_Back = false)에 걸리고, 역순이면 0건 + iGrind 화면과 9개 오퍼레이션 휠·팩 번호 일치(실측 검증).
+- 출처: Cowork (컴퓨터2 — Drive 「cnc-wiki 인계/컴퓨터2/decisions_추가분_2026-11-23.md」)
+- 영향: 연동 v0.1.0 의 휠 대응 결과는 폐기(v0.1.1 부터 수정).
+
+## 2026-11-23 (4): .tom 파일 전체 경로는 100 byte 이하로 (한글 1자 = 2 byte)
+
+- 결정: Claude 가 만드는 공구 파일은 영문 이름 + 짧은 폴더, 전체 경로 100 byte 를 넘으면 만들지 않는다. 사람이 저장할 때도 깊은 한글 폴더·긴 파일명은 피한다.
+- 근거: iGrind 경고 「PPI Execution Error — p:/3dx/tmp/sim/igrind1/map1/map1.pp line 182, String too long to fit into variable」. iGrind 가 만드는 내부 프로그램에서 `tom_filename` 에 .tom 전체 경로를 넣다가 길이 초과. 실측: 경로 99·100 byte 정상 / 106 byte Invalid Tool / 같은 내용을 64 byte 경로에 두면 정상(실측 검증).
+- 출처: Cowork (컴퓨터2 — Drive 「cnc-wiki 인계/컴퓨터2/decisions_추가분_2026-11-23.md」)
+- 영향: 정확한 한계는 100~105 byte 사이로 미확정 → 100 byte 로 보수 적용.
+
+## 2026-11-23 (3): Claude 생성 공구 파일 저장 위치 = toolroom\user\tools\_Claude\
+
+- 결정: 새 공구 파일은 이 폴더에만 저장하고, 같은 이름이 있으면 만들지 않는다(덮어쓰기 없음). ToolRoom 원본 파일은 읽기만 한다.
+- 근거: 경준님 승인(2026-11-23). 경로가 짧고(P: 기준 약 41 byte) 사내 공구 라이브러리와 섞이지 않음. 첫 생성본 `4FCO_R05_T1.tom`(4F CO 바탕, 코너 R 0.5 mm·외경 1차 여유각 12°·7. Endface Gash 이송 120 mm/min) iGrind Simulation Complete 확인(2026-11-23 11:27 KST).
+- 출처: Cowork (컴퓨터2 — Drive 「cnc-wiki 인계/컴퓨터2/decisions_추가분_2026-11-23.md」)
+- 영향: 생성 파일은 시험용 — 양산 적용 전 테스트 → 측정 → 검증 필수. 0(ZERO) 저장값·함수형 값·선택형 값은 아직 생성 기능으로 못 바꿈.
+
 ## 2026-11-23 (2): CLAUDE.md 줄이기 2차 — 절차 4개 절 원문을 standards 로, `.claude/rules/` 는 쓰지 않음
 
 - 결정: ① CLAUDE.md §0-A2 · §0-B · §8 · §15-4 원문을 [[standards/세션-위키-작업절차]] 로 그대로 옮기고(절 번호 같음) CLAUDE.md 에는 요약 · 🔴 규칙(Cowork git 쓰기 금지 · 바꾼 파일만 add · 검토 줄 정의 · 검수 제외 · 메모 공개 저장소 금지 · 3,000자 상한)만 남김 · §9 4줄 → 1줄. 447 → 371줄 · 28,811 → 약 24.9 KB ② 지금 따르는 절차는 스킬(cnc-handoff · wiki-new-page · source-add · wiki-lint) — 스킬에 아직 없는 항목 4개는 README §2 개정 후보로만 올리고 계정 스킬은 고치지 않음(개정 절차 §3 · 테스트카드 필요) ③ `.claude/rules/` 는 도입하지 않음

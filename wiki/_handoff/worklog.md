@@ -1,8 +1,17 @@
-﻿## 2026-11-23 (#9) 핸드오프 — Cowork (세션 시작 · 마무리 동작 확인)
+﻿## 2026-11-23 (#10) 핸드오프 — Cowork (컴퓨터2 ToolRoom 연동 결정 반영)
+
+- 한 일: Drive 「cnc-wiki 인계/컴퓨터2/decisions_추가분_2026-11-23.md」(컴퓨터2 Cowork) 4건을 decisions 맨 위에 원문 그대로 · 순서 그대로 넣음 — (6) MCP 등록 · (5) 휠 번호 아버 끝부터 · (4) .tom 경로 100 byte · (3) 저장 위치 `_Claude\` · 출처 줄에 Drive 경로 덧붙임
+- 결과/산출물: `wiki/_handoff/decisions.md`(백업 `.bak_20261123y`) · 인계 사본 `outputs/챗핸드오프_20261123_컴퓨터2_ToolRoom연동.md`(추적 제외)
+- 미완·블로커: 위키에 ToolRoom 연동 · 휠 번호 규칙 페이지 없음(decisions 에만) · 투자 검토 페이지 「사내 ToolRoom은 RN35」와 컴퓨터2 빌드 9.22 patch 60.15 / Build 682 표기 관계 확인 필요
+- 다음 단계 제안: 커밋(decisions.md · worklog.md) · 필요하면 `cadcam/` 에 ToolRoom 연동 페이지
+- 검토: R4 주 · R2 — 통과 4(본문 12줄 원문 일치 python 대조 · 기존 위키 모순 grep 0 · 실명 검사 0개 · 반영 뒤 다시 읽기) · 확인 필요 1(RN35 표기) · 통과 뒤 지적 0
+- 챗으로 가져갈 질문: 없음
+
+## 2026-11-23 (#9) 핸드오프 — Cowork (세션 시작 · 마무리 동작 확인)
 
 - 한 일: CLAUDE.md 줄이기 2차(#8) 뒤 새 세션에서 「세션 시작」(가볍게) · 「마무리해줘」 실행 — 세 파일 읽기 · P0/P1 판정 · worklog 쓰기 정상
 - 결과/산출물: 이 블록만 (`wiki/_handoff/worklog.md`)
-- 미완·블로커: cnc-handoff 스킬의 PC 경로 · 커밋 명령이 옛 PC(`C:\Users\TOOLKOREA\...`) 기준 — 지금은 `C:\Users\HAN\Desktop\cnc-wiki`. 스킬 수정은 승인 대기(P1 작업 PC 이전에 딸림)
+- 미완·블로커: cnc-handoff 스킬의 PC 경로 · 커밋 명령이 옛 PC(`C:\Users\TOOLKOREA\...`) 기준 — 지금은 `C:\Users\HAN\Desktop\cnc-wiki`. 한경준님 승인 → 스킬 수정안(경로 2곳 HAN · 개정 이력 1줄) 저장 카드로 올림 — 카드에서 저장해야 반영
 - 다음 단계 제안: 스킬 경로 HAN 으로 수정 승인 · P0 넥 휠 D 측정 기록
 - 검토: 작은 일(G1)
 - 챗으로 가져갈 질문: 없음
