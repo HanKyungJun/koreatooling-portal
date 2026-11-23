@@ -1,4 +1,13 @@
-﻿## 2026-11-23 (#2) 핸드오프 — Cowork (챗 핸드오프 반영)
+﻿## 2026-11-23 (#3) 핸드오프 — Cowork (폴더 정리)
+
+- 한 일: 폴더 점검 → 한경준님 승인 → 191항목 이동(실패 0) · `slim_tasks.py --apply`
+- 결과/산출물: `.bak` 107개(이름 날짜 11-16 이전, raw · outputs 제외) · outputs 84항목(commit_msg 전부 · 임시 파일 · 정가 앱 · 위젯 · 프로젝트 옛 판 · barcode_checker/build · FreeCAD sim_*_Z.npy 3개) → `_to_delete/정리_20261123/`(같은 폴더 구조, 154 MB) · outputs 365 → 264 MB · .bak 217 → 110개 · tasks.md 63.0 → 43.6 KB(15건 원문 → tasks-archive.md, 백업 `_to_delete/handoff_backup_20261123/`)
+- 미완·블로커: `_to_delete` 1.5 GB(기준 500 MB) 비우기 — 한경준님(`20261112_도면작업` 895 MB 먼저 확인) · worklog 89.6 KB 는 당월분이라 12월 정리 때 줄어듦
+- 다음 단계 제안: 커밋(tasks.md · tasks-archive.md · worklog.md)
+- 검토: R4 주 — 통과 5(이동 191 · 원위치 없음 확인 · outputs 참조 grep · tasks P0/P1 줄 5개 남음 · git 추적 .bak 0) · 확인 필요 0 · 통과 뒤 지적 0
+- 챗으로 가져갈 질문: 없음
+
+## 2026-11-23 (#2) 핸드오프 — Cowork (챗 핸드오프 반영)
 
 - 한 일: Drive 「챗핸드오프_20261123_인스타스크랩.md」 반영 — 챗이 못 본 11-20 16:44 뒤 기록 대조(worklog #14 · decisions 맨 위 (9) — 겹침 · 모순 없음, 11-21 ~ 22 기록 없음) · 4개 파일에 핸드오프 원문 그대로 넣음 · 백업 `.bak_20261123`
 - 결과/산출물: `wiki/_handoff/skills-custom/README.md` §4 · `tasks.md` P3 「신입 교육 — 위키 페이지로 시험 문제 내기」 · `decisions.md` 2026-11-23 (1) · worklog #1 · 핸드오프 사본 `outputs/챗핸드오프_20261123_인스타스크랩.md`
