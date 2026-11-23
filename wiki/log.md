@@ -1,3 +1,10 @@
+## [2026-11-23] 신규 — standards/세션-위키-작업절차 (CLAUDE.md 줄이기 2차)
+
+CLAUDE.md §0-A2 · §0-B · §8 · §15-4 원문을 그대로 옮기고 CLAUDE.md 에는 요약 · 🔴 규칙만 남김(447 → 371줄). 계기: 공식 권장 200줄 아래 · Cowork 는 `.claude/rules/` 경로 규칙이 안 켜짐(11-23 시험).
+
+영향받은 페이지: [[standards/세션-위키-작업절차]], [[index]], [[_handoff/skills-custom/README]]
+출처 추가: 없음
+
 ## [2026-11-20] 업데이트 — 예약 작업 등록 스크립트 옛판 표시 · 작업 XML 기준
 
 generate.py 검수(③) 결과 `setup_scheduler.ps1` · `_v2.ps1` 이 9월 이전 설정이라 다시 돌리면 사내 배포가 다시 실패함 → 두 파일에 실행 금지 표시, 지금 등록된 작업 7개를 XML 로 내보내 기준으로 삼음(실측: CNC_Daily_Report Interactive · 제한 권한 · 시간 제한 없음, OnBoot 로그온 + 3분).

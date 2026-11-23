@@ -1,4 +1,13 @@
-﻿## 2026-11-23 (#7) 핸드오프 — Cowork (.claude/rules 시험 결과 · 판정)
+﻿## 2026-11-23 (#8) 핸드오프 — Cowork (CLAUDE.md 줄이기 2차)
+
+- 한 일: 한경준님 승인 → CLAUDE.md §0-A2 · §0-B · §8 · §15-4 원문을 `wiki/standards/세션-위키-작업절차.md` 로 그대로 옮기고 요약 · 🔴 규칙만 남김 · §9 줄임 → 447 → 371줄(28,811 → 약 24.9 KB). 계정 스킬은 안 고침 — 스킬에 없는 4개 항목은 README §2 개정 후보
+- 결과/산출물: `CLAUDE.md`(원본 `.bak_20261123`) · `wiki/standards/세션-위키-작업절차.md` 신규 · `wiki/index.md` · `wiki/log.md` · `decisions.md` 2026-11-23 (2) · `skills-custom/README.md` §2
+- 미완·블로커: 200줄까지는 「특정 폴더」 절(약 136줄)도 옮겨야 함 — 다음 판단 · 스킬 개정 후보 4건
+- 다음 단계 제안: 새 Cowork 세션에서 「세션 시작」 · 「마무리해줘」가 전처럼 도는지 한 번 확인
+- 검토: R4 주 · R5 — 통과 6(옮긴 4개 절 원문 일치 python 대조 · 새 페이지 링크 5개 실재 · CLAUDE.md 참조처 grep(스킬 §15-4 3,000자 · lint §8-4 주간브리핑 · 검토표 §0-B 모두 요약에 남음) · wc · index · log 등재) · 확인 필요 1(새 세션 동작) · 통과 뒤 지적 0
+- 챗으로 가져갈 질문: 없음
+
+## 2026-11-23 (#7) 핸드오프 — Cowork (.claude/rules 시험 결과 · 판정)
 
 - 한 일: 새 Cowork 세션 시험(한경준님 실행) — A: 인사 답엔 없음 → holidays.md 읽은 답에 나옴(폴더 첫 접근 때 들어옴) · B(경로 규칙): 안 나옴 ⇒ Cowork 에서 rules 는 CLAUDE.md 를 줄이는 효과 없음 → README §4-2 행 판정 「일부」 → 「제외」(옛 값 취소선 병기)
 - 결과/산출물: `wiki/_handoff/skills-custom/README.md` · `outputs/CLAUDE_md_측정_20261123.md` §5 · §6 · 시험 파일 2개 → `_to_delete/규칙시험_20261123/`
