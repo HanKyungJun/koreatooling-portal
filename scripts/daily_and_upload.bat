@@ -64,6 +64,9 @@ echo [step5-end] %DATE% %TIME% rc=%RC5% >> wiki\reports\daily\run.log
 REM 6) 2026-11-19: Fridays only - weekly cleanup metrics (dry-run / read-only) uploaded to
 REM    Google Drive for the Claude task "weekly cleanup". Runs after the push on purpose.
 python scripts\export_weekly_metrics.py >> wiki\reports\daily\run.log 2>&1
+REM 7) 2026-11-23: days 1-5 only (first run of the month) - month-start check metrics (read-only,
+REM    dry-run) uploaded to Google Drive for the Claude task "month-start check v3".
+python scripts\export_monthly_check.py >> wiki\reports\daily\run.log 2>&1
 REM 2026-11-20: task result = step 5 code, or step 1 code when step 5 was OK.
 set "RCF=%RC5%"
 if "%RCF%"=="0" if not "%RC1%"=="0" set "RCF=%RC1%"
