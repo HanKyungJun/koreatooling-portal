@@ -1,4 +1,13 @@
-﻿## 2026-11-23 (#8) 핸드오프 — Cowork (CLAUDE.md 줄이기 2차)
+﻿## 2026-11-23 (#9) 핸드오프 — Cowork (세션 시작 · 마무리 동작 확인)
+
+- 한 일: CLAUDE.md 줄이기 2차(#8) 뒤 새 세션에서 「세션 시작」(가볍게) · 「마무리해줘」 실행 — 세 파일 읽기 · P0/P1 판정 · worklog 쓰기 정상
+- 결과/산출물: 이 블록만 (`wiki/_handoff/worklog.md`)
+- 미완·블로커: cnc-handoff 스킬의 PC 경로 · 커밋 명령이 옛 PC(`C:\Users\TOOLKOREA\...`) 기준 — 지금은 `C:\Users\HAN\Desktop\cnc-wiki`. 스킬 수정은 승인 대기(P1 작업 PC 이전에 딸림)
+- 다음 단계 제안: 스킬 경로 HAN 으로 수정 승인 · P0 넥 휠 D 측정 기록
+- 검토: 작은 일(G1)
+- 챗으로 가져갈 질문: 없음
+
+## 2026-11-23 (#8) 핸드오프 — Cowork (CLAUDE.md 줄이기 2차)
 
 - 한 일: 한경준님 승인 → CLAUDE.md §0-A2 · §0-B · §8 · §15-4 원문을 `wiki/standards/세션-위키-작업절차.md` 로 그대로 옮기고 요약 · 🔴 규칙만 남김 · §9 줄임 → 447 → 371줄(28,811 → 약 24.9 KB). 계정 스킬은 안 고침 — 스킬에 없는 4개 항목은 README §2 개정 후보
 - 결과/산출물: `CLAUDE.md`(원본 `.bak_20261123`) · `wiki/standards/세션-위키-작업절차.md` 신규 · `wiki/index.md` · `wiki/log.md` · `decisions.md` 2026-11-23 (2) · `skills-custom/README.md` §2
