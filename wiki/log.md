@@ -1,3 +1,10 @@
+## [2026-11-23] 신규 — cadcam/ToolRoom-Claude-연동
+
+컴퓨터2 ToolRoom–Claude 연동 결정 4건(decisions 2026-11-23 (3) ~ (6))을 위키 페이지로 — 구성 · 설정 파일 등록 이유 · 기능 · 휠 번호 읽는 법 · 공구 파일 생성 규칙(저장 위치 · 경로 100 byte) · 갱신 · 확인 필요(ToolRoom 버전 표기).
+
+영향받은 페이지: [[cadcam/ToolRoom-Claude-연동]], [[index]], [[cadcam/CAD-3D-프로그램-역할-정의]]
+출처 추가: [VEN-ANTHROPIC-CONNECTOR-UNLISTED], [VEN-MCP-LOCAL-SERVERS]
+
 ## [2026-11-23] 신규 — standards/세션-위키-작업절차 (CLAUDE.md 줄이기 2차)
 
 CLAUDE.md §0-A2 · §0-B · §8 · §15-4 원문을 그대로 옮기고 CLAUDE.md 에는 요약 · 🔴 규칙만 남김(447 → 371줄). 계기: 공식 권장 200줄 아래 · Cowork 는 `.claude/rules/` 경로 규칙이 안 켜짐(11-23 시험).

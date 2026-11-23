@@ -1,4 +1,23 @@
-﻿## 2026-11-23 (#10) 핸드오프 — Cowork (컴퓨터2 ToolRoom 연동 결정 반영)
+﻿## 2026-11-23 (#11) 핸드오프 — Cowork (챗 핸드오프 추가3 반영 · SkillSpector)
+
+- 한 일: Drive 「챗핸드오프_20261123」 4개 파일 순서 확인 — 앞 세 개(본편 · 트렌딩10 · 추가2)와 추가2 측정은 #2 · #4 · #5 에서 반영 · 측정 끝남(이후 #6 · #7 rules 시험, #8 CLAUDE.md 2차). 남은 추가3(hongik.man, NVIDIA SkillSpector) 반영 — README §4-2 1행(판정 「도입 — 검토 도구로만」) · 표 아래 시험 기록 ※ 1줄 · §4-1 2단계 1줄 · decisions 2026-11-23 (1) ② 덧붙임 · 추가2 측정은 CLAUDE.md 2차 뒤 현재 크기로 다시 잼(`outputs/CLAUDE_md_측정_20261123.md` §7)
+- 고친 곳(챗 원문 → 반영본, 판정은 그대로): 근거 칸 「챗 11-23 시험(아래 §3)」 → 「챗 11-23 시험(표 아래 ※ SkillSpector 시험)」 — README 안에 §3 이 가리킬 곳이 없어 시험 표를 표 아래 ※ 한 줄로 옮김
+- 결과/산출물: `wiki/_handoff/skills-custom/README.md` · `decisions.md` · `worklog.md` — 백업 `.bak_20261123k` 3개
+- 미완·블로커: 시험 재현 안 함 — Cowork 클라우드 작업 공간에서 SkillSpector 설치가 권한 판정으로 막힘(외부 패키지 설치). 저장소 메타만 확인
+- 다음 단계 제안: 커밋(README.md · decisions.md · worklog.md)
+- 검토: R4 주 · R5 — 통과 4(저장소 원본 확인: Apache-2.0 · v2.12.0 · 패턴 71개 · 17분류 · `--no-llm` 옵션 실재 · 기존 기록 grep 0 · 반영 뒤 다시 읽기 · 표 열 수 6) · 확인 필요 1(챗 시험 4건 재현) · 통과 뒤 지적 0
+- 챗으로 가져갈 질문: 없음
+
+## 2026-11-23 (#11) 핸드오프 — Cowork (ToolRoom–Claude 연동 위키 페이지)
+
+- 한 일: 한경준님 승인 → decisions 2026-11-23 (3) ~ (6) 을 위키 페이지로 · Claude 공식 문서 2건 원문 확인 후 출처 등재
+- 결과/산출물: `wiki/cadcam/ToolRoom-Claude-연동.md` 신규 · `sources.md` [VEN-ANTHROPIC-CONNECTOR-UNLISTED] · [VEN-MCP-LOCAL-SERVERS] · `index.md` · `log.md` · `cadcam/CAD-3D-프로그램-역할-정의.md` 관련 페이지 1줄(백업 `.bak_20261123t`)
+- 미완·블로커: ToolRoom 버전 표기(컴퓨터2 9.22 Build 682 ↔ 위키 RN32.1-1 · RN35) · 경로 한계 100 ~ 105 byte 정확값 · `4FCO_R05_T1.tom` 실가공 — 페이지 §7
+- 다음 단계 제안: 커밋 · 컴퓨터2 에서 ToolRoom 정보 화면(RN 번호) 한 번 확인
+- 검토: R4 주 · R2 · R1 — 통과 6(링크 9개 실재 · 출처 ID 2개 등재 확인 · 공식 문서 2건 원문 대조 · 실명 검사 0개 · index · log 등재 grep · 새 페이지 수치 = decisions 원문) · 확인 필요 1(버전 표기) · 통과 뒤 지적 0
+- 챗으로 가져갈 질문: 없음
+
+## 2026-11-23 (#10) 핸드오프 — Cowork (컴퓨터2 ToolRoom 연동 결정 반영)
 
 - 한 일: Drive 「cnc-wiki 인계/컴퓨터2/decisions_추가분_2026-11-23.md」(컴퓨터2 Cowork) 4건을 decisions 맨 위에 원문 그대로 · 순서 그대로 넣음 — (6) MCP 등록 · (5) 휠 번호 아버 끝부터 · (4) .tom 경로 100 byte · (3) 저장 위치 `_Claude\` · 출처 줄에 Drive 경로 덧붙임
 - 결과/산출물: `wiki/_handoff/decisions.md`(백업 `.bak_20261123y`) · 인계 사본 `outputs/챗핸드오프_20261123_컴퓨터2_ToolRoom연동.md`(추적 제외)

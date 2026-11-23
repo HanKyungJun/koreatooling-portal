@@ -569,6 +569,8 @@
 - **[VEN-FREECAD-MCP]** neka-nat. *freecad-mcp* 0.1.27 — PyPI 배포본 소스(`freecad_mcp/server.py` · `headless.py`) · 애드온 `FreeCADMCP/rpc_server/settings.py`. https://pypi.org/project/freecad-mcp/0.1.27/ (확인일: 2026-11-19). `--freecadcmd` 값을 `shlex.split`(POSIX)으로 나눔 — Windows 경로는 따옴표 + `/` · 지정이 없으면 PATH · Flatpak 에서 자동 탐색 · RPC 포트 9875 · 애드온 `auto_start_rpc` 기본 False. 인용: [[cadcam/CAD-3D-프로그램-역할-정의]]
 - **[VEN-ANTHROPIC-PROJECTS-SHARING]** Anthropic 도움말. *Manage project visibility and sharing* https://support.claude.com/en/articles/9519189-manage-project-visibility-and-sharing (확인일: 2026-10-28). 프로젝트 공유 = Team · Enterprise 요금제, 같은 조직 구성원에게 이름 · 메일로 추가, 권한 「보기(Can view)」 · 「편집(Can edit)」, 프로젝트 안 대화는 따로 공유하지 않으면 각자만 봄. 조직 밖 사용자 공유는 문서에 없음. 신뢰도: **제조사 기준**. (2026-10-28 등재)
 - **[VEN-ANTHROPIC-PROJECTS-RAG]** Anthropic 도움말. *Retrieval augmented generation (RAG) for projects* https://support.claude.com/en/articles/11473015-retrieval-augmented-generation-rag-for-projects (확인일: 2026-10-28). 프로젝트 지식이 컨텍스트 한도에 가까워지면 자동으로 RAG(관련 부분만 검색)로 바뀜 · 사용자가 고를 수 없음 · 화면에 표시 · 중요한 사실은 원본 대조 권고. 신뢰도: **제조사 기준**. (2026-10-28 등재)
+- **[VEN-ANTHROPIC-CONNECTOR-UNLISTED]** Anthropic. *Add a connector that isn't in the directory* (Claude 문서) https://claude.com/docs/connectors/custom/add-unlisted (확인일: 2026-11-23). 원격 MCP 는 URL 로 커스텀 커넥터 추가 · 로컬은 데스크톱 확장(.mcpb, Settings > Extensions) · 「조직이 확장을 끄면 설정에 Extensions 가 나타나지 않음」 · Team · Enterprise 는 Owner 가 커스텀 커넥터를 추가. 신뢰도: **제조사 기준**. → [[cadcam/ToolRoom-Claude-연동]] (2026-11-23 등재)
+- **[VEN-MCP-LOCAL-SERVERS]** Model Context Protocol. *Connect to local MCP servers* https://modelcontextprotocol.io/docs/develop/connect-local-servers (확인일: 2026-11-23). Claude Desktop 설정 파일 위치 Windows `%APPDATA%\Claude\claude_desktop_config.json` · `mcpServers` 등록 · 저장 뒤 앱을 완전히 종료하고 재실행 · 경로는 절대 경로 · 로그 `%APPDATA%\Claude\logs`(`mcp.log` · `mcp-server-이름.log`). 신뢰도: **제조사 기준**. → [[cadcam/ToolRoom-Claude-연동]] (2026-11-23 등재)
 - **[VEN-AUTODESK-FUSION-OUTPUTOPT]** Autodesk. *Fusion CAM 도움말 — Output Options dialog*. https://help.autodesk.com/cloudhelp/2025/ENU/FCAM/files/GUID-B7038103-EE81-407B-BB88-579997906D9B.htm (2026-10-23 접근). 허용차(Tolerance) 0.01 mm · 출력 필터 50 % 예시 → 최종 오차 0.005 ~ 0.015 mm · 직선을 원호로 근사(XY · YZ · XZ 평면만) · 원호를 못 다루는 기계용 직선 변환 옵션. 기본값은 문서에 없음. CAM 원호 맞춤 오차 비교용(decisions 2026-10-23 (3)).
 
 ## 3. 공구 카탈로그 (Tool Catalogs — 보유)
@@ -713,6 +715,7 @@
 ### Blender 3D 시각화 페이지 매핑 (2026-10-22 등재)
 
 - [[cadcam/Blender-3D-시각화-MCP-연동]] → [VEN-BLENDER-LAB-MCP] · [VEN-ANTHROPIC-BLENDER-CONNECTOR]
+- [[cadcam/ToolRoom-Claude-연동]] → [VEN-ANTHROPIC-CONNECTOR-UNLISTED] · [VEN-MCP-LOCAL-SERVERS]
 
 ### CAD · 3D 프로그램 역할 정의 페이지 매핑 (2026-11-12 등재)
 
