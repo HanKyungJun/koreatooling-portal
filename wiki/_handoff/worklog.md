@@ -1,4 +1,13 @@
-﻿## 2026-11-23 (#5) 핸드오프 — Cowork (챗 핸드오프 추가2 반영 · CLAUDE.md 측정)
+﻿## 2026-11-23 (#6) 핸드오프 — Cowork (.claude/rules 읽힘 시험)
+
+- 한 일: 한경준님 승인 → 시험 규칙 2개 생성(`.claude/rules/zz-시험A.md` 무조건 · `zz-시험B.md` holidays.md 경로) · 진행 중 세션에서 시험 B — device_bash 읽기 · 사본 Read 둘 다 문구 안 들어옴
+- 결과/산출물: `outputs/CLAUDE_md_측정_20261123.md` §5(결과 칸)
+- 미완·블로커: 새 Cowork 세션 시험 A · B · Claude Code `/memory` 대조군(한경준님) → 결과 받으면 README §4-2 행 판정 · 시험 파일 `_to_delete/` 로
+- 다음 단계 제안: 🔴 `.claude/rules/zz-시험*.md` 2개는 커밋하지 않는다(git add 경로 지정이라 안 들어감 · git-commit.bat 은 쓰지 않기)
+- 검토: R4 주 — 통과 3(파일 2개 생성 ls · git ?? 미추적 · 진행 중 세션 시험 B 2가지 경로) · 확인 필요 1(새 세션 결과) · 통과 뒤 지적 0
+- 챗으로 가져갈 질문: 없음
+
+## 2026-11-23 (#5) 핸드오프 — Cowork (챗 핸드오프 추가2 반영 · CLAUDE.md 측정)
 
 - 한 일: Drive 「챗핸드오프_20261123_추가2_폴더구조.md」 — README §4-2 끝에 1행(Claude Code 폴더 구조, 판정 「일부」) · 「다시 볼 조건」의 「아래 §2」 → 「worklog 2026-11-23 #5」(README 안에서 가리킬 곳이 없어서) · §2 측정만 함(CLAUDE.md · rules 안 만듦 · 안 고침). 앞 두 파일은 #2 · #4 에서 반영돼 있음을 재확인
 - 결과/산출물: `wiki/_handoff/skills-custom/README.md`(25행) · `outputs/CLAUDE_md_측정_20261123.md`(표 · 시험 방법, 추적 제외) — CLAUDE.md 447줄 · 28,811 B(공식 권장 200줄 아래) · 모든 세션 183줄 / 특정 폴더 136줄 / 절차 129줄 · PC 전용 1줄(59줄 TOOLKOREA 경로) · `.gitignore` 에 CLAUDE.local.md 없음
