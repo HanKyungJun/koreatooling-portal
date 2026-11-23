@@ -1,4 +1,13 @@
-﻿## 2026-11-23 (#6) 핸드오프 — Cowork (.claude/rules 읽힘 시험)
+﻿## 2026-11-23 (#7) 핸드오프 — Cowork (.claude/rules 시험 결과 · 판정)
+
+- 한 일: 새 Cowork 세션 시험(한경준님 실행) — A: 인사 답엔 없음 → holidays.md 읽은 답에 나옴(폴더 첫 접근 때 들어옴) · B(경로 규칙): 안 나옴 ⇒ Cowork 에서 rules 는 CLAUDE.md 를 줄이는 효과 없음 → README §4-2 행 판정 「일부」 → 「제외」(옛 값 취소선 병기)
+- 결과/산출물: `wiki/_handoff/skills-custom/README.md` · `outputs/CLAUDE_md_측정_20261123.md` §5 · §6 · 시험 파일 2개 → `_to_delete/규칙시험_20261123/`
+- 미완·블로커: CLAUDE.md 줄이기(「절차」 129줄 → 기존 스킬) 한경준님 승인 대기 · Claude Code `/memory` 대조는 공식 문서로 갈음해 안 함
+- 다음 단계 제안: 승인되면 CLAUDE.md 개정 → decisions(규칙 변경)
+- 검토: R4 주 — 통과 4(시험 A · B 결과 기록 · 판정 행 grep · 시험 파일 이동 ls · .claude git 깨끗) · 확인 필요 0 · 통과 뒤 지적 0
+- 챗으로 가져갈 질문: 없음
+
+## 2026-11-23 (#6) 핸드오프 — Cowork (.claude/rules 읽힘 시험)
 
 - 한 일: 한경준님 승인 → 시험 규칙 2개 생성(`.claude/rules/zz-시험A.md` 무조건 · `zz-시험B.md` holidays.md 경로) · 진행 중 세션에서 시험 B — device_bash 읽기 · 사본 Read 둘 다 문구 안 들어옴
 - 결과/산출물: `outputs/CLAUDE_md_측정_20261123.md` §5(결과 칸)

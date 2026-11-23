@@ -89,6 +89,6 @@
 | ffmpeg-skill | 확인 안 함 | 인스타 (_choosit 11-23) | 제외 — 영상 편집 업무 없음, 필요하면 말로 시켜 ffmpeg 명령을 짜는 것은 지금도 됨 | 챗 11-23 | — |
 | hyperframes · claude-animated-shorts · line-art-animation | 확인 안 함 | 인스타 (_choosit 11-23) | 제외 — 영상 · 애니메이션 제작은 업무 범위 밖 | 챗 11-23 | — |
 | instagram-agent-skill | 확인 안 함 | 인스타 (_choosit 11-23) | 제외 — 업무 무관(릴스 문구 점수) | 챗 11-23 | — |
-| Claude Code 폴더 구조 (CLAUDE.md · rules · skills · agents · hooks) | 게시물 (dannyoff.ai, 원 구성 shiva.bytes) · 공식 문서 code.claude.com/docs/en/memory | 인스타 (11-23) | 일부 — `.claude/rules/`(경로 지정 규칙)만 후보, 나머지는 이미 있음(CLAUDE.md · 계정 스킬 · 검수 스킬 · git pre-commit 훅) | 챗 11-23 | CLAUDE.md 측정(worklog 2026-11-23 #5) 결과를 보고 판단 |
+| Claude Code 폴더 구조 (CLAUDE.md · rules · skills · agents · hooks) | 게시물 (dannyoff.ai, 원 구성 shiva.bytes) · 공식 문서 code.claude.com/docs/en/memory | 인스타 (11-23) | 제외(11-23 시험) — Cowork 에서 경로 규칙은 안 켜지고, 무조건 규칙은 CLAUDE.md 와 같이 폴더 첫 접근 때 들어와 맥락이 안 줆. 나머지는 이미 있음(CLAUDE.md · 계정 스킬 · 검수 스킬 · git pre-commit 훅). ~~일부 — `.claude/rules/`(경로 지정 규칙)만 후보~~(챗 11-23) | 챗 11-23 · Cowork 시험 11-23(worklog 2026-11-23 #5 · #7) | Cowork 가 경로 규칙을 지원한다고 공지될 때 · Claude Code 전용 작업이 늘 때 |
 
 ※ 게시물에 함께 붙은 주장 중 확인한 것: ECC 해커톤 우승은 Anthropic · Forum Ventures 공동 주최(2025-09), 「하버드 연구」는 맞춤 제작 AI 튜터 · 물리 2개 주제 · 단기 결과(Kestin 외, Scientific Reports 2025), 「20시간이면 충분」은 연구가 아니라 Josh Kaufman 의 책 주장. 위키 근거로 쓰지 않는다.
