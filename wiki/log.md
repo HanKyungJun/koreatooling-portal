@@ -1,3 +1,10 @@
+## [2026-11-24] 신규 — troubleshoot/장비-전원-갑자기-꺼짐
+
+F 장비 전원 꺼짐(11-24 오후) 진단덤프 분석 — ErrorLog.epl `dsc Power Up Log` 에 Power failure 2회(PC 시각 13:48:14 · 13:52:17), 평소 퇴근 종료(ALM 0105 → AMCore Shutdown)와 다름. Windows W32Time · Serial 오류는 부팅 때마다 찍히는 무해한 기록. UPS 감시 기록(Rupsd.evt)은 2024 ~ 2026-06 정전 6건을 받아 냈으나 이번엔 기록 없음 → UPS 미동작 추정. 11-23 13:04 ALM 8010 · 0138 도 같은 시간대.
+
+영향받은 페이지: [[troubleshoot/장비-전원-갑자기-꺼짐]], [[index]]
+출처 추가: [VEN-MEGATEC-RUPS2000]
+
 ## [2026-11-23] 신규 — cadcam/ToolRoom-Claude-연동
 
 컴퓨터2 ToolRoom–Claude 연동 결정 4건(decisions 2026-11-23 (3) ~ (6))을 위키 페이지로 — 구성 · 설정 파일 등록 이유 · 기능 · 휠 번호 읽는 법 · 공구 파일 생성 규칙(저장 위치 · 경로 100 byte) · 갱신 · 확인 필요(ToolRoom 버전 표기).
