@@ -105,6 +105,8 @@
 | Astryx 아스트릭스(메타 화면 부품 세트, 베타) | astryx.atmeta.com (Meta, MIT) | 인스타 (aiscene.kr 11-24) | 제외 — 화면 부품은 코고툴 디자인 시스템이 기본 · 아직 베타 | 챗 11-24 | — |
 | Claude 트레이딩 스킬 | 확인 안 함 | 인스타 (aiscene.kr 11-24) | 제외 — 업무 무관(개인 투자용) | 챗 11-24 | — |
 | 러스트 애니링(가칭 — 영문 이름 확인 안 함) | 확인 안 함 | 인스타 (aiscene.kr 11-24) | 제외 — 느린 프로그램을 Rust 로 조금씩 옮기는 도구, 사내 필요 없음 · 생긴 지 6일 | 챗 11-24 | — |
+| youtube-agent-skill (스킬 11개 — 대본 훅 · 제목 썸네일 · 댓글 답장 · 업로드 계획 등) | github.com/Jakeschincariol/youtube-agent-skill (MIT) | 인스타 (yonkyeong_ai_cheat 11-24) | 제외 — 업무 무관(유튜브 채널 운영), instagram-agent-skill 과 같은 경우. ※ 게시물의 설치법(저장소 주소를 Claude Code 에 붙여 「설치해 줘」 · SKILL.md 를 채팅 맨 위에 붙여 넣기)은 4-1 의 검사 단계를 건너뛰는 방식이라 따르지 않음 | 챗 11-24 | — |
+| Claude Code 로 와이파이 점검 · 수정(요령) | 게시물 (shimteamjjang_ai) — 출처로 단 code.claude.com/docs/en/desktop 은 데스크톱 앱 안내 문서라 점검 효과의 근거 아님, 「고칠 것 23개 · 속도 두 배」는 게시물 스스로 한 사람 결과라고 적음 | 인스타 (11-24) | 제외(회사) — 연결 기기를 전부 훑고 공유기 설정을 바꾸는 방식. 사내망은 전산 담당 소관이고 장비가 붙어 있으며 ERP 도 이 회선으로 접속함(서버는 사무실 밖), 사내 시스템 무단 시험 호출 금지 원칙(tasks-archive 「ERP 서비스 외부 접속」 ⚠️), 공유기 관리자 비밀번호를 대화에 넣지 않음 | 챗 11-24 | — |
 
 ※ SkillSpector 시험(챗 샌드박스 2026-11-23, v2.12.0, `--no-llm`): 악성 견본(챗이 만든 것 — 숨은 주석 지시 + 환경변수 중 KEY · TOKEN 외부 전송) 위험 100 · DO_NOT_INSTALL · HIGH 6 → 숨은 지시 · 유출 모두 잡음 / python-review 1차안(11-19 챗) 위험 7 · SAFE · MEDIUM 1 → 정상 / im-not-ai DO_NOT_INSTALL · HIGH 9(캐시 파일 제외) → 시험 · 설치 스크립트와 git 훅의 명령 실행이 걸림, 악성 아님(오탐) / cloudflare/security-audit-skill 위험 86 · DO_NOT_INSTALL · HIGH 6 → 공격 유형을 설명하는 보안 문서가 걸림, 오탐. ⇒ 명백한 악성은 잡지만 정상 스킬도 「설치 금지」로 자주 나와 지적 줄 판독까지 해야 판정. LLM 분석 단계는 외부 API 키가 필요해 쓰지 않음. 저장소 메타(라이선스 · 버전 · 패턴 수 · `--no-llm` 옵션)는 Cowork 가 원본 저장소에서 확인(11-23), 시험 재현은 안 함
 

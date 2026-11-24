@@ -1,4 +1,14 @@
-﻿## 2026-11-24 (#1) 핸드오프 — Cowork (챗 핸드오프 11-24 반영 · 인스타 주간 트렌딩)
+﻿## 2026-11-24 (#2) 핸드오프 — Cowork (챗 핸드오프 11-24 (2) · (3) 반영)
+
+- 한 일: Drive 「cnc-wiki 인계」 챗핸드오프_20261124_2_유튜브스킬 · _3_와이파이점검 반영 — README §4-2 표 끝(러스트 애니링 행 뒤)에 2행. (1) 인스타 주간트렌딩은 #1 에서 반영 끝. 판정은 그대로, decisions 안 고침(결정 기록 기준에 안 걸림)
+- 고친 곳(챗 원문 → 반영본): 유튜브 원본 「저장소 확인 안 함」 → 「github.com/Jakeschincariol/youtube-agent-skill (MIT)」(저장소 실재 · 스킬 11개 확인) · 와이파이 근거 「장비 · ERP 서버가 붙어 있음」 → 「장비가 붙어 있으며 ERP 도 이 회선으로 접속함(서버는 사무실 밖)」 — ERP 서버는 사무실 밖(tasks-archive 「ERP 서비스 외부 접속」 11-20 실측)과 모순이라 고침
+- 결과/산출물: `wiki/_handoff/skills-custom/README.md` · `worklog.md` — 백업 `.bak_20261124b` 2개
+- 미완·블로커: 없음 — Drive 내 드라이브 첫 화면의 11-23 챗핸드오프 4개(본편 인스타스크랩 · 추가_트렌딩10 · 추가2_폴더구조 · 추가3_스킬검사) 휴지통으로 보냄(경준님 승인, 반영 확인 worklog 11-23 #2 · #4 · #5 · #12)
+- 다음 단계 제안: 커밋(README.md · worklog.md)
+- 검토: R4 주 · R5 — 통과 4(데스크톱 문서에 와이파이 · 공유기 내용 없음 확인 · 유튜브 저장소 실재 · 기존 기록 grep 0 · 반영 뒤 다시 읽기 표 열 수 6) · 통과 뒤 지적 0
+- 챗으로 가져갈 질문: 없음
+
+## 2026-11-24 (#1) 핸드오프 — Cowork (챗 핸드오프 11-24 반영 · 인스타 주간 트렌딩)
 
 - 한 일: Drive 「cnc-wiki 인계/챗핸드오프_20261124_인스타_주간트렌딩.md」(aiscene.kr, 깃허브 주간 인기 11개) 반영 — README §4-2 표 끝(SkillSpector 행 뒤)에 9행 · 챗 11-24 인스타 1건 판정 11행(ffmpeg · Last 30 Days 는 이력 표에 있어 행 추가 안 함). 기존 기록 grep(README · decisions · decisions-archive · tasks · wiki) 0건 — 겹침 · 모순 없음. 결정 기록 기준(조건 · 안전 · 대외 · 돈 · 규칙)에 안 걸려 decisions 는 안 고침
 - 고친 곳(챗 원문 → 반영본, 판정은 그대로): Modern Web Guidance 「1.0 = 2026-11-13」 → 「1.0 = 2026-11-10 발표 · 11-13 정리 글」(Chrome 블로그 v1 발표 11-10, 11-13 은 정리 글) · 「확인 안 함」 원본 5개 채움 — Univer dream-num/univer (Apache-2.0) · Open Code Review alibaba/open-code-review (Apache-2.0) · Plannotator backnotprop/plannotator · AG-UI ag-ui-protocol/ag-ui · 아스트릭스 = Astryx (astryx.atmeta.com, Meta, MIT, 베타). Claude 트레이딩 스킬 · 러스트 애니링은 이름이 불확실해 「확인 안 함」 그대로
