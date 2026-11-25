@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<!--
+  치수 기호도 양식 v1 (2026-11-25) — cnc-wiki 「치수 기호도 만들어 줘」(dimension-symbol-sheet) 스킬이 복사해서 쓴다.
+  고칠 곳: ① 머리칸(제목 · 도면 번호 · 판 · 값 출처) ② <script> 의 V 값 · 그리기 함수(공구 형상이 다르면 정면도 path)
+           ③ 오른쪽 기호 표 ④ 시리즈 표 ⑤ 주기. 값은 카탈로그 · 도면(STEP) 등 출처가 있는 것만, 없으면 [TBD].
+  지금 들어 있는 값은 tool-generator 샘플(2026-11-12, 모양 확인용 추정값)이다.
+  그리기 도구(dimH · dimV · callout · nb · detailRef · table · begin)와 시트 짜임은 아래 저장소에서 가져와 고쳤다:
+  dimensional-drawing — https://github.com/enesozturk/dimensional-drawing
+  Copyright (c) 2026 Enes Ozturk — MIT License (전문: 같은 폴더 LICENSE-dimensional-drawing.txt)
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>치수 기호도 양식 v1 — 4날 코너R 넥 엔드밀 (견본)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap">
+<style>
+/* dimensional-drawing 스킬(enesozturk, MIT) 규칙을 따른 사내 양식: 흑백, 기호(변수) 치수, 표에 값·식 */
+:root{--paper:#ececec;--sheet:#ffffff;--ink:#111;--ink2:#444;--ink3:#7a7a7a;--fill:#f3f3f3;--fill2:#e6e6e6;--f:'Noto Sans KR','Noto Sans CJK KR','Malgun Gothic',Arial,sans-serif;color-scheme:light}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f)}
+.wrap{max-width:1760px;margin:0 auto;padding:24px 16px 40px}
+.scroll{overflow-x:auto;background:var(--sheet);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+svg{display:block;width:100%;min-width:1100px;height:auto}
+.tb{background:var(--sheet);display:grid;grid-template-columns:2.2fr 1fr 1fr 1fr;margin-bottom:24px;border:1.2px solid var(--ink);border-radius:16px;overflow:hidden}
+.tb>div{border-right:.8px solid var(--ink);border-bottom:.8px solid var(--ink);padding:10px 14px;min-width:0}
+.tb>div:nth-child(4),.tb>div:nth-child(7){border-right:0}
+.tb .big{grid-row:span 2;display:flex;flex-direction:column;justify-content:space-between;gap:12px}
+.tb h1{font-size:clamp(24px,3.4vw,38px);line-height:1.1;margin:4px 0 0;font-weight:400;letter-spacing:.06em}
+.lbl{letter-spacing:.06em;font-size:10px;color:var(--ink2)}
+.tb .v{font-size:13px;margin-top:2px;font-variant-numeric:tabular-nums}
+.tb .big .v{font-size:12px;color:var(--ink2);line-height:1.6}
+.tb .notes{grid-column:1/-1;border-right:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:6px 24px;font-size:12px;line-height:1.8}
+.tb .notes ol{margin:4px 0 0;padding-left:20px}
+.tb .nh{font-weight:700;font-size:13px}
+.tb .nh span{font-weight:400;font-size:11.5px;margin-left:6px}
+.tb .figs{grid-column:1/-1;border-right:0;border-bottom:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px 18px}
+.tb .figs>div{border-left:.8px solid var(--ink);padding-left:14px}
+.tb .figs>div:first-child{border-left:0;padding-left:0}
+.tb .figs .v{font-size:17px;margin-top:4px}
+.foot{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:11px;letter-spacing:.06em;color:var(--ink2);padding:10px 2px 0}
+.foot b{font-weight:700;color:var(--ink)}
+.border{fill:none;stroke:var(--ink);stroke-width:1.2}
+.obj{fill:var(--sheet);stroke:var(--ink);stroke-width:1.6;stroke-linejoin:round}
+.objf{fill:var(--fill);stroke:var(--ink);stroke-width:1.6;stroke-linejoin:round}
+.thin{fill:none;stroke:var(--ink);stroke-width:.8}
+.hid{fill:none;stroke:var(--ink2);stroke-width:.8;stroke-dasharray:4 3}
+.ph{fill:none;stroke:var(--ink3);stroke-width:.8;stroke-dasharray:14 3 3 3}
+.cl{fill:none;stroke:var(--ink3);stroke-width:.7;stroke-dasharray:16 3 2 3}
+.dl{stroke:var(--ink);stroke-width:.7;fill:none}
+.ext{stroke:var(--ink);stroke-width:.55;fill:none}
+.arrow{fill:var(--ink)}
+.hl{stroke:var(--ink2);stroke-width:.7}
+.hel{stroke:var(--ink2);stroke-width:.8;fill:none}
+.dt{font:400 12px var(--f);fill:var(--ink);paint-order:stroke;stroke:var(--sheet);stroke-width:4px;stroke-linejoin:round}
+.dts{font:400 10px var(--f);fill:var(--ink2);letter-spacing:.04em;paint-order:stroke;stroke:var(--sheet);stroke-width:3px}
+.nt{font:400 12px var(--f);fill:var(--ink)}
+.nth{font:700 13px var(--f);fill:var(--ink)}
+.vt{font:400 13px var(--f);fill:var(--ink);letter-spacing:.08em}
+.nb{fill:var(--sheet);stroke:var(--ink);stroke-width:.9}
+.nbt{font:400 10px var(--f);fill:var(--ink)}
+.lead{stroke:var(--ink);stroke-width:.7;fill:none}
+.dot{fill:var(--ink)}
+.th{font:700 11px var(--f);fill:var(--ink)}
+.tc{font:400 11px var(--f);fill:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="tb">
+    <div class="big">
+      <div><div class="lbl">공구 · 치수 기호도</div><h1>4날 코너R 넥 엔드밀</h1></div>
+      <div class="v">한 시리즈의 형상을 기호로만 그림. 품번별 값은 오른쪽 표 · 카탈로그 표에서 읽는다. 제작 도면 아님.</div>
+    </div>
+    <div><div class="lbl">도면 번호</div><div class="v">REF-EM4F-CR-N-001</div></div>
+    <div><div class="lbl">판</div><div class="v">견본 · 2026-11-25</div></div>
+    <div><div class="lbl">시트</div><div class="v">1</div></div>
+    <div><div class="lbl">단위</div><div class="v">mm · 각도 °</div></div>
+    <div><div class="lbl">척도</div><div class="v">비례 아님 (도식)</div></div>
+    <div><div class="lbl">값 출처</div><div class="v">tool-generator 샘플 2026-11-12</div></div>
+    <div class="notes">
+      <div><span class="nh">주기:<span>(따로 적지 않으면)</span></span><ol>
+        <li>그림에서 재지 말 것. 값은 표에서 읽는다.</li>
+        <li>모든 치수는 기호(D, d, L …). 값과 계산식은 표에 있다.</li>
+        <li>표 값은 생성기 샘플(모양 확인용 · 추정값). 양산 · 대외 값 아님.</li></ol></div>
+      <div><span class="nh" aria-hidden="true">&nbsp;</span><ol start="4">
+        <li>근거 없는 값은 [TBD] — 지어내지 않는다.</li>
+        <li>소재 · 코팅은 비워 두고 도면 작성 때 채운다.</li>
+        <li>투상법 3각법. 흑백 — 색은 범위 밖.</li></ol></div>
+    </div>
+    <div class="figs">
+      <div><div class="lbl">D · 날경</div><div class="v">6</div></div>
+      <div><div class="lbl">d · 생크경</div><div class="v">6 h6</div></div>
+      <div><div class="lbl">L · 전장</div><div class="v">50</div></div>
+      <div><div class="lbl">Lc · 날장</div><div class="v">9</div></div>
+      <div><div class="lbl">L2 · 유효장</div><div class="v">18</div></div>
+      <div><div class="lbl">c · 넥 여유</div><div class="v">(D − dn) ÷ 2</div></div>
+      <div><div class="lbl">P · 리드</div><div class="v">π·D ÷ tan β</div></div>
+    </div>
+  </header>
+  <div class="sheetwrap"><div class="scroll"><svg id="sh1" viewBox="0 0 1700 1060" role="img" aria-label="엔드밀 치수 기호 참조도: 정면도, 끝면도, 상세 A 코너 R, 상세 B 넥 테이퍼, 단면 B-B, 기호 표"></svg></div>
+  <div class="foot"><span>2026-11-25 &nbsp;|&nbsp; 공구 치수 기호도</span><span><b>4날 코너R 넥 엔드밀, 기호</b> &nbsp;|&nbsp; 1</span></div></div>
+</div>
+<script>
+(function(){
+const NS='http://www.w3.org/2000/svg';let sv,A,HAT,uid=0;
+function mk(t,a,p){const e=document.createElementNS(NS,t);for(const k in a)if(a[k]!=null)e.setAttribute(k,a[k]);(p||sv).appendChild(e);return e}
+function tx(x,y,s,c,a,p){const t=mk('text',Object.assign({x:x,y:y,class:c||'dt'},a||{}),p);t.textContent=s;return t}
+function rr(x,y,w,h,r,c){return mk('rect',{x:x,y:y,width:w,height:h,rx:r,class:c})}
+function begin(id){sv=document.getElementById(id);sv.innerHTML='';const n=uid++;const d=mk('defs',{});const m=mk('marker',{id:'ar'+n,viewBox:'0 0 10 10',refX:10,refY:5,markerWidth:7,markerHeight:7,orient:'auto-start-reverse',markerUnits:'userSpaceOnUse'},d);mk('path',{d:'M0,1.7 L10,5 L0,8.3 z',class:'arrow'},m);
+ const pt=mk('pattern',{id:'hat'+n,width:5,height:5,patternUnits:'userSpaceOnUse',patternTransform:'rotate(45)'},d);mk('line',{x1:0,y1:0,x2:0,y2:5,class:'hl'},pt);A='url(#ar'+n+')';HAT='url(#hat'+n+')';rr(20,20,1660,1020,16,'border')}
+function dimH(x1,x2,y,e1,e2,l,o){o=o||{};[[x1,e1],[x2,e2]].forEach(([x,e])=>{if(e==null)return;const s=Math.sign(y-e)||1;mk('line',{x1:x,y1:e+s*3,x2:x,y2:y+s*5,class:'ext'})});
+ if(x2-x1>=28)mk('line',{x1:x1,y1:y,x2:x2,y2:y,class:'dl','marker-start':A,'marker-end':A});else{mk('line',{x1:x1-13,y1:y,x2:x1,y2:y,class:'dl','marker-end':A});mk('line',{x1:x2+13,y1:y,x2:x2,y2:y,class:'dl','marker-end':A});mk('line',{x1:x1,y1:y,x2:x2,y2:y,class:'dl'})}
+ tx((x1+x2)/2+(o.dx||0),(o.below?y+14:y-5)+(o.dy||0),l,o.c||'dt',{'text-anchor':'middle'})}
+function dimV(y1,y2,x,e1,e2,l,o){o=o||{};[[y1,e1],[y2,e2]].forEach(([y,e])=>{if(e==null)return;const s=Math.sign(x-e)||1;mk('line',{x1:e+s*3,y1:y,x2:x+s*5,y2:y,class:'ext'})});
+ if(y2-y1>=28)mk('line',{x1:x,y1:y1,x2:x,y2:y2,class:'dl','marker-start':A,'marker-end':A});else{mk('line',{x1:x,y1:y1-13,x2:x,y2:y1,class:'dl','marker-end':A});mk('line',{x1:x,y1:y2+13,x2:x,y2:y2,class:'dl','marker-end':A});mk('line',{x1:x,y1:y1,x2:x,y2:y2,class:'dl'})}
+ const c=(y1+y2)/2;if(o.side){const r=o.side==='r';tx(r?x+7:x-7,c+4,l,o.c||'dt',{'text-anchor':r?'start':'end'})}else tx(x-6,c,l,o.c||'dt',{'text-anchor':'middle',transform:'rotate(-90 '+(x-6)+' '+c+')'})}
+function callout(px,py,ex,ey,l,dir){const s=dir||(ex>=px?1:-1);mk('circle',{cx:px,cy:py,r:1.8,class:'dot'});mk('polyline',{points:px+','+py+' '+ex+','+ey+' '+(ex+s*10)+','+ey,class:'lead'});tx(ex+s*14,ey+4,l,'dt',{'text-anchor':s>0?'start':'end'})}
+function nb(x,y,n){mk('rect',{x:x-6,y:y-6,width:12,height:12,class:'nb'});tx(x,y+3.5,String(n),'nbt',{'text-anchor':'middle'})}
+function title(x,y,t,s){tx(x,y,t,'vt',{'text-anchor':'middle'});if(s)tx(x,y+15,s,'dts',{'text-anchor':'middle'})}
+function detailRef(cx,cy,r,lbl,lx,ly){mk('circle',{cx:cx,cy:cy,r:r,class:'ph'});const a=Math.atan2(ly-cy,lx-cx);mk('line',{x1:cx+r*Math.cos(a),y1:cy+r*Math.sin(a),x2:lx,y2:ly,class:'lead'});tx(lx+(lx<cx?-4:4),ly+4,lbl,'dts',{'text-anchor':lx<cx?'end':'start'})}
+function table(x,y,ttl,rows){const ws=[44,96,144],rh=19;tx(x,y-9,ttl,'vt');
+ const all=[['기호','이름','값 · 식']].concat(rows);all.forEach((r,i)=>{let cx2=x;r.forEach((c,j)=>{mk('rect',{x:cx2,y:y+i*rh,width:ws[j],height:rh,class:'thin'});tx(cx2+(j?ws[j]/2:6),y+i*rh+13,c,i?'tc':'th',{'text-anchor':j?'middle':'start'});cx2+=ws[j]})});return y+all.length*rh+38}
+
+/* ---- 값 (mm) : tool-generator 샘플 2026-11-12, 모양 확인용 추정값 ---- */
+const V={D:6,d:6,L:50,Lc:9,L2:18,dn:5.7,R:0.5,beta:35,theta:15,C:0.3,Z:4};
+const c=(V.D-V.dn)/2;                                   // 0.15
+const Lt=c/Math.tan(V.theta*Math.PI/180);               // 0.56
+const P=Math.PI*V.D/Math.tan(V.beta*Math.PI/180);       // 26.92
+const Ls=V.L-V.L2-Lt;                                   // 31.44
+const f2=v=>v.toFixed(2);
+
+begin('sh1');
+
+/* 주기 (왼쪽 위) */
+(function(){const NX=50,NY=60;tx(NX,NY,'주기:','nth');tx(NX+40,NY,'(따로 적지 않으면)','nt');
+ [[1,'날 끝 코너 R — 상세 A'],[2,'넥 → 생크 테이퍼 편측 θ — 상세 B'],[3,'넥 단면 — 단면 B–B'],[4,'코어 지름 dk · 홈 형상 = [TBD] (도식)'],[0,'나선은 도식선 — 실제 리드는 표 P'],[0,'생크 끝 모따기 C'],[0,'정면도의 넥 단차는 과장해서 그림']].forEach(([n,t],i)=>{const y=NY+30+i*24;if(n){nb(NX+6,y-4,n);tx(NX+22,y,t,'nt')}else tx(NX,y,t,'nt')})})();
+
+/* 정면도 — 왼쪽이 날 끝 */
+const k=13, X0=520, CY=400, X=v=>X0+v*k, R_=v=>v*k/2;   // R_(지름)=반지름 px
+(function(){
+ const DNV=5.0; /* 넥 단차 과장(그림만) */ const yT=CY-R_(V.D), yB=CY+R_(V.D), nT=CY-R_(DNV), nB=CY+R_(DNV), sT=CY-R_(V.d), sB=CY+R_(V.d);
+ const r=V.R*k, ch=V.C*k;
+ // 외곽선
+ const p=['M',X(0),yT+r,'Q',X(0),yT,X(0)+r,yT,'L',X(V.Lc),yT,'L',X(V.Lc),nT,'L',X(V.L2),nT,'L',X(V.L2+1.2),sT,'L',X(V.L)-ch,sT,'L',X(V.L),sT+ch,
+          'L',X(V.L),sB-ch,'L',X(V.L)-ch,sB,'L',X(V.L2+1.2),sB,'L',X(V.L2),nB,'L',X(V.Lc),nB,'L',X(V.Lc),yB,'L',X(0)+r,yB,'Q',X(0),yB,X(0),yB-r,'Z'].join(' ');
+ mk('path',{d:p,class:'obj'});
+ // 날부 엷은 채움 + 나선 도식선
+ mk('rect',{x:X(0)+r,y:yT+0.8,width:X(V.Lc)-X(0)-r-0.8,height:yB-yT-1.6,fill:'var(--fill)',stroke:'none'});
+ const off=(yB-yT)*Math.tan(V.beta*Math.PI/180);
+ for(let s=X(0)+8;s<X(V.Lc)+off;s+=30){let x1=s,y1=yB,x2=s-off,y2=yT;
+   if(x1>X(V.Lc)){y1=yB-(x1-X(V.Lc))/off*(yB-yT);x1=X(V.Lc)}
+   if(x2<X(0)+2){y2=yT+(X(0)+2-x2)/off*(yB-yT);x2=X(0)+2}
+   if(y1>y2)mk('line',{x1:x1,y1:y1,x2:x2,y2:y2,class:'hel'})}
+ mk('path',{d:p,class:'obj',fill:'none',style:'fill:none'});
+ // 경계선 (날/넥, 테이퍼 시작/끝)
+ [V.Lc,V.L2,V.L2+1.2].forEach(v=>mk('line',{x1:X(v),y1:(v===V.Lc?yT:sT),x2:X(v),y2:(v===V.Lc?yB:sB),class:'thin'}));
+ mk('line',{x1:X(V.L)-ch,y1:sT,x2:X(V.L)-ch,y2:sB,class:'thin'});
+ mk('line',{x1:X(0)-40,y1:CY,x2:X(V.L)+40,y2:CY,class:'cl'});
+ title((X(0)+X(V.L))/2,yT-118,'정면도','상대 척도 1×');
+ // 위쪽 치수 사슬
+ dimH(X(0),X(V.Lc),yT-30,yT,yT,'Lc');
+ dimH(X(0),X(V.L2),yT-62,yT,nT,'L2');
+ // 아래 전장
+ dimH(X(0),X(V.L),yB+56,yB,sB,'L',{below:true});
+ dimH(X(V.L2+1.2),X(V.L),yB+26,sB,sB,'Ls',{below:true});
+ // 지름
+ dimV(yT,yB,X(0)-48,X(0),X(0),'D');
+ dimV(sT,sB,X(V.L)+46,X(V.L),X(V.L),'d (h6)',{side:'r'});
+ callout(X((V.Lc+V.L2)/2),nB,X((V.Lc+V.L2)/2)+26,yB+96,'dn',1);
+ callout(X(V.L)-ch/2,sT+ch/2,X(V.L)+30,sT-34,'C',1);
+ callout(X(V.Lc*0.55),yT+6,X(V.Lc*0.55)+40,yT-96,'β (나선각)',1);
+ nb(X(0)-14,yB+16,1); detailRef(X(0)+3,yB-3,13,'상세 A',X(0)-50,yB+86);
+ detailRef(X(V.L2+0.6),(nT+sT)/2,15,'상세 B',X(V.L2)+110,yT-36); nb(X(V.L2)+98,yT-36,2);
+ // 단면 B–B 표시
+ const bx=X((V.Lc+V.L2)/2+2.2);
+ [[nT-34,nT-14],[nB+14,nB+34]].forEach(([a,b])=>mk('line',{x1:bx,y1:a,x2:bx,y2:b,class:'dl',style:'stroke-width:1.6'}));
+ tx(bx+6,nT-26,'B','dt');tx(bx+6,nB+34,'B','dt');
+})();
+
+/* 끝면도 (3각법: 왼쪽에서 본 날 끝) */
+(function(){const cx=250,cy=CY,k2=26,Rp=V.D*k2/2;
+ mk('circle',{cx:cx,cy:cy,r:Rp,class:'thin',style:'stroke-dasharray:2 3'});
+ let d='';for(let i=0;i<V.Z;i++){const a0=i*Math.PI/2-Math.PI/4;const a1=a0+Math.PI/2*0.62,a2=a0+Math.PI/2;
+  const p0=[cx+Rp*Math.cos(a0),cy+Rp*Math.sin(a0)],p1=[cx+Rp*Math.cos(a1),cy+Rp*Math.sin(a1)],p2=[cx+Rp*Math.cos(a2),cy+Rp*Math.sin(a2)];
+  const mid=(a1+a2)/2,q=[cx+Rp*0.38*Math.cos(mid),cy+Rp*0.38*Math.sin(mid)];
+  d+=(i?' L ':'M ')+p0.join(',')+' A '+Rp+' '+Rp+' 0 0 1 '+p1.join(',')+' Q '+q.join(',')+' '+p2.join(',')}
+ mk('path',{d:d+' Z',class:'objf'});
+ mk('circle',{cx:cx,cy:cy,r:Rp*0.62,class:'hid'});
+ mk('line',{x1:cx-Rp-20,y1:cy,x2:cx+Rp+20,y2:cy,class:'cl'});mk('line',{x1:cx,y1:cy-Rp-20,x2:cx,y2:cy+Rp+20,class:'cl'});
+ title(cx,cy-Rp-56,'끝면도','상대 척도 2× · 3각법');
+ callout(cx+Rp*0.62*Math.cos(2.5),cy+Rp*0.62*Math.sin(2.5),cx-Rp-10,cy+Rp+40,'dk [TBD]',-1);nb(cx-Rp-6,cy+Rp+20,4);
+ callout(cx+Rp*Math.cos(-0.5),cy+Rp*Math.sin(-0.5),cx+Rp+22,cy-Rp-6,'Z = 4',1);
+})();
+
+/* 아래 줄: 상세 A · 상세 B · 단면 B–B */
+(function(){
+ // 상세 A — 코너 R (상대 6×)
+ const k3=90, ox=180, oy=650;
+ const r=V.R*k3;
+ mk('path',{d:['M',ox,oy+170,'L',ox,oy+r,'A',r,r,0,0,1,ox+r,oy,'L',ox+150,oy].join(' '),class:'obj',style:'fill:none'});
+ mk('path',{d:['M',ox+150,oy-6,'q 6 40 -4 90 q -6 40 4 86'].join(' '),class:'thin'});
+ mk('line',{x1:ox+r,y1:oy+r,x2:ox+r+r*Math.cos(-2.356)*-0+0,y2:oy+r,class:'cl',style:'display:none'});
+ const px=ox+r-r*Math.SQRT1_2,py=oy+r-r*Math.SQRT1_2;
+ mk('circle',{cx:ox+r,cy:oy+r,r:1.8,class:'dot'});mk('line',{x1:ox+r,y1:oy+r,x2:px,y2:py,class:'dl','marker-end':A});
+ tx(px-8,py-10,'R','dt',{'text-anchor':'end'});
+ title(ox+75,oy+218,'상세 A','상대 6× · 날 끝 코너');nb(ox-20,oy-20,1);
+ // 상세 B — 넥→생크 테이퍼 (상대 12×, 반경 방향 과장 없음)
+ const k4=160, bx=480, by=760, cpx=c*k4, ltx=Lt*k4;
+ mk('path',{d:['M',bx,by,'L',bx+90,by,'L',bx+90+ltx,by-cpx,'L',bx+90+ltx+120,by-cpx].join(' '),class:'obj',style:'fill:none'});
+ mk('line',{x1:bx-10,y1:by+60,x2:bx+330,y2:by+60,class:'cl'});
+ mk('line',{x1:bx+90,y1:by,x2:bx+90+ltx+20,y2:by,class:'ext',style:'stroke-dasharray:3 3'});
+ dimH(bx+90,bx+90+ltx,by+30,by,by-cpx,'Lt',{below:true});
+ dimV(by-cpx,by,bx+90+ltx+70,bx+90+ltx,bx+90,'c',{side:'r'});
+ const ang=V.theta*Math.PI/180;mk('path',{d:['M',bx+90+60,by,'A',60,60,0,0,0,bx+90+60*Math.cos(ang),by-60*Math.sin(ang)].join(' '),class:'dl'});
+ tx(bx+90+68,by-6,'θ','dt');
+ tx(bx+40,by-10,'넥 dn','dts');tx(bx+90+ltx+118,by-cpx-10,'생크 d','dts',{'text-anchor':'end'});
+ title(bx+170,by+98,'상세 B','상대 12× · 넥 → 생크 테이퍼');nb(bx-14,by-66,2);
+ // 단면 B–B
+ const sx=1010, sy=790, Rs=V.dn*26/2;
+ mk('circle',{cx:sx,cy:sy,r:Rs,class:'thin',fill:HAT,style:'stroke:var(--ink);stroke-width:1.6'});
+ mk('line',{x1:sx-Rs-18,y1:sy,x2:sx+Rs+18,y2:sy,class:'cl'});mk('line',{x1:sx,y1:sy-Rs-18,x2:sx,y2:sy+Rs+18,class:'cl'});
+ dimH(sx-Rs,sx+Rs,sy-Rs-30,sy,sy,'dn');
+ title(sx,sy+Rs+48,'단면 B–B','상대 2× · 넥 (속이 찬 원형)');nb(sx-Rs-20,sy-Rs-20,3);
+})();
+
+/* 오른쪽 기호 표 */
+(function(){let y=86;const x=1360;
+ y=table(x,y,'지름',[['D','날경','6'],['d','생크경','6 h6 (0/−0.008)'],['dn','넥 지름','5.7'],['c','넥 여유(편측)','(D−dn)÷2 = '+f2(c)],['dk','코어 지름','[TBD]']]);
+ y=table(x,y,'길이',[['L','전장','50'],['Lc','날장','9'],['L2','유효장(넥 끝)','18'],['Lt','테이퍼 길이','c÷tan θ = '+f2(Lt)],['Ls','생크 길이','L−L2−Lt = '+f2(Ls)]]);
+ y=table(x,y,'형상',[['Z','날 수','4'],['R','코너 R','0.5'],['β','나선각','35°'],['P','리드','π·D÷tan β = '+f2(P)],['θ','테이퍼 편측','15°'],['C','생크 끝 모따기','0.3']]);
+ table(x,y,'재료 (도면 작성 때 기입)',[['—','소재',' '],['—','코팅',' ']]);
+})();
+
+/* 시리즈 표 — 품번별 값이 들어갈 자리 (카탈로그 · 몰 상품 표와 같은 열) */
+(function(){const x=1180,y=930,cols=[['품번',110],['D',44],['d',44],['L',44],['Lc',44],['L2',44],['dn',44],['R',44]],rh=19;
+ tx(x,y-9,'시리즈 표 (품번별 값)','vt');
+ const rows=[cols.map(c=>c[0]),['샘플(생성기)','6','6','50','9','18','5.7','0.5'],['[TBD]','…','…','…','…','…','…','…']];
+ rows.forEach((r,i)=>{let cx=x;r.forEach((v,j)=>{mk('rect',{x:cx,y:y+i*rh,width:cols[j][1],height:rh,class:'thin'});tx(cx+cols[j][1]/2,y+i*rh+13,v,i?'tc':'th',{'text-anchor':'middle'});cx+=cols[j][1]})})})();
+})();
+</script>
+</body>
+</html>

@@ -1,3 +1,25 @@
+## 2026-11-25 (#9) 핸드오프 — Cowork (공개 폼 Apps Script 수정 코드)
+
+- 한 일: 저장소 사본 `netlify_to_sheets.gs` 수정 — ① 첨부 공유 「링크가 있는 누구나」 → 「회사 계정 + 링크」(`DOMAIN_WITH_LINK`, 회사 정책상 막히면 소유자만) ② 파일 저장 실패 시 행 · 메일 없이 `error: file` 반환(화면이 실패 안내) ③ 한 번만 손으로 돌리는 `restrictExistingAttachments()`(이미 받은 첨부의 공개 링크를 회사 계정 한정으로, 지우기 · 옮기기 없음). 백업 `netlify_to_sheets.gs.bak_20261125`
+- 시험(작업 공간, Apps Script 대역 함수): 첨부 없음 ok · 첨부 정상 ok + 공유 DOMAIN · 저장 실패 `error: file` + 행 0 · 메일 0 · 도메인 공유 막힘 ok + 소유자만 · 스팸 숨은 칸 ok + 행 0 · 기존 첨부 4개 중 공개 2개만 변경
+- 미완·블로커: 경준님 편집기 작업(붙여넣기 → 같은 배포에 새 버전) · `restrictExistingAttachments` 1회 실행 · 배포본과 저장소 사본 차이는 붙여넣기 전 백업으로 대비
+- 다음 단계 제안: 편집기 반영 뒤 견적 화면에서 첨부 있는 시험 1건 → 시트 · Drive 공유 확인 · 시험 행 삭제. 커밋(netlify_to_sheets.gs · worklog.md)
+- 검토: R4 주 · 코드 리뷰 — 통과 6(대역 시험 6건) · 확인 필요 2(실제 Apps Script 실행 · 회사 계정 도메인 공유 허용 여부)
+- 챗으로 가져갈 질문: 없음
+
+---
+
+## 2026-11-25 (#8) 핸드오프 — Cowork (portal.js 수정 적용 · 실주소 1회 시험)
+
+- 한 일: 승인분 적용 — `dist/portal.js` 제출 처리(fetch 로 응답 `ok` 확인 뒤에만 「접수」, 실패 안내 · 입력 유지 · 30 s 제한, 옛 브라우저는 iframe load 대기) · `dist/portal.css` `.submit-error`(대비 5.72 : 1) · `.hp-field` · 스팸 숨은 칸 `hp_check` 를 `generate.py` `_form_page`(의뢰 · 불량 · 진행 문의) + `dist/estimate.html` 에 추가 → 3개 화면 생성 함수로 재생성, 루트 6개 = dist(cmp). 백업 `.bak_20261125b` 13개
+- 시험: 모의 서버 응답 5가지 × 견적 · 의뢰 = 10건 모두 기대대로(ok 만 접수, 나머지 실패 안내) · 숨은 칸 4화면 화면 밖(x −9999) · Tab 제외 · `hp_check=` 빈 값 전송. **실주소 1회(09:29:06 KST, 경준님 Chrome, 공개 포털 출처)**: 같은 방식 POST → 302 → 응답 `ok` · HTTP 200 · type cors(응답 읽힘) · 2.9 초 — 지금 코드(0.8 초)는 서버 처리가 끝나기 전에 「접수」를 띄우고 있었음
+- 남은 것: 시트 「견적문의」 탭 시험 행 1건(회사명 「[시험] 접수 확인 — 삭제」) 삭제 · 알림 메일 1통 올 수 있음 · GAS 쪽 #2(첨부 공개 공유) · #3(파일 실패도 ok) · #5 배포본 대조 · 숨은 칸 거르기가 배포본에 있는지는 미확인(빈 값이면 영향 없음)
+- 다음 단계 제안: 커밋(dist/portal.js · dist/portal.css · dist/estimate.html · dist/request.html · dist/defect.html · dist/inquiry.html · 루트 같은 6개 · generate.py · wiki/_handoff/worklog.md) → 평소 배포
+- 검토: R4 주 · 코드 리뷰 — 통과 6(node 문법 · py_compile · 모의 10건 · 숨은 칸 4화면 · 실주소 응답 ok/cors · 대비 5.72) · 확인 필요 1(실제 iPhone)
+- 챗으로 가져갈 질문: 없음
+
+---
+
 ## 2026-11-25 (#7) 핸드오프 — Cowork (SkillSpector 검사 · Graphify · Ponytail)
 
 - 한 일: 두 저장소를 샌드박스에 받아 `skillspector scan <저장소> --no-llm`(v2.13.7, NVIDIA 원본 확인) 실행 → 둘 다 DO_NOT_INSTALL · 지적 줄 직접 판독 → 오탐. Drive 「cnc-wiki 인계/챗핸드오프_20261125_SkillSpector_Graphify_Ponytail.md」 업로드 후 한경준님 「진행」으로 바로 반영

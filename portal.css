@@ -39,7 +39,7 @@ main { max-width: 680px; margin: 32px auto; padding: 0 20px 40px; }
   box-shadow: 0 2px 12px rgba(0,0,0,0.08);
 }
 .card-title { font-size: 1.1rem; font-weight: 700; color: #1A3A6B; margin-bottom: 4px; }
-.card-sub   { font-size: 0.8rem; color: #999; margin-bottom: 28px; }
+.card-sub   { font-size: 0.8rem; color: #666; margin-bottom: 28px; }  /* #999 → #666 대비 2.85 → 5.74 : 1 (2026-11-25) */
 
 /* ── 폼 필드 ──────────────────────────────────────── */
 .field { margin-bottom: 18px; }
@@ -51,6 +51,7 @@ main { max-width: 680px; margin: 32px auto; padding: 0 20px 40px; }
   margin-bottom: 6px;
 }
 .req { color: #ea4335; }
+.hint { font-weight: 400; color: #666; font-size: 0.75rem; margin-left: 6px; }  /* 보조 글 — #aaa · #bbb → #666 (2026-11-25) */
 
 .field input[type=text],
 .field input[type=tel],
@@ -60,6 +61,7 @@ main { max-width: 680px; margin: 32px auto; padding: 0 20px 40px; }
 .field select,
 .field textarea {
   width: 100%;
+  background: #fff;   /* 2026-11-25 — 선택 상자가 브라우저 기본 회색으로 나오던 것 */
   padding: 10px 13px;
   border: 1.5px solid #e0e0e0;
   border-radius: 8px;
@@ -123,13 +125,36 @@ main { max-width: 680px; margin: 32px auto; padding: 0 20px 40px; }
   padding: 22px;
   text-align: center;
   cursor: pointer;
-  color: #888;
+  color: #666;   /* #888 → #666 (2026-11-25) */
   font-size: 0.85rem;
   line-height: 1.7;
   transition: border-color 0.15s, background 0.15s;
 }
 .file-drop:hover      { border-color: #1A3A6B; background: #f5f8ff; }
 .file-drop.has-file   { border-color: #34a853; background: #f0faf3; color: #2d7a3a; }
+
+/* ── 규격 · 수량 행 (2026-11-25 — HTML 안 style= 를 옮김: 포커스 테두리가 안 바뀌던 것 · 휴대폰 글 잘림) ── */
+.spec-row { display: grid; grid-template-columns: 1fr 90px; gap: 8px; margin-bottom: 8px; }
+#spec-rows.multi .spec-row { grid-template-columns: 1fr 90px 40px; }   /* 행이 2개 이상일 때만 ✕ 칸 */
+.spec-row input[type=number] { text-align: center; }
+.row-del {
+  background: #fff; color: #ea4335; border: 1.5px solid #e0e0e0; border-radius: 8px;
+  font-size: 1.1rem; cursor: pointer; transition: background 0.15s, border-color 0.15s;
+}
+.row-del:hover { background: #fdecea; border-color: #ea4335; }
+.row-add {
+  margin-top: 4px; padding: 8px 16px; background: #f5f8ff; color: #1A3A6B;
+  border: 1.5px dashed #d0d8f0; border-radius: 8px; font-size: 0.82rem; font-weight: 600;
+  font-family: inherit; cursor: pointer; transition: border-color 0.15s;
+}
+.row-add:hover { border-color: #1A3A6B; }
+
+/* ── 제출 실패 안내 · 스팸 숨은 칸 (2026-11-25 — portal.js 가 서버 응답 'ok' 를 확인한 뒤에만 접수 표시) ── */
+.submit-error {
+  margin: 0 0 12px; padding: 10px 13px; border: 1.5px solid #ea4335; border-radius: 8px;
+  background: #fdecea; color: #b3261e; font-size: 0.85rem; line-height: 1.5;
+}
+.hp-field { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 
 /* ── 인증 오버레이 (직원 전용 페이지) ─────────────── */
 .auth-overlay {
@@ -202,10 +227,15 @@ main { max-width: 680px; margin: 32px auto; padding: 0 20px 40px; }
 .quick-nav a.active { background: rgba(255,255,255,0.2); color: white; }
 
 /* ── 푸터 ──────────────────────────────────────────── */
-footer { text-align: center; padding: 20px; color: #bbb; font-size: 0.75rem; }
+footer { text-align: center; padding: 20px; color: #666; font-size: 0.75rem; }  /* #bbb → #666 (2026-11-25) */
 
 /* ── 반응형 ───────────────────────────────────────── */
 @media (max-width: 560px) {
-  .row2 { grid-template-columns: 1fr; }
+  .row2 { grid-template-columns: 1fr; gap: 0; }   /* gap 0 — 칸 사이 32 · 18 px 들쭉날쭉 (2026-11-25) */
   main  { margin: 16px auto; }
+  .spec-row { grid-template-columns: 1fr 72px; }
+  #spec-rows.multi .spec-row { grid-template-columns: 1fr 72px 40px; }
+  .field input[type=text], .field input[type=tel], .field input[type=email],
+  .field input[type=number], .field input[type=date],
+  .field select, .field textarea { font-size: 16px; }   /* iPhone Safari 16 px 미만 칸 확대 방지 */
 }
