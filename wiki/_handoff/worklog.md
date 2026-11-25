@@ -1,3 +1,36 @@
+## 2026-11-25 (#12) 핸드오프 — Cowork (테스트카드 #9 ④ 통과 · 치수 기호도 스킬 정상본)
+
+- 한 일: ④(「공구 만들어 줘」) 판정 = 통과 — tool-generator 가 불리고 치수 기호도 스킬 안 끼어듦, 산출 폴더 `outputs/02_도면_3D_CAM/공구생성기/EM4F_D6_d6_L50_v2` 확인. 테스트카드 #9 시험 4가지 모두 끝
+- 결과/산출물: `skills-custom/dimension-symbol-sheet/SKILL.md` 정상본(계정본 그대로, fb993c40) · README §1 목록에 새 행 · 테스트카드 #9 마감
+- 미완·블로커: review-role 계정본 md5 대조(다음 세션) · 묶음 수정 승인 대기 · 개인정보 안내 방식 결정
+- 다음 단계 제안: 커밋(테스트카드.md · README.md · review-role/SKILL.md · review-role/SKILL.개정안_20261125.md · dimension-symbol-sheet/SKILL.md · worklog.md)
+- 검토: R4 주 — 통과 3(산출 폴더 ls · 정상본 md5 · README 행) · 확인 필요 0
+- 챗으로 가져갈 질문: 없음
+
+---
+
+## 2026-11-25 (#11) 핸드오프 — Cowork (테스트카드 #9 ① 재시험 통과 · review-role 정상본 교체)
+
+- 한 일: ① 재시험(수정 뒤 request.html) 판정 = 통과 — code-review 함께 · R6-A 표 없음 · `ok` 일 때만 완료 확인. review-role 정상본 교체(개정안 2판 58bf3f77, 옛 74005e46 → `.bak_20261125`) · README §1 행 · §2 후보 ✅
+- 새 지적(승인 대기): 파일 이름 innerHTML(자기 화면 스크립트 실행) · 끌어놓기 형식 검사 없음 · 5 MB → 전송 7.08 MB 실주소 미시험 · 첨부 취소 없음 · label 연결 · `</html>` 뒤 script — 앞서 찾은 규격 · 수량 짝 어긋남(상)과 함께 묶어 수정 제안
+- 미완·블로커: ④ 미실행(dimension-symbol-sheet 정상본 교체는 그 뒤) · 이 세션 동기화 사본은 아직 1판 — 다음 세션에 계정본 md5 대조 · 개인정보 안내 방식 결정(담당 · 법률)
+- 다음 단계 제안: 묶음 수정 승인 → generate.py · dist/estimate.html · gs 수정 + 가짜 서버 시험. 커밋(테스트카드.md · README.md · review-role/SKILL.md · review-role/SKILL.개정안_20261125.md · worklog.md)
+- 검토: R4 주 — 통과 3(재시험 기준 2항목 대조 · 교체 md5 · README 행 다시 읽기) · 확인 필요 1(계정본 md5)
+- 챗으로 가져갈 질문: 없음
+
+---
+
+## 2026-11-25 (#10) 핸드오프 — Cowork (테스트카드 #9 ① 판정 · review-role 개정안 2판)
+
+- 한 일: 시험 ①(request.html 검수, 수정 전 08:05 판 대상) 판정 = 부분 통과 — code-review 안 부름 · 디자인 요청 아닌데 R6-A 씀. 새로 찾은 진짜 문제(상): 규격 · 수량 줄 짝 어긋남(gs `buildRow` `arr()` 가 따로 빈칸 제거 · 추가 줄 `required` 없음, 의뢰 · 견적 · 불량 3폼 — 코드 대조 확인) · 개인정보 수집 안내 없음
+- 결과/산출물: `review-role/SKILL.개정안_20261125.md` 2판(58bf3f77, 1판 `.bak_1판`) · 저장 카드 · 테스트카드 #9 ① 기록 · 백업 `테스트카드.md.bak_20261125c`
+- 미완·블로커: 2판 저장 뒤 ① 재시험 · ④ 미실행 · 줄 짝 어긋남 · 개인정보 안내 수정은 승인 대기(안내 방식은 담당자 · 변호사 판단)
+- 다음 단계 제안: 줄 짝 수정(generate.py 2폼 · dist/estimate.html 추가 줄 required + gs 줄 단위 묶기) 승인 → 시험. 커밋(테스트카드.md · review-role/SKILL.개정안_20261125.md · worklog.md)
+- 검토: R4 주 — 통과 2(gs arr 코드 · 추가 줄 required grep) · 확인 필요 0
+- 챗으로 가져갈 질문: 없음
+
+---
+
 ## 2026-11-25 (#10) 핸드오프 — Cowork (폼 검수 대조 · 공구 3D 재실행)
 
 - 한 일: ① 붙여 받은 재연마 의뢰 폼 검수 결과(08:05 파일 기준)를 실제 파일과 대조 — 거짓 「완료」 · 숨은 칸 · 회사명 예시 · 대비 · 첨부 공유는 #5 · #8 · #9 에서 이미 고쳐짐 ② tool-generator 3D 단계 재실행(EM4F_D6_d6_L50_v1, 사본은 `_작업` 에 따로 저장 → 원본과 같아 한경준님 승인 뒤 삭제) ③ SkillSpector 반영 커밋 7502d14 확인(#1 ~ #6 의 미커밋 기록도 같이 들어감)
