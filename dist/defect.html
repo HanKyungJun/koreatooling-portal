@@ -22,22 +22,22 @@
 
       <div class="row2">
         <div class="field">
-          <label>회사명 <span class="req">＊</span></label>
-          <input type="text" name="company" placeholder="예) 코리아툴링" required>
+          <label for="f-company">회사명 <span class="req">＊</span></label>
+          <input id="f-company" type="text" name="company" placeholder="예) 코리아툴링" required>
         </div>
         <div class="field">
-          <label>담당자 <span class="req">＊</span></label>
-          <input type="text" name="contact" placeholder="이름" required>
+          <label for="f-contact">담당자 <span class="req">＊</span></label>
+          <input id="f-contact" type="text" name="contact" placeholder="이름" required>
         </div>
       </div>
       <div class="row2">
         <div class="field">
-          <label>연락처 <span class="req">＊</span></label>
-          <input type="tel" name="phone" placeholder="010-0000-0000" required>
+          <label for="f-phone">연락처 <span class="req">＊</span></label>
+          <input id="f-phone" type="tel" name="phone" placeholder="010-0000-0000" required>
         </div>
         <div class="field">
-          <label>발생 일자 <span class="req">＊</span></label>
-          <input type="date" name="defect_date" required>
+          <label for="f-defect_date">발생 일자 <span class="req">＊</span></label>
+          <input id="f-defect_date" type="date" name="defect_date" required>
         </div>
       </div>
       <div class="field">
@@ -71,12 +71,12 @@
         </div>
       </div>
       <div class="field">
-        <label>피삭재 / 사용 환경</label>
-        <input type="text" name="workpiece" placeholder="예) SUS304, 건식">
+        <label for="f-workpiece">피삭재 / 사용 환경</label>
+        <input id="f-workpiece" type="text" name="workpiece" placeholder="예) SUS304, 건식">
       </div>
       <div class="field">
-        <label>불량 상세 내용 <span class="req">＊</span></label>
-        <textarea name="detail" placeholder="불량 발생 경위, 사용 조건(회전수/이송) 등 상세히 기재해주세요." required></textarea>
+        <label for="f-detail">불량 상세 내용 <span class="req">＊</span></label>
+        <textarea id="f-detail" name="detail" placeholder="불량 발생 경위, 사용 조건(회전수/이송) 등 상세히 기재해주세요." required></textarea>
       </div>
       <button type="submit" class="submit-btn">제출하기 →</button>
     </form>
@@ -93,16 +93,15 @@
 <footer>© 2026 코리아툴링 | Korea Tooling Co., Ltd.</footer>
 <iframe name="hidden-target" style="display:none;"></iframe>
 <script src="portal.js"></script>
-</body>
-</html><script>
+<script>
 function addDefectRow() {
   var container = document.getElementById('defect-rows');
   var row = document.createElement('div');
   row.className = 'defect-row';
   row.style.cssText = 'display:grid;grid-template-columns:1fr 90px 32px;gap:8px;margin-bottom:8px;';
-  row.innerHTML = '<input type="text" name="tool_spec[]" placeholder="공구명/규격 (예: 초경 엔드밀 Ø10, 4날)"'
+  row.innerHTML = '<input type="text" name="tool_spec[]" placeholder="공구명/규격 (예: 초경 엔드밀 Ø10, 4날)" required'
     + ' style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;">'
-    + '<input type="number" name="defect_qty[]" placeholder="수량" min="1"'
+    + '<input type="number" name="defect_qty[]" placeholder="수량" min="1" required'
     + ' style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;text-align:center;">'
     + '<button type="button" onclick="removeDefectRow(this)"'
     + ' style="background:#fff0f0;color:#e53935;border:1.5px solid #ffd0d0;border-radius:8px;font-size:1.1rem;cursor:pointer;">✕</button>';
@@ -121,3 +120,5 @@ function updateDefectButtons() {
   });
 }
 </script>
+</body>
+</html>

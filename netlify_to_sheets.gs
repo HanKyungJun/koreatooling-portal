@@ -31,6 +31,8 @@ function doPost(e) {
     if (!sheet) return ContentService.createTextOutput('sheet not found: ' + sheetName);
 
     var fileUrl = '';
+    // 2026-11-25 — 서버에서도 크기 검사(화면 5MB 제한을 우회한 전송 차단). 5MB 를 base64 로 바꾸면 약 6.99M 글자
+    if (d['file-data'] && d['file-data'].length > 7100000) return ContentService.createTextOutput('error: file too large');
     if ((form === 'request-form' || form === 'estimate-form') && d['file-data'] && d['file-data'].indexOf(',') > -1) {
       // 2026-11-25 — 파일 저장이 실패하면 행 · 메일 없이 실패를 돌려준다(화면이 「접수 확인 안 됨」을 띄워 고객이 다시 보냄).
       //   예전에는 오류 문구를 파일 칸에 넣고 'ok' 를 돌려줘서, 고객은 첨부된 줄 알았지만 파일이 없었다.
@@ -102,6 +104,20 @@ function restrictExistingAttachments() {
   Logger.log('changed ' + changed + ' · already limited ' + skipped + ' · failed ' + failed);
 }
 
+// 2026-11-25 — 규격 · 수량을 줄 단위로 맞춰 돌려준다. 예전에는 두 칸의 빈칸을 따로 지운 뒤 합쳐서
+//   [A, 빈칸, C] · [5, 3, 2] → 「A / C」「5 / 3 / 2」 처럼 어느 수량이 어느 규격인지 틀어졌다.
+//   두 칸 다 빈 줄만 버리고, 한쪽만 빈 칸은 '-' 로 남겨 짝을 유지한다. 돌려주는 값: [규격 글, 수량 글]
+function pairCols(darr, specKey, qtyKey, sep) {
+  var s = darr[specKey] || [], q = darr[qtyKey] || [];
+  var n = Math.max(s.length, q.length), outS = [], outQ = [];
+  for (var i = 0; i < n; i++) {
+    var a = (s[i] || '').trim(), b = (q[i] || '').trim();
+    if (!a && !b) continue;
+    outS.push(a || '-'); outQ.push(b || '-');
+  }
+  return [outS.join(sep), outQ.join(sep)];
+}
+
 function sendEmail(form, d, darr, ts, fileUrl) {
   try {
     var labels = {
@@ -147,8 +163,8 @@ function buildEmailBody(form, d, darr, ts, fileUrl) {
     body += 'Email    : ' + val('email') + '\n';
     body += 'Tool Type: ' + val('tool_type') + '\n';
     body += 'Material : ' + val('material') + '\n';
-    body += 'Spec     : ' + arr('spec[]') + '\n';
-    body += 'Quantity : ' + arr('quantity[]') + '\n';
+    body += 'Spec     : ' + (pairCols(darr, 'spec[]', 'quantity[]', ', ')[0] || '-') + '\n';
+    body += 'Quantity : ' + (pairCols(darr, 'spec[]', 'quantity[]', ', ')[1] || '-') + '\n';
     body += 'Notes    : ' + val('notes') + '\n';
     if (fileUrl) { body += 'File     : ' + fileUrl + '\n'; }
   } else if (form === 'defect-form') {
@@ -156,8 +172,8 @@ function buildEmailBody(form, d, darr, ts, fileUrl) {
     body += 'Contact  : ' + val('contact') + '\n';
     body += 'Phone    : ' + val('phone') + '\n';
     body += 'Date     : ' + val('defect_date') + '\n';
-    body += 'Tool Spec: ' + arr('tool_spec[]') + '\n';
-    body += 'Defect Qty: ' + arr('defect_qty[]') + '\n';
+    body += 'Tool Spec: ' + (pairCols(darr, 'tool_spec[]', 'defect_qty[]', ', ')[0] || '-') + '\n';
+    body += 'Defect Qty: ' + (pairCols(darr, 'tool_spec[]', 'defect_qty[]', ', ')[1] || '-') + '\n';
     body += 'Symptom  : ' + arr('symptom') + '\n';
     body += 'Workpiece: ' + val('workpiece') + '\n';
     body += 'Detail   : ' + val('detail') + '\n';
@@ -183,8 +199,8 @@ function buildEmailBody(form, d, darr, ts, fileUrl) {
     body += 'Email    : ' + val('email') + '\n';
     body += 'Category : ' + val('category') + '\n';
     body += 'Material : ' + val('material') + '\n';
-    body += 'Spec     : ' + arr('spec[]') + '\n';
-    body += 'Quantity : ' + arr('quantity[]') + '\n';
+    body += 'Spec     : ' + (pairCols(darr, 'spec[]', 'quantity[]', ', ')[0] || '-') + '\n';
+    body += 'Quantity : ' + (pairCols(darr, 'spec[]', 'quantity[]', ', ')[1] || '-') + '\n';
     body += 'Due Date : ' + val('due_date') + '\n';
     body += 'Monthly Vol: ' + val('monthly_volume') + '\n';
     body += 'Notes    : ' + val('notes') + '\n';
@@ -201,6 +217,8 @@ function buildEmailBody(form, d, darr, ts, fileUrl) {
 
 function buildRow(form, d, darr, ts, fileUrl) {
   function val(key) { return d[key] || ''; }
+  var sq = pairCols(darr, 'spec[]', 'quantity[]', ' / ');        // 2026-11-25 줄 맞춤
+  var dq = pairCols(darr, 'tool_spec[]', 'defect_qty[]', ' / ');
   function arr(key) {
     var v = darr[key];
     return v ? v.filter(function(x) { return x && x.trim(); }).join(' / ') : '';
@@ -209,11 +227,11 @@ function buildRow(form, d, darr, ts, fileUrl) {
   if (form === 'request-form') {
     return [ts, val('company'), val('contact'), val('phone'), val('email'),
             val('tool_type'), val('material'),
-            arr('spec[]'), arr('quantity[]'), val('notes'), fileUrl || ''];
+            sq[0], sq[1], val('notes'), fileUrl || ''];
   }
   if (form === 'defect-form') {
     return [ts, val('company'), val('contact'), val('phone'), val('defect_date'),
-            arr('tool_spec[]'), arr('defect_qty[]'),
+            dq[0], dq[1],
             arr('symptom'), val('workpiece'), val('detail')];
   }
   if (form === 'inquiry-form') {
@@ -228,7 +246,7 @@ function buildRow(form, d, darr, ts, fileUrl) {
   if (form === 'estimate-form') {
     return [ts, val('company'), val('contact'), val('phone'), val('email'),
             val('category'), val('material'),
-            arr('spec[]'), arr('quantity[]'), val('due_date'), val('monthly_volume'),
+            sq[0], sq[1], val('due_date'), val('monthly_volume'),
             val('notes'), fileUrl || ''];
   }
   return [ts, JSON.stringify(d)];

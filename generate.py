@@ -1,4 +1,4 @@
-import sys, io, os, json, subprocess, time
+import sys, io, os, re, json, subprocess, time   # re: 2026-11-25 _link_labels
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 import openpyxl, xlrd   # 2026-11-20: 안 쓰는 requests · hashlib 제거(새 PC 에 없으면 시작부터 멈춤)
@@ -218,7 +218,20 @@ _AUTH_HTML = """<div id="auth-overlay" class="auth-overlay">
 </div>"""
 
 
-def _form_page(page_title, form_name, icon, header_title, fields_html, success_msg, protected=False):
+# 2026-11-25 — 칸 이름(label)을 바로 뒤 입력칸과 연결(label 을 누르면 그 칸으로). 이미 for/id 가 있으면 건드리지 않는다
+def _link_labels(html):
+    def rep(m):
+        label_inner, gap, tag, attrs, name = m.group(1), m.group(2), m.group(3), m.group(4), m.group(5)
+        if ' id=' in attrs:
+            return m.group(0)
+        fid = 'f-' + re.sub(r'[^A-Za-z0-9_-]', '', name)
+        return ('<label for="' + fid + '">' + label_inner + '</label>' + gap
+                + '<' + tag + ' id="' + fid + '"' + attrs + 'name="' + name + '"')
+    return re.sub(r'<label>(.*?)</label>(\s*)<(input|select|textarea)([^>]*?)name="([^"]+)"', rep, html)
+
+def _form_page(page_title, form_name, icon, header_title, fields_html, success_msg, protected=False, tail_script=''):
+    # 2026-11-25 — tail_script 는 </body> 앞에 넣는다(예전엔 </html> 뒤에 붙었음) · label 연결
+    fields_html = _link_labels(fields_html)
     # CSS → portal.css, 폼 제출 + 인증 → portal.js (2026-06-15 분리)
     auth_block = _AUTH_HTML if protected else ''
     return ('<!DOCTYPE html>\n<html lang="ko">\n<head>\n'
@@ -257,6 +270,7 @@ def _form_page(page_title, form_name, icon, header_title, fields_html, success_m
             '<iframe name="hidden-target" style="display:none;"></iframe>\n'
             '<script src="portal.js"></script>\n'
             + ('<script src="portal-auth.js"></script>\n' if protected else '')
+            + (tail_script + '\n' if tail_script else '')
             + ('</body>\n</html>'))
 
 
@@ -464,21 +478,23 @@ def build_request_html():
           <span class="hint" style="margin-left:0">JPG · PNG · PDF · DWG · DXF</span></span>
         </label>
         <input type="file" id="attach-input" accept="image/*,.pdf,.dwg,.dxf" style="display:none">
+        <button type="button" id="attach-clear" class="attach-clear" style="display:none;">첨부 취소</button>
+        <div id="attach-error" class="attach-error" role="alert" style="display:none;"></div>
         <input type="hidden" name="file-data" id="file-data">
         <input type="hidden" name="file-name" id="file-name">
         <input type="hidden" name="file-type" id="file-type">
       </div>"""
-    return (_form_page(
+    return _form_page(
         '재연마 의뢰 접수', 'request-form', '🔧', '재연마 의뢰 접수',
         fields,
-        '담당자가 확인 후 연락드리겠습니다.<br>감사합니다.')
-    + """<script>
+        '담당자가 확인 후 연락드리겠습니다.<br>감사합니다.',
+        tail_script="""<script>
 function addSpecRow() {
   var container = document.getElementById('spec-rows');
   var row = document.createElement('div');
   row.className = 'spec-row';
-  row.innerHTML = '<input type="text" name="spec[]" placeholder="예: Ø10 4날 R0.5">'
-    + '<input type="number" name="quantity[]" placeholder="수량" min="1">'
+  row.innerHTML = '<input type="text" name="spec[]" placeholder="예: Ø10 4날 R0.5" required>'
+    + '<input type="number" name="quantity[]" placeholder="수량" min="1" required>'
     + '<button type="button" class="row-del" onclick="removeRow(this)" aria-label="이 행 삭제">✕</button>';
   container.appendChild(row);
   updateRemoveButtons();
@@ -497,8 +513,14 @@ function updateRemoveButtons() {
 }
 
 // ── 파일 첨부 ─────────────────────────────────────────────────────────────────
-var dropZone = document.getElementById('file-drop-zone');
-document.getElementById('attach-input').addEventListener('change', function(e) {
+var ATTACH_OK = /\.(jpe?g|png|gif|webp|bmp|pdf|dwg|dxf)$/i;   // 2026-11-25 — 끌어놓기에도 허용 형식 검사
+var dropZone    = document.getElementById('file-drop-zone');
+var attachInput = document.getElementById('attach-input');
+var attachErr   = document.getElementById('attach-error');
+var attachClear = document.getElementById('attach-clear');
+var dropText    = document.getElementById('file-drop-text');
+var dropDefault = dropText.innerHTML;   // 처음 안내 문구(페이지에 고정된 글) — 첨부 취소 때 되돌림
+attachInput.addEventListener('change', function(e) {
   handleAttach(e.target.files[0]);
 });
 dropZone.addEventListener('dragover', function(e) {
@@ -511,10 +533,33 @@ dropZone.addEventListener('drop', function(e) {
   e.preventDefault(); dropZone.style.borderColor = '';
   handleAttach(e.dataTransfer.files[0]);
 });
+// 첨부 칸 밖에 파일을 떨어뜨려도 브라우저가 파일을 열며 페이지를 벗어나지 않게
+window.addEventListener('dragover', function(e) { e.preventDefault(); });
+window.addEventListener('drop', function(e) { e.preventDefault(); });
+attachClear.addEventListener('click', clearAttach);
+function attachError(msg) {
+  attachErr.textContent = msg || '';
+  attachErr.style.display = msg ? 'block' : 'none';
+}
+function clearAttach() {
+  ['file-data', 'file-name', 'file-type'].forEach(function(id) { document.getElementById(id).value = ''; });
+  attachInput.value = '';
+  dropText.innerHTML = dropDefault;
+  dropZone.classList.remove('has-file');
+  attachClear.style.display = 'none';
+  attachError('');
+}
 function handleAttach(file) {
   if (!file) return;
+  attachError('');
+  if (!ATTACH_OK.test(file.name)) {
+    attachInput.value = '';
+    attachError('JPG · PNG · PDF · DWG · DXF 파일만 첨부할 수 있습니다.');
+    return;
+  }
   if (file.size > 5 * 1024 * 1024) {
-    alert('파일 크기는 5MB 이하로 첨부해 주세요.');
+    attachInput.value = '';
+    attachError('파일 크기는 5MB 이하로 첨부해 주세요.');
     return;
   }
   var reader = new FileReader();
@@ -522,15 +567,21 @@ function handleAttach(file) {
     document.getElementById('file-data').value = ev.target.result;
     document.getElementById('file-name').value = file.name;
     document.getElementById('file-type').value = file.type;
-    document.getElementById('file-drop-text').innerHTML =
-      '✅ ' + file.name + '<br><span style="font-size:0.75rem;color:#888">'
-      + (file.size/1024).toFixed(0) + 'KB · 클릭해서 변경</span>';
+    // 파일 이름은 글자로만 넣는다(이름에 든 HTML · 스크립트가 실행되지 않게 — 2026-11-25)
+    dropText.textContent = '';
+    dropText.appendChild(document.createTextNode('✅ ' + file.name));
+    dropText.appendChild(document.createElement('br'));
+    var sub = document.createElement('span');
+    sub.className = 'hint';
+    sub.style.marginLeft = '0';
+    sub.textContent = (file.size / 1024).toFixed(0) + 'KB · 클릭해서 변경';
+    dropText.appendChild(sub);
     dropZone.classList.add('has-file');
+    attachClear.style.display = '';
   };
   reader.readAsDataURL(file);
 }
-</script>"""
-    )
+</script>""")
 
 
 def build_defect_html():
@@ -593,19 +644,19 @@ def build_defect_html():
         <label>불량 상세 내용 <span class="req">＊</span></label>
         <textarea name="detail" placeholder="불량 발생 경위, 사용 조건(회전수/이송) 등 상세히 기재해주세요." required></textarea>
       </div>"""
-    return (_form_page(
+    return _form_page(
         '공구 불량 신고', 'defect-form', '⚠️', '공구 불량 신고',
         fields,
-        '불량 내용을 접수하였습니다.<br>빠른 시일 내에 확인 후 연락드리겠습니다.')
-    + """<script>
+        '불량 내용을 접수하였습니다.<br>빠른 시일 내에 확인 후 연락드리겠습니다.',
+        tail_script="""<script>
 function addDefectRow() {
   var container = document.getElementById('defect-rows');
   var row = document.createElement('div');
   row.className = 'defect-row';
   row.style.cssText = 'display:grid;grid-template-columns:1fr 90px 32px;gap:8px;margin-bottom:8px;';
-  row.innerHTML = '<input type="text" name="tool_spec[]" placeholder="공구명/규격 (예: 초경 엔드밀 Ø10, 4날)"'
+  row.innerHTML = '<input type="text" name="tool_spec[]" placeholder="공구명/규격 (예: 초경 엔드밀 Ø10, 4날)" required'
     + ' style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;">'
-    + '<input type="number" name="defect_qty[]" placeholder="수량" min="1"'
+    + '<input type="number" name="defect_qty[]" placeholder="수량" min="1" required'
     + ' style="padding:10px 13px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:0.9rem;outline:none;text-align:center;">'
     + '<button type="button" onclick="removeDefectRow(this)"'
     + ' style="background:#fff0f0;color:#e53935;border:1.5px solid #ffd0d0;border-radius:8px;font-size:1.1rem;cursor:pointer;">✕</button>';
@@ -623,8 +674,7 @@ function updateDefectButtons() {
     r.querySelector('button').style.display = rows.length > 1 ? '' : 'none';
   });
 }
-</script>"""
-    )
+</script>""")
 
 
 def build_inquiry_html():

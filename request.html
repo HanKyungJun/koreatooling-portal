@@ -22,28 +22,28 @@
 
       <div class="row2">
         <div class="field">
-          <label>회사명 <span class="req">＊</span></label>
-          <input type="text" name="company" placeholder="예) ○○정밀" required>
+          <label for="f-company">회사명 <span class="req">＊</span></label>
+          <input id="f-company" type="text" name="company" placeholder="예) ○○정밀" required>
         </div>
         <div class="field">
-          <label>담당자 <span class="req">＊</span></label>
-          <input type="text" name="contact" placeholder="이름" required>
-        </div>
-      </div>
-      <div class="row2">
-        <div class="field">
-          <label>연락처 <span class="req">＊</span></label>
-          <input type="tel" name="phone" placeholder="010-0000-0000" required>
-        </div>
-        <div class="field">
-          <label>이메일</label>
-          <input type="email" name="email" placeholder="example@email.com">
+          <label for="f-contact">담당자 <span class="req">＊</span></label>
+          <input id="f-contact" type="text" name="contact" placeholder="이름" required>
         </div>
       </div>
       <div class="row2">
         <div class="field">
-          <label>공구 종류 <span class="req">＊</span></label>
-          <select name="tool_type" required>
+          <label for="f-phone">연락처 <span class="req">＊</span></label>
+          <input id="f-phone" type="tel" name="phone" placeholder="010-0000-0000" required>
+        </div>
+        <div class="field">
+          <label for="f-email">이메일</label>
+          <input id="f-email" type="email" name="email" placeholder="example@email.com">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label for="f-tool_type">공구 종류 <span class="req">＊</span></label>
+          <select id="f-tool_type" name="tool_type" required>
             <option value="">선택하세요</option>
             <option>엔드밀</option>
             <option>드릴</option>
@@ -53,8 +53,8 @@
           </select>
         </div>
         <div class="field">
-          <label>재질</label>
-          <select name="material">
+          <label for="f-material">재질</label>
+          <select id="f-material" name="material">
             <option value="">선택하세요</option>
             <option>초경</option>
             <option>HSS</option>
@@ -75,8 +75,8 @@
         <button type="button" class="row-add" onclick="addSpecRow()">+ 규격 추가</button>
       </div>
       <div class="field">
-        <label>특이사항 / 요청사항</label>
-        <textarea name="notes" placeholder="재연마 특이사항, 요청사항을 입력해주세요."></textarea>
+        <label for="f-notes">특이사항 / 요청사항</label>
+        <textarea id="f-notes" name="notes" placeholder="재연마 특이사항, 요청사항을 입력해주세요."></textarea>
       </div>
       <div class="field">
         <label>도면 / 사진 첨부 <span class="hint">(선택 · 최대 5MB)</span></label>
@@ -85,6 +85,8 @@
           <span class="hint" style="margin-left:0">JPG · PNG · PDF · DWG · DXF</span></span>
         </label>
         <input type="file" id="attach-input" accept="image/*,.pdf,.dwg,.dxf" style="display:none">
+        <button type="button" id="attach-clear" class="attach-clear" style="display:none;">첨부 취소</button>
+        <div id="attach-error" class="attach-error" role="alert" style="display:none;"></div>
         <input type="hidden" name="file-data" id="file-data">
         <input type="hidden" name="file-name" id="file-name">
         <input type="hidden" name="file-type" id="file-type">
@@ -104,14 +106,13 @@
 <footer>© 2026 코리아툴링 | Korea Tooling Co., Ltd.</footer>
 <iframe name="hidden-target" style="display:none;"></iframe>
 <script src="portal.js"></script>
-</body>
-</html><script>
+<script>
 function addSpecRow() {
   var container = document.getElementById('spec-rows');
   var row = document.createElement('div');
   row.className = 'spec-row';
-  row.innerHTML = '<input type="text" name="spec[]" placeholder="예: Ø10 4날 R0.5">'
-    + '<input type="number" name="quantity[]" placeholder="수량" min="1">'
+  row.innerHTML = '<input type="text" name="spec[]" placeholder="예: Ø10 4날 R0.5" required>'
+    + '<input type="number" name="quantity[]" placeholder="수량" min="1" required>'
     + '<button type="button" class="row-del" onclick="removeRow(this)" aria-label="이 행 삭제">✕</button>';
   container.appendChild(row);
   updateRemoveButtons();
@@ -130,8 +131,14 @@ function updateRemoveButtons() {
 }
 
 // ── 파일 첨부 ─────────────────────────────────────────────────────────────────
-var dropZone = document.getElementById('file-drop-zone');
-document.getElementById('attach-input').addEventListener('change', function(e) {
+var ATTACH_OK = /\.(jpe?g|png|gif|webp|bmp|pdf|dwg|dxf)$/i;   // 2026-11-25 — 끌어놓기에도 허용 형식 검사
+var dropZone    = document.getElementById('file-drop-zone');
+var attachInput = document.getElementById('attach-input');
+var attachErr   = document.getElementById('attach-error');
+var attachClear = document.getElementById('attach-clear');
+var dropText    = document.getElementById('file-drop-text');
+var dropDefault = dropText.innerHTML;   // 처음 안내 문구(페이지에 고정된 글) — 첨부 취소 때 되돌림
+attachInput.addEventListener('change', function(e) {
   handleAttach(e.target.files[0]);
 });
 dropZone.addEventListener('dragover', function(e) {
@@ -144,10 +151,33 @@ dropZone.addEventListener('drop', function(e) {
   e.preventDefault(); dropZone.style.borderColor = '';
   handleAttach(e.dataTransfer.files[0]);
 });
+// 첨부 칸 밖에 파일을 떨어뜨려도 브라우저가 파일을 열며 페이지를 벗어나지 않게
+window.addEventListener('dragover', function(e) { e.preventDefault(); });
+window.addEventListener('drop', function(e) { e.preventDefault(); });
+attachClear.addEventListener('click', clearAttach);
+function attachError(msg) {
+  attachErr.textContent = msg || '';
+  attachErr.style.display = msg ? 'block' : 'none';
+}
+function clearAttach() {
+  ['file-data', 'file-name', 'file-type'].forEach(function(id) { document.getElementById(id).value = ''; });
+  attachInput.value = '';
+  dropText.innerHTML = dropDefault;
+  dropZone.classList.remove('has-file');
+  attachClear.style.display = 'none';
+  attachError('');
+}
 function handleAttach(file) {
   if (!file) return;
+  attachError('');
+  if (!ATTACH_OK.test(file.name)) {
+    attachInput.value = '';
+    attachError('JPG · PNG · PDF · DWG · DXF 파일만 첨부할 수 있습니다.');
+    return;
+  }
   if (file.size > 5 * 1024 * 1024) {
-    alert('파일 크기는 5MB 이하로 첨부해 주세요.');
+    attachInput.value = '';
+    attachError('파일 크기는 5MB 이하로 첨부해 주세요.');
     return;
   }
   var reader = new FileReader();
@@ -155,11 +185,20 @@ function handleAttach(file) {
     document.getElementById('file-data').value = ev.target.result;
     document.getElementById('file-name').value = file.name;
     document.getElementById('file-type').value = file.type;
-    document.getElementById('file-drop-text').innerHTML =
-      '✅ ' + file.name + '<br><span style="font-size:0.75rem;color:#888">'
-      + (file.size/1024).toFixed(0) + 'KB · 클릭해서 변경</span>';
+    // 파일 이름은 글자로만 넣는다(이름에 든 HTML · 스크립트가 실행되지 않게 — 2026-11-25)
+    dropText.textContent = '';
+    dropText.appendChild(document.createTextNode('✅ ' + file.name));
+    dropText.appendChild(document.createElement('br'));
+    var sub = document.createElement('span');
+    sub.className = 'hint';
+    sub.style.marginLeft = '0';
+    sub.textContent = (file.size / 1024).toFixed(0) + 'KB · 클릭해서 변경';
+    dropText.appendChild(sub);
     dropZone.classList.add('has-file');
+    attachClear.style.display = '';
   };
   reader.readAsDataURL(file);
 }
 </script>
+</body>
+</html>
