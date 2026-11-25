@@ -296,6 +296,11 @@
   - 메모: 941 B 갱신 이력 나열 → 「마지막 갱신: 날짜 (요약) — 이력은 decisions」 1줄. 다른 절은 안 고침. 고친 뒤 wc · 다시 읽기 확인. 줄에 든 날짜별 이력이 decisions(아카이브 포함)에 있는지 먼저 grep — 없는 건 남김. 예약 알림 11-27(금) 16:40 KST 이 세션으로 옴
   - 관련: decisions 2026-11-23 (7) · `outputs/CLAUDE_md_측정_20261123.md` §7
 
+- [ ] ⏸ **토큰 절감 도구 1주 시험 — Graphify(무료 빌드) · Ponytail(기본 꺼둠)** (P2, 2026-11-25 등재 — decisions 2026-11-25 (1))
+  - 담당: 챗(SkillSpector 검사) → Cowork(설치 전 기준값 · 설치 · 기록) / 한경준(과제 실행 · 답 품질 O/△/X)
+  - 메모: ✅ SkillSpector 정적 검사 통과(11-25 챗 — 두 도구 DO_NOT_INSTALL 이나 지적 줄 판독 결과 오탐, 인계 사본 `outputs/챗핸드오프_20261125_SkillSpector_Graphify_Ponytail.md`). 다음은 인계 사본의 「작업 목록」 1 ~ 9 → 「1주 비교」 과제 A · B · C 순서. Cowork 대조로 바꿀 곳: ① 7번 「Netlify 로 올리지 않는지」 → 지금 공개 배포는 GitHub Pages(git, generate.py 51 · 66행) — `.gitignore` 에 `graphify-out/` 넣고 `git check-ignore` 로 확인하면 됨 ② `.graphifyignore` 에 `private_local/` · `internal/` · `_to_delete/` · `dist/` · `token*.json` · `client_secret*.json` 도 넣기 ③ `.claude/settings.json` 권한 경로가 옛 PC(`C:\Users\TOOLKOREA\`) 그대로 — 훅 넣을 때 같이 봄 ④ 판정 기준(같은 과제 `/context` 합계 −20 % 이상 · 품질 같거나 나음 → 채택)은 챗 제안 추정값
+  - 관련: [[_handoff/skills-custom/README]] §4-2 Graphify · Ponytail 행 · 인계 사본 `outputs/챗핸드오프_20261125_토큰절감도구_시험.md`
+
 ## 다음 세션 시작 후보 (P0~P1)
 
 > 새 Cowork 세션 시작 시 `wiki/_handoff/`를 먼저 읽으면 이 큐가 보입니다.

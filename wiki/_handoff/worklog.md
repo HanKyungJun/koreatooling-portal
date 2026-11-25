@@ -1,4 +1,85 @@
-﻿## 2026-11-24 (#3) 핸드오프 — Cowork (F 장비 전원 꺼짐 원인)
+## 2026-11-25 (#7) 핸드오프 — Cowork (SkillSpector 검사 · Graphify · Ponytail)
+
+- 한 일: 두 저장소를 샌드박스에 받아 `skillspector scan <저장소> --no-llm`(v2.13.7, NVIDIA 원본 확인) 실행 → 둘 다 DO_NOT_INSTALL · 지적 줄 직접 판독 → 오탐. Drive 「cnc-wiki 인계/챗핸드오프_20261125_SkillSpector_Graphify_Ponytail.md」 업로드 후 한경준님 「진행」으로 바로 반영
+- 결과/산출물: Graphify 위험 100 · CRITICAL 14(전부 tests/) · HIGH 399 / Ponytail 위험 100 · CRITICAL 1 · HIGH 36 — `decisions.md` 2026-11-25 (1) 영향 줄 끝 · `skills-custom/README.md` §4-2 Graphify · Ponytail 행 + ※ SkillSpector 시험 줄 · `tasks.md` P2 메모 「⏸ 검사 대기 → ✅ 통과」 · 인계 사본 `outputs/챗핸드오프_20261125_토큰절감도구_시험.md` 되돌리기에 Ponytail 잔여 파일 2개 · 새 인계 사본 `outputs/챗핸드오프_20261125_SkillSpector_Graphify_Ponytail.md`(추적 제외) — 백업 `.bak_20261125e` 4개
+- 미완·블로커: 정적 검사만(LLM 분석 안 함) · 테스트 · 문서 지적은 유형별 표본 판독 · Ponytail 검사 범위 81.6 % 부분
+- 다음 단계 제안: 인계 사본 「토큰절감도구_시험」 작업 목록 1번(사전 확인)부터 — Cowork 대조 ① ~ ④ 함께
+- 검토: R4 주 · R5 — 통과 5(HIGH 합계 399 · 37 맞춤 · Drive 파일 11,684 B 로컬과 같음 · 반영 4개 파일 grep 각 1건 · 옛 문구 「설치는 … 통과 뒤」 0건 · diff 바뀐 줄만) · 확인 필요 0 · 통과 뒤 지적 0
+- 챗으로 가져갈 질문: 없음
+
+---
+
+## 2026-11-25 (#6) 핸드오프 — Cowork (portal.js 검수)
+
+- 한 일: 「검수해 줘」(review-role R4 · code-review)로 `dist/portal.js` 전체 + 받는 쪽 `netlify_to_sheets.gs`(저장소 사본) 검수. GAS 흉내 모의 서버 + Playwright 로 지금 코드 · 수정안을 응답 5가지에 실제 제출 시험(실제 GAS 주소로는 안 보냄)
+- 결과/산출물: `outputs/portaljs_검수_20261125/`(검수 md · 수정안 js · 시험 스크립트 2, 추적 제외) — 지적 7(상 1 · 중 3 · 하 3). 상: 0.8초 뒤 무조건 「접수」 — 정상 · 오류 문구 · 500 · 끊김 · 무응답 5가지 모두 「접수」 확인. 수정안(fetch 로 `ok` 확인 뒤에만 접수, 실패 안내 · 입력 유지 · 30 s)은 모의 5가지 모두 맞게 동작. 중: 첨부 도면 「링크 있는 누구나 보기」 · 파일 저장 실패해도 `ok` · 스팸 숨은 칸 `hp_check` 가 GAS 에만 있고 폼에 없음
+- 미완·블로커: 실제 GAS 의 CORS 응답 확인(실주소 1회 전송 = 시험 행 1건) · GAS 배포본 = 저장소 사본 대조 · 수정 적용은 승인 대기 · 실패 안내 CSS 없음
+- 다음 단계 제안: 승인되면 portal.js 수정안 + CSS + 폼 4종 `hp_check` 적용 → 실주소 1회 시험(시험 행은 경준님이 지움). GAS 쪽(#2 · #3)은 경준님 편집기 작업
+- 검토: R4 주 · 코드 리뷰 — 통과 3(비밀번호 없음 · innerHTML 고정 목록 · node 문법) · 확인 필요 4(실 GAS CORS · 배포본 대조 · 회사 계정 공유 정책 · 시트 공유 설정)
+- 챗으로 가져갈 질문: 없음
+
+---
+
+## 2026-11-25 (#5) 핸드오프 — Cowork (견적 문의 · 재연마 의뢰 화면 수정 — 디자인 검토 추천 범위 승인분)
+
+- 한 일: 디자인 검토(R6-A) 지적 중 승인 범위(#1 포커스 · #2 규격 행 · #3 순서 · #4 휴대폰 간격 · #5 대비 · #6 16 px · #10 문구) + 같은 부품 정리(#7 버튼 색 · #8 선택 상자 · #9 hover) 반영. **원본 위치 주의**: 정적 파일 원본은 `dist/`(generate 가 dist → 루트 복사), `request.html` 은 `generate.py` `build_request_html()` 가 만듦 → 그 셋을 고치고 루트에 같은 내용 복사
+- 결과/산출물: `dist/portal.css`(`.spec-row` · `#spec-rows.multi` · `.row-del` · `.row-add` · `.hint`, #999 · #bbb → #666, select 흰 바탕, 휴대폰 `.row2 gap 0` · 입력 16 px) · `dist/estimate.html`(구분 · 재질 → 규격 · 수량을 맨 앞으로, 예시 문구) · `generate.py` build_request_html(규격 행 · 보조 글 · 회사명 예시) → `dist/request.html` 재생성(함수 직접 호출, 생성기 출력과 diff = 의도한 줄만) · 루트 3개 = dist 일치(cmp) · 백업 `.bak_20261125` 7개 · 전후 사진 `outputs/디자인검토_견적문의_20261125/수정후/`
+- 재측정(Playwright, 같은 방법): 포커스 테두리 rgb(224,224,224) → rgb(26,58,107) · 휴대폰 규격칸 안쪽 178 px ≥ 안내 글 121 px · 수량칸 끝 = 다른 칸 끝(PC 1008 · 휴대폰 338) · 견적 휴대폰 규격 시작 763 → 399 px(첫 화면 664 안) · 휴대폰 칸 간격 32 · 18 → 18 하나 · 대비 #666 = 5.74 · 5.12 : 1 · 입력 16 px(휴대폰만) · 선택 상자 흰색 · ✕ hover 반응 · 페이지 오류 0(견적 · 의뢰 · 불량 신고)
+- 미완·블로커: 재연마 의뢰는 순서를 안 바꿔 휴대폰 규격 시작 720 px(첫 화면 밖) · 불량 신고(defect)에도 같은 모양의 규격 행 · 「예) 코리아툴링」이 남음(범위 밖) · 카드 제목 그림 글자 중복은 포털 다섯 화면 공통 형식이라 안 건드림 · 제출 0.8초 「접수」 문제(프로그램 검수) · 실제 iPhone · Windows Chrome 미확인
+- 다음 단계 제안: 커밋(dist/estimate.html · dist/portal.css · dist/request.html · estimate.html · portal.css · request.html · generate.py) → 평소 배포(generate 실행)로 GitHub Pages 반영 · 「portal.js 검수해 줘」
+- 검토: R6 주 · R4 — 통과 9(위 재측정 8 · `py_compile` 통과 · git diff 범위 = 의도한 줄만 · request.html 줄바꿈 HEAD 와 같은 LF) · 확인 필요 1(실기기) · 통과 뒤 지적 0
+- 챗으로 가져갈 질문: 없음
+
+---
+
+## 2026-11-25 (#4) 핸드오프 — Cowork (테스트카드 #9 ② · ③ 판정)
+
+- 한 일: 새 대화 시험 결과 2건(견적 문의 화면 디자인 검토 · 2날 볼 D4 치수 기호도)을 테스트카드 #9 기대 결과와 대조 · 주요 주장 실물 대조(포커스 테두리 Playwright · portal.js 800 ms · request.html 같은 코드 · 2SCB D4 5행 카탈로그 원문 · 쪽 번호 체계)
+- 결과/산출물: 테스트카드 #9 ② 통과(기록 1) · ③ 통과(기록 2) · README §2 개정 후보 2행(review-role 디자인 요청 때 code-review 표기 · dimension-symbol-sheet 1단계 · 쪽 표기) · 백업 `테스트카드.md.bak_20261125b` · `README.md.bak_20261125c`
+- 판정 보정: 「위키 2SCB p.159 ↔ 원문 p.154 불일치」는 오판 — 위키는 절삭조건 표의 PDF 쪽(인쇄 156), 그림은 치수 표의 인쇄 쪽(PDF 157). 위키 안 고침
+- 미완·블로커: #9 ① · ④ 미실행 → 정상본 교체 · README §1 새 스킬 행은 그 뒤 · 견적 화면 수정은 승인 대기 · 제출 0.8초 「접수」 문제 프로그램 검수 필요
+- 다음 단계 제안: 새 대화 「request.html 검수해 줘」 · 「EM 4날 D6 d6 L50 Lc9 공구 만들어 줘」. 커밋(테스트카드.md · README.md · worklog.md)
+- 검토: R4 주 — 통과 5(포커스 rgb 측정 · setTimeout 800 grep · spec-row 6곳 · 2SCB 5행 원문 대조 · 카드 · README 다시 읽기) · 통과 뒤 지적 0
+- 챗으로 가져갈 질문: 없음
+
+---
+
+## 2026-11-25 (#3) 핸드오프 — Cowork (디자인 스킬 일부 이식 ① · ② 승인분)
+
+- 한 일: 한경준님 「①과 ② 둘 다 진행 승인」 → ① review-role 개정안(R6-A 화면 다듬기 R6-9 ~ 13) ② 새 스킬 dimension-symbol-sheet(「치수 기호도 만들어 줘」) 초안 + 양식. 저장 카드 2장 올림(개정 절차 README §3 — 테스트카드 먼저)
+- 결과/산출물: `skills-custom/review-role/SKILL.개정안_20261125.md`(09a11485, 정상본 74005e46 그대로) · `skills-custom/dimension-symbol-sheet/SKILL.초안_20261125.md`(e9dfa921) · `wiki/templates/치수기호도-양식/치수기호도_양식_v1.html` + `LICENSE-dimensional-drawing.txt`(MIT 고지) · 테스트카드 #9 · README §4-2 두 행 「일부 이식(11-25 승인)」 · decisions 2026-11-25 (2) · 백업 `.bak_20261125`(테스트카드) · `decisions.md.bak_20261125d`
+- 미완·블로커: 카드 저장(한경준님) · 새 대화 시험 4가지(테스트카드 #9) · 통과 뒤 정상본 교체 · README §1 목록에 새 스킬 행 · SkillSpector 미실행(옮긴 것이 글 · 그리기 JS 뿐)
+- 다음 단계 제안: 카드 2장 저장 → 새 대화에서 #9 ① ~ ④ 시험. 커밋(테스트카드.md · README.md · decisions.md · worklog.md · review-role/SKILL.개정안_20261125.md · dimension-symbol-sheet/SKILL.초안_20261125.md · wiki/templates/치수기호도-양식/ 2개)
+- 검토: R4 주 · R2 — 통과 5(개정안 바뀐 곳 grep 3줄 · 정상본 md5 74005e46 유지 · 양식 렌더 오류 0 · 식 검산 P 26.92 · Lt 0.56 · Ls 31.44 · git check-ignore — 양식은 추적 대상, 실명 · 단가 없음) · 확인 필요 1(SkillSpector) · 통과 뒤 지적 0
+- 챗으로 가져갈 질문: 없음
+
+---
+
+## 2026-11-25 (#2) 핸드오프 — Cowork (챗 핸드오프 11-25 반영 · 토큰 절감 도구)
+
+- 한 일: Drive 「cnc-wiki 인계/챗핸드오프_20261125_토큰절감도구_시험.md」 반영 · 챗 11-25 토큰 절감 도구 판정 6행 · 시험 착수(SkillSpector 검사 대기). 검토 순서 1단계 대조 — Ponytail(11-19 제외)과 판정 다름 · Caveman(11-23 제외) 중복 · decisions 원문 「CLAUDE.md 200줄 안팎」이 2026-11-23 (7)과 어긋남 → 한경준님께 알리고 추천안 승인
+- 고친 곳(챗 원문 → 반영본): Ponytail · Caveman 은 새 행 대신 기존 행을 고침(옛 판정 취소선) · 새 행 4개(Graphify · OmniRoute · claude-code-router · Serena) · decisions 에서 200줄 문구 빼고 (7) 참조 · 「Netlify」 → GitHub Pages(tasks 메모)
+- 결과/산출물: `wiki/_handoff/skills-custom/README.md` · `decisions.md` 2026-11-25 (1) · `tasks.md` P2 1줄 · `worklog.md` — 백업 `.bak_20261125b` 4개 · 인계 사본 `outputs/챗핸드오프_20261125_토큰절감도구_시험.md`(추적 제외)
+- 미완·블로커: SkillSpector 정적 검사(Graphify · Ponytail) — Cowork 클라우드 샌드박스에서 권한 검사에 막힘 → 챗에서
+- 다음 단계 제안: 챗 검사 결과 받으면 README 근거 칸 · tasks 갱신 → 설치 전 기준값 측정 · 커밋(위 4개 파일)
+- 검토: R4 주 · R5 — 통과 5(기존 기록 grep 대조 — README · decisions · tasks · CLAUDE.md · 인계 사본 8,339 B Drive 원본과 같음 · README §4-2 표 열 6 전체 · generate.py 공개 배포 경로 GitHub Pages 확인 · 반영 뒤 4개 파일 다시 읽기) · 확인 필요 1(SkillSpector) · 통과 뒤 지적 0
+- 챗으로 가져갈 질문: Graphify · Ponytail 저장소 SkillSpector `--no-llm` 검사 결과(DO_NOT_INSTALL 이면 지적 줄 판독까지)
+
+---
+
+## 2026-11-25 (#1) 핸드오프 — Cowork (인스타 디자인 스킬 5개 검토 · 시범 2건)
+
+- 한 일: 인스타 「디자인 스킬 5개」(taste-skill · oil-ui · brand-identity · dimensional-drawing · awwwards-mcp) 원본 저장소를 직접 읽고 코고툴 디자인 외 영역(제작 도면 · 치수 기호 설명도 · 보고서 그림 · 포털 웹 화면 · ERP 뷰어 · 마이다스 몰)에 맞는지 판정. 시범 A = dimensional-drawing 방식 4날 코너R 넥 엔드밀 치수 기호 참조도(생성기 샘플 값) · 시범 B = oil-ui 「기존 화면 다듬기 검토」로 포털 견적 문의 화면 검토
+- 결과/산출물: `wiki/_handoff/skills-custom/README.md` §4-2 4행 추가 + Hallmark · Taste 행 재확인 표기 · `outputs/디자인스킬_시범_20261125/`(시범 A html · png, 시범 B 스크린샷 2 · 검토 md, 추적 제외) · 백업 `.bak_20261125` 2개
+- 판정: oil-ui · dimensional-drawing = 보류(일부 이식 승인 대기) · brand-identity · awwwards-mcp = 제외 · taste-skill = 기존 보류 그대로. 앞 답에서 낸 「oil-ui 도입」 추천은 철회(핵심 기능이 이미 코고툴 디자인 시스템에 있음 · 자동 업데이트 · 유료 크레딧 스크립트)
+- 미완·블로커: SkillSpector 정적 검사 — Cowork 에서 실행이 막힘(이식하는 것이 글뿐이라 필수는 아님, 필요하면 챗 샌드박스)
+- 다음 단계 제안: 승인되면 ① 「검토해 줘」 사이트 검토에 oil-ui 4항목 추가 ② 사내 「치수 기호도 만들어 줘」 스킬 초안. 커밋(README.md · worklog.md)
+- 검토: R2 주 · R4 — 통과 6(원본 SKILL.md 2개 · scripts 9개 접속 주소 grep · 시범 A 렌더 오류 0 · 계산 c 0.15 · Lt 0.56 · P 26.92 · 시범 B 수치 Playwright 측정 · README 표 열 6 다시 읽기) · 확인 필요 1(SkillSpector) · 통과 뒤 지적 0
+- 챗으로 가져갈 질문: 없음
+
+---
+
+## 2026-11-24 (#3) 핸드오프 — Cowork (F 장비 전원 꺼짐 원인)
 
 - 한 일: F 장비(FastGrind 750534) 작업 중 전원 꺼짐 문의 → 이벤트 뷰어 사진 12장 · 진단덤프(14:25) 분석. ErrorLog.epl `dsc Power Up Log` Power failure 2회(PC 시각 13:48:14 · 13:52:17) · 평소 퇴근 종료(ALM 0105 → AMCore Shutdown)와 다름 · Rupsd.evt(Megatec RUPS 2000) 정전 기록 2024 ~ 2026-06 은 PC 안 꺼짐, 이번엔 기록 없음 → UPS 미동작 추정
 - 결과/산출물: `wiki/troubleshoot/장비-전원-갑자기-꺼짐.md`(신규) · `index.md` · `log.md` · `_handoff/sources.md`([VEN-MEGATEC-RUPS2000] · [VEN-PULS-UB10]) · `decisions.md` · `worklog.md`

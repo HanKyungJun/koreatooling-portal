@@ -3,6 +3,20 @@
 > 무엇을(What), 왜(Why), 출처(Where)를 **시간 역순(최신이 맨 위)** 으로 기록합니다.
 > 챗에서 결정된 내용도 반드시 여기로 옮겨야 Code/Cowork가 따라옵니다.
 
+## 2026-11-25 (2): 인스타 디자인 스킬 — oil-ui 화면 검토 순서는 「검수해 줘」(review-role) R6-A 로, dimensional-drawing 은 사내 「치수 기호도」 스킬 · 양식으로 일부 이식
+
+- 결정: ① review-role 에 「R6-A 화면 다듬기」(R6-9 규격 이탈 · R6-10 배치 세 곳 · R6-11 읽힘(대비 · 첫 화면) · R6-12 움직임 · R6-13 뺄 것, 점수 없음 · 브랜드 교체 제안 없음 · PC 1440 · 휴대폰 390 스크린샷 증거)를 넣는다 ② 새 사내 스킬 dimension-symbol-sheet(「치수 기호도 만들어 줘」) — 공구 한 계열을 기호 치수 + 값 · 식 표로 그린 설명 그림(카탈로그 · 몰 상품 · 신입 교육용), 양식 `wiki/templates/치수기호도-양식/치수기호도_양식_v1.html`. 제작 도면은 tool-generator 그대로 ③ oil-ui · dimensional-drawing 통째 설치 · motion 짝 스킬 · taste-skill · brand-identity · awwwards-mcp 는 들이지 않는다
+- 근거: Cowork 시범 2건(11-25) — 시범 A 엔드밀 기호도(식 검산 P = π×6÷tan35° = 26.92 · Lt = 0.15÷tan15° = 0.56 맞음) · 시범 B 포털 견적 문의 화면 검토(규격 이탈 4 · 배치 3 · 뺄 것 2, Playwright 측정). oil-ui 의 핵심 「안 2~3개 비교」는 decisions 2026-11-20 (2) ① 에 이미 있고, 딸린 스크립트가 자동 업데이트 · 유료 이미지 크레딧 · 외부 이미지 API 에 접속 → 글로 된 검토 순서만 옮김(스크립트 없음). dimensional-drawing 은 실행 스크립트 없음, MIT 고지를 양식 머리 주석 · `LICENSE-dimensional-drawing.txt` 로 남김. 검토한 대안: 원본 그대로 설치 — 중국어 본문 · 영문 대문자 · 상호 없음 규칙이 사내 대외 명의 · 한글 표기와 맞지 않아 기각. SkillSpector 는 Cowork 에서 실행이 막혀 못 돌림(옮긴 것이 글 · 그리기 JS 뿐)
+- 출처: Cowork 추천 → 한경준님 「①과 ② 둘 다 진행 승인」 11-25
+- 영향: `skills-custom/review-role/SKILL.개정안_20261125.md` · `skills-custom/dimension-symbol-sheet/SKILL.초안_20261125.md` · 테스트카드 #9(시험 4가지 미실행) · README §4-2 두 행 판정 · `wiki/templates/치수기호도-양식/`. 정상본 교체는 시험 통과 뒤(README §3)
+
+## 2026-11-25 (1): Claude 토큰 절감 도구 — Graphify · Ponytail 1주 시험(SkillSpector 검사 통과 뒤), OmniRoute 제외
+
+- 결정: ① Graphify(무료 빌드만 — 문서 의미 추출 `/graphify` 는 안 씀) · Ponytail(기본 꺼둠, ERP · 스크립트 작업 때만 켬)을 cnc-wiki PC(DESKTOP-DQDPA0J)에서 1주 시험한다. 설치 전에 README §4-1 2단계 SkillSpector 정적 검사(챗 샌드박스)를 먼저 통과해야 한다 ② OmniRoute · claude-code-router(한도가 차면 다른 모델로 넘기는 중계기)는 들이지 않는다 ③ Ponytail 판정은 2026-11-19 「제외」 → 「시험 1주」로 바꾸고 이력 표에 옛 판정을 취소선으로 남긴다 ④ 공식 절감 습관(작업이 바뀌면 /clear · 모델 구분 · 파일은 붙여넣지 말고 경로로 · 큰 변경 전 계획)은 그대로 쓴다. CLAUDE.md 길이는 2026-11-23 (7)(371줄 유지)을 따른다
+- 근거: 챗 격리 시험(설치 · 실행 · 제거, 한글 시험 폴더) — 두 도구 모두 외부 전송 없음 · 설치 · 제거 뒤 원래대로 돌아옴. OmniRoute 는 사내 자료가 외부 제공사로 나가고 국가 차단 우회 · 구독 공유 등 약관 회피 기능이 있음, 구독 계정을 물리면 Anthropic 약관 위반. 출처: Anthropic 지원 문서 「Claude Code의 모델, 사용량 및 제한」, 각 저장소 README · 패키지 코드(제조사 기준), 챗 시험값(Linux 1코어 격리 환경 — 추정값, Windows 실측 아님). 검토한 대안: 챗 원문 그대로 6행 추가 — Ponytail · Caveman 행이 이미 있어 겹치고 「CLAUDE.md 200줄 안팎」이 2026-11-23 (7)과 어긋나 기각
+- 출처: 챗(Drive 「cnc-wiki 인계/챗핸드오프_20261125_토큰절감도구_시험.md」) → Cowork 대조 · 추천 → 한경준님 「승인」 11-25
+- 영향: `wiki/_handoff/skills-custom/README.md` §4-2(새 4행 · Ponytail 판정 변경 · Caveman 근거 덧붙임) · `tasks.md` P2 1줄(시험). 설치하면 CLAUDE.md 에 graphify 섹션 1개(약 320토큰 — 챗 시험값, 매 턴 실림) · `.claude/settings.json` 훅 3개 · `.gitignore` · `.graphifyignore` 가 추가됨 — 1주 뒤 채택 / 제거 판정. 비교 방법(`/context` · `/usage`)과 훅은 Claude Code 기준이라 Cowork 세션에서도 같은지 시험 때 함께 본다 · 11-25 SkillSpector 검사 통과 — 두 도구 모두 DO_NOT_INSTALL(위험 100)이나 지적 줄 판독 결과 오탐(챗 · Drive 「cnc-wiki 인계/챗핸드오프_20261125_SkillSpector_Graphify_Ponytail.md」 → 한경준님 「진행」 11-25)
+
 ## 2026-11-24 (1): F 장비 DC-UPS 배터리 — 예비 ROCKET ES2-12 2개 폐기, 새 12 V 2 Ah 배터리 2개 구매(교체 1 · 예비 1)
 
 - 결정: ① 사내 예비 ROCKET ES2-12 2개는 폐기(납축전지 재활용 수거로) ② 같은 규격 12 V 2 Ah 밀폐형(ROCKET ES2-12 또는 지금 달린 E&P KB1220) 새것 2개 구매 → 1개는 F 장비 PULS DC-UPS 에 교체, 1개는 예비 ③ 예비품은 보관 중에도 몇 달마다 개방전압 확인(12.4 V 아래면 보충전)
