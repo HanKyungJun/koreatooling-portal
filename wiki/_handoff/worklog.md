@@ -39,6 +39,7 @@
 - 추가(워크숍 11-28 대비): 1 ~ 10월 집계 요약 `wiki/reports/07_KPI/재연마_수주출하_집계_2026년1-10월_20261127.docx`(4쪽, 스크립트 `scripts/report_order_summary_1010/`) — 출하 18,628(+19.9 %) · 생산 13,312(+17.9 %, 10월만 ERP 기준) · 수주 6 ~ 10월 8,812
 - 추가(실명판): 한경준님 요청으로 두 보고서 실명판을 `wiki/_private/reports/`(gitignore)에 따로 만듦 — `*_실명.docx` · PDF · `fig_real/`. 공개판은 익명 그대로(재생성 본문 동일 확인). 스크립트는 `REAL=1` 일 때만 `_private` 대조표를 읽어 바꿈(`scripts/report_order_decline/realname.js`), 실명 검사 0개
 - 추가(발표): 워크숍용 PPT 8장 — 익명판 `wiki/reports/04_비교·분석/수주감소_원인분석_발표_20261127.pptx` · 실명판 `wiki/_private/reports/…_발표_20261127_실명.pptx`, 스크립트 `scripts/report_order_ppt/`(코고툴 발표양식 B안, 발표자 노트 [m:ss] 약 9분). validate 통과 · doc_style_check 0 · 실명 검사 0개
+- 추가(거래 끊긴 거래처): `wiki/_private/reports/거래끊긴_거래처_정리_20261127_실명.xlsx`(주요 업체 · 전체 89곳 · 상호 변경 · 기준과 한계), 스크립트 `scripts/report_order_decline/lost_customers.py`(실명 없음). 새 신호: 거래처 AK 34개월 단골, 2026. 5. 27. 뒤 수주 없음. 상호 변경 2곳(I → Q, L → M)은 끊김에서 뺌
 - 미완·블로커: C 종료 사유 · O 공백 사유(영업 확인) · 2025 수주 원자료 없음 · 8월 이후 품목 목록 없음 · `outputs/order_report/` 에 soffice 잠금 파일 `.~lock*` · `lu445reqr.tmp` 남음(삭제 권한 없음)
 - 다음 단계 제안: 12-01 ~ 05 11월 마감 때 나머지 거래처 일평균 수주(기준 57.7개/일) · 대량 수주 건수 재집계
 - 검토: R5 주 · R4 — 통과 6(doc_style_check 0 · 실명 검사 0개 · PDF 14쪽 눈 확인 · 주요 수치 13개 PDF 대조 · 분해 합계 −972 일치 · data.json 재생성) · 확인 필요 1(Word 에서 맑은 고딕 쪽 나눔) · 통과 뒤 지적 0
