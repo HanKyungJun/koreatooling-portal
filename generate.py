@@ -513,7 +513,7 @@ function updateRemoveButtons() {
 }
 
 // ── 파일 첨부 ─────────────────────────────────────────────────────────────────
-var ATTACH_OK = /\.(jpe?g|png|gif|webp|bmp|pdf|dwg|dxf)$/i;   // 2026-11-25 — 끌어놓기에도 허용 형식 검사
+var ATTACH_OK = /\\.(jpe?g|png|gif|webp|bmp|pdf|dwg|dxf)$/i; // 2026-11-25 — 끌어놓기에도 허용 형식 검사
 var dropZone    = document.getElementById('file-drop-zone');
 var attachInput = document.getElementById('attach-input');
 var attachErr   = document.getElementById('attach-error');

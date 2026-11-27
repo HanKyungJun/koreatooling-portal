@@ -1,9 +1,18 @@
 // Korea Tooling - Form Submissions to Google Sheets + Email
 // HTML form (iframe POST) -> Apps Script doPost -> Sheets + Drive + Email
+// Apps Script > Project Settings > Script Properties:
+//   FORM_SHEET_ID      : private response spreadsheet ID
+//   FORM_NOTIFY_EMAIL  : internal notification recipient
 
-var SHEET_ID      = '1FawxgBM132Xi_ourEGj3dlEQOxk9ZMDbO2O4De0AfHc';
-var NOTIFY_EMAIL  = 'hzn2001@toolkorea.co.kr';
 var UPLOAD_FOLDER = 'koreatooling-attachments';
+
+function formConfig_() {
+  var props = PropertiesService.getScriptProperties();
+  var sheetId = props.getProperty('FORM_SHEET_ID');
+  var notifyEmail = props.getProperty('FORM_NOTIFY_EMAIL');
+  if (!sheetId || !notifyEmail) throw new Error('Missing required form script properties');
+  return { sheetId: sheetId, notifyEmail: notifyEmail };
+}
 
 function doPost(e) {
   try {
@@ -14,7 +23,8 @@ function doPost(e) {
     //   칸이 없는 옛 폼은 값이 비어 있으므로 그대로 접수된다(순서 상관없이 배포 가능).
     if (d['hp_check']) return ContentService.createTextOutput('ok');
     var ts   = Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd HH:mm:ss');
-    var ss   = SpreadsheetApp.openById(SHEET_ID);
+    var config = formConfig_();
+    var ss   = SpreadsheetApp.openById(config.sheetId);
 
     var sheetMap = {
       'request-form':  '재연마의뢰',
@@ -45,7 +55,7 @@ function doPost(e) {
     }
 
     sheet.appendRow(buildRow(form, d, darr, ts, fileUrl));
-    sendEmail(form, d, darr, ts, fileUrl);
+    sendEmail(form, d, darr, ts, fileUrl, config);
 
     return ContentService.createTextOutput('ok');
 
@@ -118,7 +128,7 @@ function pairCols(darr, specKey, qtyKey, sep) {
   return [outS.join(sep), outQ.join(sep)];
 }
 
-function sendEmail(form, d, darr, ts, fileUrl) {
+function sendEmail(form, d, darr, ts, fileUrl, config) {
   try {
     var labels = {
       'request-form':  'Regrinding Request',
@@ -129,14 +139,14 @@ function sendEmail(form, d, darr, ts, fileUrl) {
     };
     var label   = labels[form] || form;
     var subject = '[KoreaTooling] ' + label + ' (' + ts + ')';
-    var body    = buildEmailBody(form, d, darr, ts, fileUrl);
-    MailApp.sendEmail({ to: NOTIFY_EMAIL, subject: subject, body: body });
+    var body    = buildEmailBody(form, d, darr, ts, fileUrl, config.sheetId);
+    MailApp.sendEmail({ to: config.notifyEmail, subject: subject, body: body });
   } catch (err) {
     Logger.log('Email error: ' + err.message);
   }
 }
 
-function buildEmailBody(form, d, darr, ts, fileUrl) {
+function buildEmailBody(form, d, darr, ts, fileUrl, sheetId) {
   function val(key) { return d[key] || '-'; }
   function arr(key) {
     var v = darr[key];
@@ -209,7 +219,7 @@ function buildEmailBody(form, d, darr, ts, fileUrl) {
 
   body += '\n--------------------------------\n';
   body += 'Google Sheet:\n';
-  body += 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '\n';
+  body += 'https://docs.google.com/spreadsheets/d/' + sheetId + '\n';
   body += '--------------------------------\n';
   body += 'KoreaTooling Portal - Auto Notification';
   return body;

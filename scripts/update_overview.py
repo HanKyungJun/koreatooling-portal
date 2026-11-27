@@ -3,7 +3,7 @@
 wiki/overview.md 통계 자동 갱신
 실행: python scripts/update_overview.py
      python scripts/update_overview.py --dry-run   (미리보기만, 파일 미수정)
-출력: wiki/overview.md 의 "페이지 통계" 테이블 + "성장 추이" 줄 갱신
+출력: wiki/overview.md 의 통계 기준일·테이블·성장 추이 갱신
 """
 import re
 import sys
@@ -119,6 +119,14 @@ def update_overview(dry_run: bool = False) -> None:
         text,
     )
 
+    # ── 2-A) 페이지 통계 기준일 갱신 ─────────────────────────────────────────
+    text = re.sub(
+        r"^## 페이지 통계(?: \(.*? 기준\))?$",
+        f"## 페이지 통계 ({today} 기준)",
+        text,
+        flags=re.MULTILINE,
+    )
+
     # ── 3) 통계 테이블 교체 ────────────────────────────────────────────────────
     # "## 페이지 통계" 섹션의 테이블 전체를 교체
     text = re.sub(
@@ -136,7 +144,7 @@ def update_overview(dry_run: bool = False) -> None:
     )
 
     if dry_run:
-        print("=== DRY RUN — overview.md 변경 예정 내용 ===")
+        print("=== DRY RUN - overview.md 변경 예정 내용 ===")
         print(f"  날짜: {today}")
         print(f"  총 페이지: {total}")
         print("\n카테고리별:")
@@ -148,7 +156,7 @@ def update_overview(dry_run: bool = False) -> None:
         return
 
     OVERVIEW.write_text(text, encoding="utf-8")
-    print(f"✅ overview.md 갱신 완료 ({today}, 총 {total}페이지)")
+    print(f"[OK] overview.md 갱신 완료 ({today}, 총 {total}페이지)")
     for key in CATEGORY_ORDER:
         n = counts.get(key, 0)
         if n:
