@@ -17,7 +17,8 @@ const KO = '맑은 고딕', LATIN = 'Arial';
 const BODY = 30, TBL = 26, TITLE = 44, SMALL = 22;
 const PAGE_W = 11906, MARGIN_LR = 1134, CONTENT_W = PAGE_W - 2 * MARGIN_LR;
 
-const run = (t, o = {}) => new TextRun({ text: t, font: KO, size: BODY, color: INK, ...o });
+const { apply: REALNAME } = require('../report_order_decline/realname.js'); // REAL=1 이면 거래처 코드를 실명으로(실명판은 wiki/_private 에만)
+const run = (t, o = {}) => new TextRun({ text: REALNAME(t), font: KO, size: BODY, color: INK, ...o });
 const p = (children, o = {}) => new Paragraph({ children: Array.isArray(children) ? children : [run(children)], spacing: { after: 140, line: 312 }, ...o });
 const item = (mark, text, level = 0) => new Paragraph({ children: [run(`${mark} `), run(text)], indent: { left: 360 + level * 400, hanging: 360 }, spacing: { after: 60, line: 312 } });
 const h1 = (t) => new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun({ text: t, font: KO, size: 34, bold: true, color: NAVY })], spacing: { before: 280, after: 120 }, keepNext: true });
@@ -60,7 +61,7 @@ const refParas = () => REFS.map(([pub, date, title, url], i) => new Paragraph({ 
   children: [run(`[${i + 1}] `, { size: SMALL, bold: true }), run(`${pub}, ${date.endsWith('.') ? date : date + '.'} 「${title}」 `, { size: SMALL }),
     new ExternalHyperlink({ link: url, children: [new TextRun({ text: url, font: LATIN, size: 18, color: LINK, underline: {} })] })] }));
 
-const img = (file, wCm, alt) => { const b = fs.readFileSync(path.join(__dirname, 'fig', file)); const pw = b.readUInt32BE(16), ph = b.readUInt32BE(20);
+const img = (file, wCm, alt) => { const b = fs.readFileSync(path.join(process.env.FIGDIR || path.join(__dirname, 'fig'), file)); const pw = b.readUInt32BE(16), ph = b.readUInt32BE(20);
   const w = Math.round(wCm / 2.54 * 96), h = Math.round(w * ph / pw);
   return new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 60, after: 40 }, keepNext: true,
     children: [new ImageRun({ type: 'png', data: b, transformation: { width: w, height: h }, altText: { title: alt, description: alt, name: file } })] }); };

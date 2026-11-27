@@ -21,7 +21,7 @@ module.exports = (H) => {
   const info = table(infoW, [
     [lab('보고일'), '2026. 11. 27.', lab('자료 기간'), '2025. 1. ~ 2026. 10.'],
     [lab('작성'), '생산팀 한경준', lab('검토'), ''],
-    [lab('대상'), '재연마 수주, 출하, 생산 수량', lab('제외'), '금액과 단가'],
+    [lab('대상'), '재연마 수주, 출하, 생산 수량', lab('제외'), require('../report_order_decline/realname.js').ON ? '금액과 단가. 실명판 사내 전용' : '금액과 단가'],
   ], false);
   const nv = (t) => ({ t, fill: NAVY, bold: true, color: 'FFFFFF', align: C });
   const summary = table([1300, CONTENT_W - 1300], [
