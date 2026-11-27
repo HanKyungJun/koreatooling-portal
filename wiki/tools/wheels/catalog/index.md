@@ -8,7 +8,7 @@ catalog_pages: 15
 tags: [휠, 카탈로그, 홍익다이아, HID]
 sources:
   - "홍익다이아 catalogue 영문.pdf (Vol. 2026, 15 pages)"
-updated: 2026-05-15
+updated: 2026-11-27
 ---
 
 # 홍익다이아 카탈로그 (HID Product Brochure)
@@ -65,7 +65,7 @@ updated: 2026-05-15
 
 카탈로그는 두 계열을 병기합니다.
 
-- **Diamond grit (D 시리즈)**: 초경(Carbide) 공구용. D15 ~ D91.
+- **Diamond grit (D 시리즈)**: 초경(Carbide) 공구용. ~~D15 ~ D91~~ → D6 ~ D91(형식별 최소: 6A2 D6 — [[홍익다이아-그릿-체계]], 2026-11-27).
 - **HSS grit (B 시리즈)**: 고속도강(HSS) 공구용. B46 ~ B126.
 
 > 출처: p.2 (11V9), p.4 (1A1), p.5 (3A1) 등 다수 페이지의 그릿 표.

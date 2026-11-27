@@ -4,7 +4,7 @@ category: "ANCA 작업 절차 (SOP)"
 tags: [ANCA, 기계준비, 인터페이스, 휠드레싱, 휠교체, SOP]
 sources:
   - "[INT-TOOLKOREA-PRODMANUAL-2026]"
-updated: 2026-07-27
+updated: 2026-11-27
 ---
 
 # ANCA 재연마 작업절차 (기계준비 · 인터페이스 · 휠드레싱 · 휠교체)
@@ -84,7 +84,7 @@ updated: 2026-07-27
 | Digitize EOT | `Protrude length` = 콜렛에 엔드밀 장착 시 나와야 하는 길이. **기계축 간 모션 충돌을 피하는 범위 내 최대한 짧게** 잡을 것 |
 | Digitize Lead/Helix/Shear | 엔드밀 형상에 따라 `Index position`, `Lead/Helix/Shear` 조정 |
 | Endface Gash | 빨간 원 클릭 → 가공에 맞는 Wheel인지 확인 |
-| OD and finish | 빨간 원 클릭 → 가공에 맞는 Wheel인지 확인 |
+| OD and finish (⚠️ 위 순서 ⑦ 「Endface finish」와 이름 다름 · 10단계 중 ⑧ ~ ⑩ 은 표에 없음 — 화면 이름 확인 필요, 2026-11-27) | 빨간 원 클릭 → 가공에 맞는 Wheel인지 확인 |
 
 ---
 
@@ -152,6 +152,7 @@ Wheel이 돌아가지 않게 고정한 뒤 T렌치를 wheel pack 중간에 꽂�
 - [[anca-cnc-tool-grinder]] — ANCA 장비 개요·스택 구성·소프트웨어 생태계
 - [[tools/재연마-형상-치수기준]] — 형상·치수 기준표·가공 Know-how
 - [[cadcam/재연마-작업준비-절차]] — 선별·레이저마킹·밑작업(C40)
+- [[cadcam/재연마-프로그램-워크플로우]] — 프로그램 작성 · 시뮬레이션 · 검증 흐름 (2026-11-27 연결)
 - [[런아웃-편심]] — Run-out 허용 기준·진단
 - [[휠-밸런싱-iBalance]] — iBalance 소프트웨어 기반 휠 밸런싱(본 절차와 별개 기능)
 - [[스택-1-1]], [[스택-1-2]] — 사내 운용 휠 스택 구성

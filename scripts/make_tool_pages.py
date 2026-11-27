@@ -7,10 +7,10 @@ def classify(shape):
     if s in ('형     상', 'nan', ''): return None
     if '볼' in s: return '볼'
     if '드릴' in s: return '드릴'
-    if '스퀘어' in s: return '스퀘어'
+    if '스퀘어' in s: return '평'  # 2026-11-27: 작업일지 2023-04 표기 변경 스퀘어→평, 같은 FL (옛: return '스퀘어')
     if '면취' in s or '챔퍼' in s or 'c0.' in s: return '면취'
     if 'nc' in s: return 'NC'
-    if any(x in s for x in ['코너', 'r0.', 'r1', 'r2', 'r3', 'r4']): return '코너R'
+    if any(x in s for x in ['코너', 'r0.', 'r01', 'r1', 'r2', 'r3', 'r4']): return '코너R'
     if '평' in s: return '평'
     return None
 
@@ -145,6 +145,9 @@ pages = {
 # ── 페이지 생성 ───────────────────────────────────────────────────────────────
 for group, info in pages.items():
     sub        = df_all[df_all['group'] == group]
+    if sub.empty:  # 2026-11-27: 데이터 없는 형상(스퀘어 → 평 통합)은 페이지를 덮어쓰지 않음
+        print(f'  건너뜀(데이터 없음): {group}')
+        continue
     total_qty  = int(sub['qty'].sum())
     years      = sorted(sub['year'].unique())
     fg_qty     = int(sub[sub['machine'] == 'FG']['qty'].sum())
