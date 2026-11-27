@@ -2,16 +2,23 @@
 
 이 폴더는 cnc-wiki 작업 공간입니다. Codex는 작업을 시작할 때 아래 문서를 먼저 확인하고, 기존 위키/핸드오프 흐름을 존중합니다.
 
-## 작업 시작 전 읽기
+## 작업 시작 전 읽기 (가볍게 시작 — 2026-11-27~)
 
-1. `wiki/_handoff/context.md` — 프로젝트 큰 그림, 범위, 용어
-2. `wiki/_handoff/decisions.md` — 누적 의사결정, 최신 항목 우선
-3. `wiki/_handoff/worklog.md` — 직전 작업 상태와 미완 사항
-4. `wiki/_handoff/memory.md` — 사용자 선호와 장기 프로젝트 메모
-5. `wiki/index.md` — 현재 위키 목차
-6. `wiki/overview.md` — 위키 현황 요약
+Codex는 무료 요금제(월 사용량 한도, 매월 26일 초기화 — 2026-11-27 화면 확인)라서 큰 파일 전체를 읽지 않습니다. 역할 분담은 `wiki/_handoff/ai-handoff.md` 「역할 분담」.
 
+**꼭 읽을 것**
+1. `wiki/_handoff/ai-handoff-current.md` — 지금 맡은 작업 카드(목적 · 읽을 파일 · 끝 기준 · 결과 위치)
+2. 작업 카드의 「읽을 파일」(최대 3개)
+
+**필요할 때만, 부분만**
+- `wiki/_handoff/decisions.md` — 맨 위 제목 3줄만. 관련 결정은 제목을 검색해 그 항목만
+- `wiki/_handoff/worklog.md` · `tasks.md` · `wiki/index.md` — 전체를 열지 않고 검색(`Select-String` 등)으로 필요한 줄만
+- `wiki/_handoff/codex-project-brief.md` — 작업 카드만으로 맥락이 모자랄 때
+- `wiki/_handoff/context.md` · `memory.md` · `wiki/overview.md` — 큰 방향이 바뀔 때만
+
+담당이 Codex인 작업 카드가 없으면 작업하지 않고 사용자에게 알립니다.
 문서가 서로 다르면 `decisions.md`의 최신 항목을 우선합니다.
+~~시작할 때 context · decisions · worklog · memory · index · overview · brief 7개 전체 읽기~~(2026-11-26 — 합계 약 17.6만 자라 무료 한도에 맞지 않음, decisions 2026-11-27 (2))
 
 ## 프로젝트 이해
 
@@ -43,7 +50,9 @@
 
 ## 작업 종료 시
 
-의미 있는 변경을 했다면 `wiki/_handoff/worklog.md` 맨 위에 다음 형식으로 기록합니다.
+작업 기록은 `wiki/_handoff/ai-worklog-codex.md`의 **안내문(`> Codex가 직접 확인하거나…`) 바로 아래**에 새 블록으로 넣습니다(파일 맨 앞 · 제목 위에 넣지 않음). 작업 카드 상태(`ai-handoff-current.md`)도 「마침」 또는 「한도로 멈춤」으로 바꿉니다.
+
+공용 흐름에 남길 만한 변경이면 `wiki/_handoff/worklog.md`의 **첫 `## ` 블록 앞**에 아래 형식으로 짧게(5줄 안팎) 기록합니다. worklog 전체를 읽을 필요는 없습니다.
 
 ```markdown
 ## YYYY-MM-DD 핸드오프 — Codex

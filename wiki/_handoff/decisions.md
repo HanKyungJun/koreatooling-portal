@@ -3,6 +3,20 @@
 > 무엇을(What), 왜(Why), 출처(Where)를 **시간 역순(최신이 맨 위)** 으로 기록합니다.
 > 챗에서 결정된 내용도 반드시 여기로 옮겨야 Code/Cowork가 따라옵니다.
 
+## 2026-11-27 (2): Claude ↔ Codex 역할 분담 — Codex(무료)는 Claude가 만든 작업 카드의 작은 일만, 시작 읽기를 작업 카드 중심으로 축소
+
+- 결정: ① 판단 · 작성(자료 조사 · 도면 · 3D · 보고서 · 위키 · 검수 · 작업 카드 작성)은 Claude, Codex는 작업 카드 1장 = 작은 일 1개(파이썬 실행 · 문법 확인 · 엑셀 · ERP 숫자 검산 · 작은 코드 수정 · git 상태 읽기 · Claude 숫자 재검산) ② Codex 시작 읽기는 `ai-handoff-current.md` + 카드의 읽을 파일(최대 3개)만, decisions 는 맨 위 제목 3줄 · worklog · tasks · index 는 검색으로 부분만 ③ Codex 한도로 멈추면 Claude가 이어받고, Claude 한도 때 Codex는 카드 범위 밖 새 판단(조건 · 대외 · 규칙 · 삭제 · 이동)을 보류 ④ Codex 남은 사용량 30% 아래면 검산 카드만
+- 근거: Codex 는 ChatGPT 무료 요금제 — 공식 요금 페이지 「Limited trial access to Codex」 · 메시지와 문맥 제한(2026-11-27 확인, 횟수 미공개) · Codex 화면 「남은 사용량 1개월 77% · 12월 26일」(11-27 한경준님 캡처 — 월 한도, 11-26 하루 시험에 약 23% 사용). 기존 `AGENTS.md` 시작 읽기 7개 파일 합계 176,754자(worklog 90,106 · decisions 42,797 · index 29,003 · 나머지 14,848, 11-27 `wc -m` 실측) + `ai-handoff.md` 의 tasks.md 28,733자 = 약 20만 자 → 토큰 환산 약 10만~20만(추정값). 검토한 대안: Codex 와 반반 분담(무료 한도로 불가) · Codex 미사용(Claude 주간 한도 소진 때 대안 없음)
+- 출처: Cowork 추천 → 한경준님 「고칠 파일 진행」 11-27
+- 영향: `AGENTS.md`(시작 읽기 · 기록 위치) · `wiki/_handoff/ai-handoff.md`(읽는 순서 · 역할 분담 · 작업 카드 양식) · `README.md`(decisions 기록 주체 · 커밋 경로 `D:\cnc-wiki` · 바꾼 파일만 add) · `ai-handoff-current.md`(Codex 대기 카드 1장)
+
+## 2026-11-27 (1): cnc-wiki 저장 위치 C → D 드라이브 이전 — 원래 경로에 연결 폴더(Junction)
+
+- 결정: cnc-wiki 전체를 `D:\cnc-wiki` 로 옮기고, 원래 경로 `C:\Users\HAN\Desktop\cnc-wiki` 에 Junction(→ D:\cnc-wiki)을 만든다. 스크립트 · 예약 작업 · 스킬의 고정 경로는 고치지 않는다(TOOLKOREA → HAN → D 순서로 열림). Cowork 는 앞으로 `D:\cnc-wiki` 를 연결 폴더로 쓴다(Junction 경로로는 마운트 안 됨, 11-27 실측). 원본 `cnc-wiki_old_20261127` 은 11-27 오전 한경준님이 삭제(16:00 확인 전 — 되돌릴 원본 없음, D 9,937개 재확인)
+- 근거: C 드라이브 남은 용량 7.3 GB / 118.6 GB(11-27 실측) · cnc-wiki 3,878 MB(raw 2,926 MB) — 일부만 옮기는 안(약 640 MB)보다 효과 6배. 고정 경로 61곳 이상 · Windows 예약 작업 7개가 경로를 써서 옮기기만 하면 깨짐 → 11-19 PC 이전 때 쓴 Junction 방식(decisions 2026-11-19 (1))을 그대로 씀. 복사 대조 C 9,937개 / 3,878 MB = D 9,937개 / 3,878 MB · Junction 경로에서 git status · `update_overview.py --dry-run` 정상(174)
+- 출처: Cowork
+- 영향: 예약 작업(CNC_Daily_Report 등) — 11-27 16:00 첫 실행 확인 필요 · Cowork 세션 연결 폴더 D:\cnc-wiki · Codex(GPT)도 같은 Junction 경로로 열림
+
 ## 2026-11-25 (2): 인스타 디자인 스킬 — oil-ui 화면 검토 순서는 「검수해 줘」(review-role) R6-A 로, dimensional-drawing 은 사내 「치수 기호도」 스킬 · 양식으로 일부 이식
 
 - 결정: ① review-role 에 「R6-A 화면 다듬기」(R6-9 규격 이탈 · R6-10 배치 세 곳 · R6-11 읽힘(대비 · 첫 화면) · R6-12 움직임 · R6-13 뺄 것, 점수 없음 · 브랜드 교체 제안 없음 · PC 1440 · 휴대폰 390 스크린샷 증거)를 넣는다 ② 새 사내 스킬 dimension-symbol-sheet(「치수 기호도 만들어 줘」) — 공구 한 계열을 기호 치수 + 값 · 식 표로 그린 설명 그림(카탈로그 · 몰 상품 · 신입 교육용), 양식 `wiki/templates/치수기호도-양식/치수기호도_양식_v1.html`. 제작 도면은 tool-generator 그대로 ③ oil-ui · dimensional-drawing 통째 설치 · motion 짝 스킬 · taste-skill · brand-identity · awwwards-mcp 는 들이지 않는다
