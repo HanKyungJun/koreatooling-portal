@@ -6,7 +6,8 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 warnings.filterwarnings('ignore')
 BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')); J = lambda *p: os.path.join(BASE, *p)
-OUT = J('wiki', '_private', 'reports', '거래끊긴_거래처_정리_20261127_실명.xlsx')
+import sys
+OUT = J('wiki', '_private', 'reports', sys.argv[1] if len(sys.argv) > 1 else '거래끊긴_거래처_정리_20261127_실명.xlsx')
 MAP = list(csv.DictReader(open(J('wiki', '_private', '거래처_익명코드표.csv'), encoding='utf-8-sig')))
 NAME = {r['code']: r['core'] for r in MAP}
 def core(n):
@@ -19,8 +20,9 @@ for r in MAP:
 code = lambda n: M2.get(str(n).strip()) or M2.get(core(n)) or '미매핑'
 RENAMED = {'거래처 I': '2024. 11.부터 거래처 Q 상호로 거래 계속', '거래처 L': 'ERP에 거래처 M 상호로 처리하라고 되어 있음, 거래 계속'}
 CONFIRMED = {'거래처 C': '거래 종료 확인(2026. 9. 3.)'}
-PRIORITY = {'거래처 O': 1, '거래처 AK': 2}
-NOTE = {'거래처 O': '2025년에도 4~7월 공백 뒤 8월 재개한 적 있음. 이번 공백 6개월', '거래처 AK': '2022년부터 34개월 거의 매달 거래한 단골',
+PRIORITY = {'거래처 AK': 1}
+SPECIAL = {'거래처 O': '탭 재연마 특수 거래, 발주 주기가 일반 재연마와 달라 끊김 판정에서 뺌'}
+NOTE = {'거래처 AK': '2022년부터 34개월 거의 매달 거래한 단골',
         '거래처 E': '2022~2023년 출하 상위 2곳 안', '거래처 Z': '2022년 546개, 2026. 4. 30개 일시 거래', '거래처 AA': '26개월 거래, 2023년 617개'}
 
 # 출하 2022~2026 납품처별 월별
@@ -47,6 +49,7 @@ for c, r in S.iterrows():
     last_act = max(act.index.max(), los[:7] if los else '')
     tot = sum(yr.values()); months = len(act)
     if c in RENAMED: grp = '상호 변경'
+    elif c in SPECIAL: grp = '특수 거래'
     elif c in CONFIRMED or c in PRIORITY: grp = '2026년 끊김'
     elif last_act >= '2026-06': grp = '지켜볼 곳'
     elif last_act >= '2026-01': grp = '2026년 끊김'
@@ -55,9 +58,9 @@ for c, r in S.iterrows():
     small = tot < 100 and months < 4
     rows.append(dict(분류=grp, 우선=PRIORITY.get(c, ''), 업체=NAME.get(c, c), 코드=c, 첫출하=act.index.min(), 마지막출하=act.index.max(), 마지막수주=los,
                      **{f'{y}년': v for y, v in yr.items()}, 합계=tot, 거래개월=months, 소량=('소량·일회성' if small else ''),
-                     비고=re.sub(r'거래처 ([A-Z]{1,2})', lambda m: NAME.get(m.group(0), m.group(0)), CONFIRMED.get(c) or RENAMED.get(c) or NOTE.get(c, ''))))
+                     비고=re.sub(r'거래처 ([A-Z]{1,2})', lambda m: NAME.get(m.group(0), m.group(0)), CONFIRMED.get(c) or RENAMED.get(c) or SPECIAL.get(c) or NOTE.get(c, ''))))
 T = pd.DataFrame(rows)
-order = {'2026년 끊김': 0, '지켜볼 곳': 1, '2025년 끊김': 2, '2024년 이전 끊김': 3, '상호 변경': 4}
+order = {'2026년 끊김': 0, '지켜볼 곳': 1, '2025년 끊김': 2, '2024년 이전 끊김': 3, '특수 거래': 4, '상호 변경': 5}
 T['_o'] = T['분류'].map(order); T['_s'] = T['소량'] != ''
 T = T.sort_values(['_o', '_s', '합계'], ascending=[True, True, False]).drop(columns=['_o', '_s'])
 
@@ -76,15 +79,15 @@ def sheet(ws, df, widths):
     ws.freeze_panes = 'A2'; ws.auto_filter.ref = ws.dimensions
 W1 = [14, 6, 18, 11, 10, 10, 12, 9, 9, 9, 9, 9, 9, 9, 12, 44]
 ws = wb.active; ws.title = '주요 업체'
-main = T[(T['소량'] == '') & (T['분류'] != '상호 변경')].drop(columns=['소량'])
+main = T[(T['소량'] == '') & (~T['분류'].isin(['상호 변경', '특수 거래']))].drop(columns=['소량'])
 sheet(ws, main, W1)
 sheet(wb.create_sheet('전체 목록'), T, W1 + [44])
-sheet(wb.create_sheet('상호 변경'), T[T['분류'] == '상호 변경'].drop(columns=['소량']), W1)
+sheet(wb.create_sheet('끊김에서 뺀 곳'), T[T['분류'].isin(['상호 변경', '특수 거래'])].drop(columns=['소량']), W1)
 ws = wb.create_sheet('기준과 한계')
 for line in ['거래 끊긴 거래처 정리 (2026. 11. 27., 생산팀)', '',
              '기준: 2026. 8. 1. ~ 11. 10. 수주 없음, 2026. 9~10월 출하 없음',
              '분류: 마지막 출하 또는 수주가 있던 해. 2026. 6. 이후 마지막인 곳은 「지켜볼 곳」(공백 3~4개월)',
-             f"예외: {NAME['거래처 C']}은 거래 종료 확인, {NAME['거래처 O']}과 {NAME['거래처 AK']}는 거래 주기에 비해 공백이 길어 2026년 끊김으로 둠",
+             f"예외: {NAME['거래처 C']}은 거래 종료 확인. {NAME['거래처 AK']}는 거래 주기에 비해 공백이 길어 2026년 끊김으로 둠. {NAME['거래처 O']}은 탭 재연마 특수 거래라 끊김에서 뺌",
              '소량·일회성: 합계 100개 미만이고 거래 개월 4개월 미만',
              '수량: 출하 수량(개), 연마불가 제외. 단가와 금액은 넣지 않음', '',
              '한계: 2022년 출하는 5월부터. 수주 자료는 2026. 5.부터라 그 전 수주 날짜는 없음',
