@@ -3,6 +3,13 @@
 > 무엇을(What), 왜(Why), 출처(Where)를 **시간 역순(최신이 맨 위)** 으로 기록합니다.
 > 챗에서 결정된 내용도 반드시 여기로 옮겨야 Code/Cowork가 따라옵니다.
 
+## 2026-11-27 (3): Codex 한 줄 지시 — Claude가 카드를 쓰고 사용자는 「카드 진행해」만, 검산은 Claude가 먼저
+
+- 결정: ① Claude 는 Codex 일을 작업 카드로 쓰고 답 끝에 복사용 `Codex — 「카드 진행해」` 한 줄을 낸다(급하지 않으면 카드를 모아서) ② Codex 는 「카드 진행해」만 받으면 담당 Codex · 대기 카드를 순서대로 모두 처리, 멈추면 그 자리에서 중단(`AGENTS.md` 「한 줄 지시」) ③ Claude 는 세션 시작 때 「마침」 카드를 사용자 말 없이 먼저 검산하고 「마침 · 검산 통과」로 바꾼다
+- 근거: Claude → Codex 직접 지시 불가 — Cowork device_bash 에서 api.openai.com · chatgpt.com 접속 000(11-27 실측, 네트워크 허용 목록 밖) · Codex 는 데스크톱 앱. 첫 카드 시험(11-27) 사용량 1%p · 1분 59초 · 검산 통과(커밋 7010f32). 검토한 대안: Codex CLI 자동 호출 — 관리자 허용 목록 변경 + CLI 포함 요금제 필요(무료판 CLI 포함 여부 확인 필요)라 보류
+- 출처: Cowork 추천 → 한경준님 「ㅇㅋ … 한 줄 지시 할 수 있게 해줘」 11-27
+- 영향: `AGENTS.md` 「한 줄 지시」 · `wiki/_handoff/ai-handoff.md` 「한 줄 지시 흐름」 · 카드 상태 값 · `CLAUDE.md` §0-D
+
 ## 2026-11-27 (2): Claude ↔ Codex 역할 분담 — Codex(무료)는 Claude가 만든 작업 카드의 작은 일만, 시작 읽기를 작업 카드 중심으로 축소
 
 - 결정: ① 판단 · 작성(자료 조사 · 도면 · 3D · 보고서 · 위키 · 검수 · 작업 카드 작성)은 Claude, Codex는 작업 카드 1장 = 작은 일 1개(파이썬 실행 · 문법 확인 · 엑셀 · ERP 숫자 검산 · 작은 코드 수정 · git 상태 읽기 · Claude 숫자 재검산) ② Codex 시작 읽기는 `ai-handoff-current.md` + 카드의 읽을 파일(최대 3개)만, decisions 는 맨 위 제목 3줄 · worklog · tasks · index 는 검색으로 부분만 ③ Codex 한도로 멈추면 Claude가 이어받고, Claude 한도 때 Codex는 카드 범위 밖 새 판단(조건 · 대외 · 규칙 · 삭제 · 이동)을 보류 ④ Codex 남은 사용량 30% 아래면 검산 카드만
