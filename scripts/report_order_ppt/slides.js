@@ -31,7 +31,7 @@ const add = () => pres.addSlide({ masterName: 'CONTENT', sectionTitle: '본문' 
   s.addTable([
     [lab('결론'), cell('거래처 C 거래 종료, 거래처 W 발주 시점 변동, 8월 영업일 감소가 겹친 결과. 거래처 O는 탭 재연마 특수 거래로 따로 봄. 나머지 거래처의 수주와 출하는 줄지 않음')],
     [lab('근거'), cell(`7월에서 8월 감소 972개 중 거래처 W 398개, 거래처 C 230개, 영업일 ${dEff}개. 1~10월 출하는 전년보다 ${pct(sh25, sh26)} %`)],
-    [lab('요청'), cell('거래처 AK 수주 공백 확인. 2022년부터 34개월 거의 매달 거래했으나 2026. 5. 27. 뒤 수주 없음')],
+    [lab('요청'), cell('거래 끊긴 거래처 연락 1순위 3곳 확인: 거래처 AA, Z, AK')],
   ], { ...TB, x: M, y: 2.2, w: 8.6, colW: [1.2, 7.4], fontSize: 18, rowH: [1.05, 1.05, 0.75], objectName: 'summary-3' });
   stat(s, 9.55, 2.2, 2.85, 2.1, '1~10월 출하 전년 대비', pct(sh25, sh26), ' %', `전년 ${f(sh25)}개`, BLUE, 'k1');
   stat(s, 9.55, 4.5, 2.85, 2.1, '3곳 제외 8~10월 출하', pct(...ex810), ' %', '전년 같은 기간 대비', LAV, 'k2');
@@ -125,7 +125,7 @@ const add = () => pres.addSlide({ masterName: 'CONTENT', sectionTitle: '본문' 
 
 // 8. 결론
 { const s = add(); s.addText('결론 및 요청', { placeholder: 'title' });
-  msg(s, '거래처 AK 확인과 11월 마감 집계로 하반기 기준선 재설정'); code(s, 'NEXT'); tabs(s, 4);
+  msg(s, '끊긴 거래처 1순위 3곳 확인과 11월 마감 집계로 하반기 기준선 재설정'); code(s, 'NEXT'); tabs(s, 4);
   s.addText('결론', { x: M, y: 2.15, w: 6.6, h: 0.45, fontFace: KO, fontSize: 20, bold: true, color: INK, margin: 0, isTextBox: true, objectName: 'concl-h' });
   s.addText([
     { text: R('8월 감소 972개는 거래처 W 398개, 거래처 C 230개, 영업일 ' + dEff + '개, 나머지 ' + (-rEff) + '개'), options: { bullet: { type: 'number' }, breakLine: true } },
@@ -134,7 +134,7 @@ const add = () => pres.addSlide({ masterName: 'CONTENT', sectionTitle: '본문' 
     { text: '업황 악화와 고객사 자체 재연마 전환은 사내 자료에서 아직 확인 안 됨', options: { bullet: { type: 'number' } } },
   ], { x: M, y: 2.7, w: 6.6, h: 3.6, fontFace: KO, fontSize: 16, color: INK, margin: 0, paraSpaceAfter: 10, valign: 'top', isTextBox: true, objectName: 'concl-list' });
   s.addShape(pres.shapes.RECTANGLE, { x: 7.6, y: 2.15, w: 4.75, h: 1.85, fill: { color: CREAM }, line: { color: INK, width: 1 }, objectName: 'req-bg' });
-  s.addText([{ text: '요청 ', options: { bold: true, breakLine: true } }, { text: R('영업팀: 거래처 AK 수주 공백 확인'), options: { breakLine: true } }, { text: R('2022년부터 34개월 거의 매달 거래, 2026. 5. 27. 뒤 수주 없음'), options: { fontSize: 14, color: GRAY } }],
+  s.addText([{ text: '요청 ', options: { bold: true, breakLine: true } }, { text: '영업팀: 거래 끊긴 거래처 1순위 3곳 확인', options: { breakLine: true } }, { text: R('거래처 AA, Z, AK. 2순위 11곳은 정리 엑셀 참고'), options: { fontSize: 14, color: GRAY } }],
     { x: 7.8, y: 2.3, w: 4.35, h: 1.55, fontFace: KO, fontSize: 16, color: INK, margin: 0, valign: 'top', paraSpaceAfter: 6, isTextBox: true, objectName: 'req-text' });
   s.addText('향후 계획', { x: 7.6, y: 4.25, w: 4.7, h: 0.45, fontFace: KO, fontSize: 20, bold: true, color: INK, margin: 0, isTextBox: true, objectName: 'plan-h' });
   s.addText([
@@ -142,7 +142,7 @@ const add = () => pres.addSlide({ masterName: 'CONTENT', sectionTitle: '본문' 
     { text: '생산팀: 2025년 수주 원자료 내보내기', options: { bullet: true, breakLine: true } },
     { text: R('영업팀: 거래처 C 몫을 메울 거래처 점검'), options: { bullet: true } },
   ], { x: 7.6, y: 4.75, w: 4.75, h: 1.8, fontFace: KO, fontSize: 16, color: INK, margin: 0, paraSpaceAfter: 8, valign: 'top', isTextBox: true, objectName: 'plan-list' });
-  s.addNotes(R(`[1:00] 정리하면 8월 감소는 대부분 거래처 W의 발주 시점, 거래처 C 거래 종료, 영업일 감소로 설명됩니다. 나머지 거래처는 작년보다 오히려 늘었습니다. 거래처 O는 탭 재연마 특수 거래라 따로 봤습니다. 영업팀에는 거래처 AK 확인을 부탁드립니다. 2022년부터 34개월 동안 거의 매달 거래하던 곳인데 5월 27일 이후 수주가 없습니다. 생산팀은 12월 초에 11월 마감 자료로 다시 집계하겠습니다.`));
+  s.addNotes(R(`[1:00] 정리하면 8월 감소는 대부분 거래처 W의 발주 시점, 거래처 C 거래 종료, 영업일 감소로 설명됩니다. 나머지 거래처는 작년보다 오히려 늘었습니다. 거래처 O는 탭 재연마 특수 거래라 따로 봤습니다. 거래가 끊긴 업체를 규모와 거래 기간, 최근성으로 점수를 매겨 보니 1순위가 거래처 AA, Z, AK 세 곳입니다. 영업팀에 이 세 곳부터 확인을 부탁드리고, 2순위 11곳은 정리한 엑셀로 드리겠습니다. 생산팀은 12월 초에 11월 마감 자료로 다시 집계하겠습니다.`));
 }
 
 (async () => { await pres.writeFile({ fileName: OUT }); await applyTheme(OUT, THEME); console.log('written', OUT); })();

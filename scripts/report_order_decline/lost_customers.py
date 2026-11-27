@@ -61,6 +61,20 @@ for c, r in S.iterrows():
                      비고=re.sub(r'거래처 ([A-Z]{1,2})', lambda m: NAME.get(m.group(0), m.group(0)), CONFIRMED.get(c) or RENAMED.get(c) or SPECIAL.get(c) or NOTE.get(c, ''))))
 T = pd.DataFrame(rows)
 order = {'2026년 끊김': 0, '지켜볼 곳': 1, '2025년 끊김': 2, '2024년 이전 끊김': 3, '특수 거래': 4, '상호 변경': 5}
+# 연락 우선순위 점수(0 ~ 9): 규모(최대 연간 출하) + 단골(거래 개월) + 최근성(마지막 출하나 수주 연도)
+Y = ['2022년', '2023년', '2024년', '2025년', '2026년']
+T['최대연간'] = T[Y].max(axis=1)
+T['최근'] = T.apply(lambda r: max(r['마지막출하'], (r['마지막수주'] or '')[:7]), axis=1)
+T['규모점'] = T['최대연간'].map(lambda v: 3 if v >= 500 else 2 if v >= 150 else 1 if v >= 50 else 0)
+T['단골점'] = T['거래개월'].map(lambda v: 3 if v >= 20 else 2 if v >= 10 else 1 if v >= 5 else 0)
+T['최근점'] = T['최근'].map(lambda v: 3 if v >= '2026' else 2 if v >= '2025' else 1 if v >= '2024' else 0)
+T['점수'] = T['규모점'] + T['단골점'] + T['최근점']
+def grade(r):
+    if r['분류'] in ('상호 변경', '특수 거래'): return '대상 아님'
+    if r['코드'] in CONFIRMED: return '종료 확정'
+    return '1순위' if r['점수'] >= 7 else '2순위' if r['점수'] >= 5 else '3순위' if r['점수'] == 4 else '낮음'
+T['우선'] = T.apply(grade, axis=1)
+T = T.drop(columns=['최근'])
 T['_o'] = T['분류'].map(order); T['_s'] = T['소량'] != ''
 T = T.sort_values(['_o', '_s', '합계'], ascending=[True, True, False]).drop(columns=['_o', '_s'])
 
@@ -78,7 +92,12 @@ def sheet(ws, df, widths):
     for i, w in enumerate(widths): ws.column_dimensions[chr(65 + i)].width = w
     ws.freeze_panes = 'A2'; ws.auto_filter.ref = ws.dimensions
 W1 = [14, 6, 18, 11, 10, 10, 12, 9, 9, 9, 9, 9, 9, 9, 12, 44]
-ws = wb.active; ws.title = '주요 업체'
+ws = wb.active; ws.title = '연락 우선순위'
+GR = {'1순위': 0, '2순위': 1, '3순위': 2}
+pr = T[T['우선'].isin(GR)].assign(_g=lambda d: d['우선'].map(GR)).sort_values(['_g', '점수', '최대연간'], ascending=[True, False, False])
+pr = pr[['우선', '점수', '업체', '분류', '마지막출하', '마지막수주', '2023년', '2024년', '2025년', '2026년', '최대연간', '거래개월', '규모점', '단골점', '최근점', '비고']]
+sheet(ws, pr, [8, 6, 18, 14, 10, 12, 9, 9, 9, 9, 9, 9, 7, 7, 7, 44])
+ws = wb.create_sheet('주요 업체')
 main = T[(T['소량'] == '') & (~T['분류'].isin(['상호 변경', '특수 거래']))].drop(columns=['소량'])
 sheet(ws, main, W1)
 sheet(wb.create_sheet('전체 목록'), T, W1 + [44])
@@ -89,6 +108,8 @@ for line in ['거래 끊긴 거래처 정리 (2026. 11. 27., 생산팀)', '',
              '분류: 마지막 출하 또는 수주가 있던 해. 2026. 6. 이후 마지막인 곳은 「지켜볼 곳」(공백 3~4개월)',
              f"예외: {NAME['거래처 C']}은 거래 종료 확인. {NAME['거래처 AK']}는 거래 주기에 비해 공백이 길어 2026년 끊김으로 둠. {NAME['거래처 O']}은 탭 재연마 특수 거래라 끊김에서 뺌",
              '소량·일회성: 합계 100개 미만이고 거래 개월 4개월 미만',
+             '연락 우선순위 점수(0 ~ 9) = 규모점 + 단골점 + 최근점. 규모점: 최대 연간 출하 500개 이상 3, 150개 이상 2, 50개 이상 1. 단골점: 거래 개월 20 이상 3, 10 이상 2, 5 이상 1. 최근점: 마지막 거래 2026년 3, 2025년 2, 2024년 1',
+             '등급: 7점 이상 1순위, 5 ~ 6점 2순위, 4점 3순위. 2022년은 5 ~ 12월 자료라 최대 연간 출하가 낮게 잡힐 수 있음',
              '수량: 출하 수량(개), 연마불가 제외. 단가와 금액은 넣지 않음', '',
              '한계: 2022년 출하는 5월부터. 수주 자료는 2026. 5.부터라 그 전 수주 날짜는 없음',
              '한계: 끊긴 사유는 사내 기록에 없음. 영업 확인 필요',
