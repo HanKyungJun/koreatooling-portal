@@ -22,9 +22,9 @@ updated: 2026-11-27
 | **tools/wheels/catalog (카탈로그 분석)** | 7 |
 | **gcode** | 8 |
 | **cadcam** | 22 |
-| **comparisons** | 25 |
+| **comparisons** | 23 |
 | **troubleshoot** | 9 |
-| **reports** | 17 |
+| **reports** | 19 |
 | **projects** | 13 |
 | **scripts** | 6 |
 | **standards** | 18 |
